@@ -1,0 +1,45 @@
+{
+  "name": "run-vcpkg-action",
+  "version": "0.0.1",
+  "description": "GitHub action for running vcpkg.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukka/run-vcpkg-action"
+  },
+  "author": "Luca Cappa (https://github.com/lukka)",
+  "license": "MIT",
+  "scripts": {
+    "pack": "gulp && ncc build build/src/vcpkg-action.js -o dist",
+    "clean": "rm -rf ./build",
+    "compile": "gulp build",
+    "lint": "gulp eslint"
+  },
+  "devDependencies": {
+    "@types/node": "^11.9.3",
+    "@typescript-eslint/eslint-plugin": "^2.10.0",
+    "@typescript-eslint/parser": "^2.10.0",
+    "eslint": "^6.7.2",
+    "gulp": "^4.0.2",
+    "gulp-eslint": "^6.0.0",
+    "gulp-install": "^1.1.0",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-typescript": "^5.0.0",
+    "ts-node": "^8.5.4",
+    "typescript": "^3.7.3",
+    "@zeit/ncc": "^0.20.5"
+  },
+  "dependencies": {
+    "@actions/core": "^1.2.0",
+    "@actions/exec": "^1.0.1",
+    "@actions/github": "^1.1.0",
+    "@actions/io": "^1.0.1",
+    "@types/adm-zip": "^0.4.32",
+    "@types/follow-redirects": "^1.8.0",
+    "@types/shelljs": "^0.8.6",
+    "shelljs": "^0.8.3",
+    "adm-zip": "^0.4.13",
+    "strip-json-comments": "^3.0.1",
+    "lodash.template": ">=4.5.0",
+    "follow-redirects": "^1.9.0"
+  }
+}

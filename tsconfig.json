@@ -1,0 +1,14 @@
+{
+    "extends": "./tsconfig-base.json",
+    "compilerOptions": {
+        "outDir": "build",
+        "rootDirs": [
+            "src",
+            "libs/run-vcpkg-lib/src",
+            "libs/action-base-lib/src"
+        ]
+    },
+    "exclude": [
+        "**/task-base-lib/**"
+    ]
+}

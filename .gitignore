@@ -1,0 +1,12 @@
+node_modules
+**/*.js
+*.map
+*.js.log
+token.txt
+*.vsix
+*.zip
+.taskkey
+.vscode
+*.tgz
+build
+dist

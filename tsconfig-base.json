@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "sourceMap": true,
+        "strict": true,
+        // https://github.com/microsoft/TypeScript/issues/9858: 
+        // Use this folder as the relative basis for computing the paths in outDir". Which 
+        // files are part of your compilation is a separate question that is answered by 
+        // files and/or include/exclude
+        //"rootDir": ".",
+        "outDir": "build"
+    },
+    "exclude": [
+        "node_modules",
+        "build"
+    ]
+}
