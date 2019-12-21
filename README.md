@@ -1,79 +1,47 @@
 [![Action Status](https://github.com/lukka/run-vcpkg/workflows/build/badge.svg)](https://github.com/lukka/run-vcpkg/actions)
 
-# [GitHub Action for vcpkg](https://marketplace.github.com/items?itemName=lucappa.cmake-ninja-vcpkg-tasks)
+# [GitHub Action for vcpkg](https://marketplace.github.com/run-vcpkg)
 
  ## User Manual
  * [Introduction](#intro)
- * [Quickstart](#quickstart)
  * [The <strong>run-vpkg</strong> action](#run-vcpkg)
- * [Tasks reference: all input parameters](#reference)
+ * [Action reference: all input/output parameters](#reference)
  * [Samples](#samples)
- * [Real world project samples](#realworldprojects)
- * [Q&As](#faqs)
 
  ## Developer Manual
  * [Developers information](#developers-information)
    * [Prerequisites](#prerequisites)
    * [Packaging](#packaging)
    * [Testing](#testing)
-     * [Run a test with its javascript file](#run-a-test-with-its-javascript-file)
-     * [Run a test with its typescript file](#run-a-test-with-its-typescript-file)
-     * [Run a specific test](#run-a-specific-test)
   * [Contributing](#contributing)
   * [License](#license)
 
 ## <a id='intro'>Introduction</a>
 
-Build C++ software with [vcpkg](https://github.com/microsoft/vcpkg). Samples provided use both [self-hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/about-self-hosted-runners) or [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners), using [Docker](https://www.docker.com/) and [Pipeline Caching](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/caching-dependencies-to-speed-up-workflows) as well.
-
-## <a id='quickstart'>Quickstart</a>
-
-It is highly recommended to use __vcpkg as a Git submodule__. Here below the sample where vcpkg is a Git submodule:
-
-```yaml
-  TBD
-```
-
-Another sample when vcpkg is NOT a submodule (not recommended):
-
-
-```yaml
-  TBD
-```
+Build C++ software with [vcpkg](https://github.com/microsoft/vcpkg). Samples provided use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners), [Caching](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/caching-dependencies-to-speed-up-workflows).
 
 ## <a id='run-vcpkg'>The ***run-vcpkg*** action</a>
 
-The documentatino of the **'run-vcpkg"** action is identical to the [**'run-vcpkg'** task's one](https://github.com/lukka/CppBuildTasks/blob/master/README.md#runvcpkg
+The documentation of the **'run-vcpkg"** action is identical to the [**'run-vcpkg'** task's one](https://github.com/lukka/CppBuildTasks/blob/master/README.md#runvcpkg
 ) for Azure DevOps.
 
+### <a id='reference'>Action reference: all input/output parameters</a>
 
-### <a id='reference'>Action reference: all input parameters</a>
-
-[action.yml](https://github.com/lukka/run-vcpkg-action/action.yml)
+[action.yml](https://github.com/lukka/run-vcpkg/action.yml)
 
 ## <a id="samples">Samples</a>
 
-[Samples](https://github.com/lukka/CppBuildTasks/blob/master/README.md#samples)
+[View the workflows based on the run-cmake and run-vcpkg actions](https://github.com/lukka/CppBuildTasks-Validation/actions).
 
-## <a id='realworldprojects'>Real world project samples</a>
+|CMakeLists.txt samples | |
+|----------|-------|
+[Linux/macOS/Windows, hosted runner, basic](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-basic.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-basic/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
+[Linux/macOS/Windows, hosted runner, advanced](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-advanced.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-advanced/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
+[Linux/macOS/Windows, hosted runner, with cache and vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-basic-cache-submod_vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-basic-cache-submod_vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
 
-[Read world project samples](https://github.com/lukka/CppBuildTasks/blob/master/README.md#realworldprojects)
-
-## <a id='faqs'>Questions and Answers</a>
-
-### Why not one single action?
-
-Because you could use vcpkg without CMake. Or you could use CMake without vcpkg.
-
-### Would creating an ad-hoc bash/powershell script be easier?
-
-Absolutely! Anyone can use this action as an inspiration for writing their own scripts to suite specific needs.
-The purpose of the action is to streamline and to simplify the usage of vcpkg on build servers.
-
-### Why the **'run-vcpkg'** task runs vcpkg in any case, even when cached port files are restored?
-
-Indeed it is not needed to run vcpkg when the cache is being restored, and you could use [Cache task](https://github.com/actions/cache)'s  `cache-hit` parameter to control the execution of the **'run-vcpkg'** task. Currently **'run-vcpkg'** task defensively runs vcpkg as a sanity check: it should output in the build log that all the requested ports are installed already, spending a neglibile amount of time.
-
+|CMakeSettings.json samples | |
+|----------|-------|
+[Linux/macOS/Windows, hosted runner, with cache and vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-cmakesettingsjson-cache-submod_vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-cmakesettingsjson-cache-submod_vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
 
 # Developers information
 
@@ -81,9 +49,9 @@ Indeed it is not needed to run vcpkg when the cache is being restored, and you c
 [gulp 4](https://www.npmjs.com/package/gulp4) globally installed.
 
 ## Build and lint
-Build using `tsc` by:
+Build with `tsc` running:
 
- > npm run compile
+ > npm run build
 
 Launch `lint` by:
 
@@ -96,23 +64,17 @@ To build, lint validate and package the extension for release purpose, run:
 
 ## Testing
 
-TBD
+No unit test are available in [run-vcpkg](https://github.com/lukka/run-vcpkg) repository.
 
-### Run a test with its javascript file
+All unit testing is executed in the [CppBuildTasks](https://github.com/lukka/CppBuildTasks/) repository that share the core functionality in the [shared Git submodule](https://github.com/lukka/run-cmake-vcpkg-action-libs).
 
-TBD
+It is desirable to have unit tests implemented in this repository as well.
 
-### Run a test with its typescript file
-
-TBD
-
-### Run a specific test
-
-TBD
+Smoke tests are run using the [Samples](#samples).
 
 ## <a id='contributing'>Contributing</a>
 
-The software is provided as is, there is no warranty of any kind. All users are encouraged to get the [source code](https://github.com/lukka/run-vcpkg) and improve the tasks with fixes and new features.
+The software is provided as is, there is no warranty of any kind. All users are encouraged to improve the [source code](https://github.com/lukka/run-vcpkg) with fixes and new features.
 
 # License
 All the content in this repository, of the extension and of the 'run-cmake' and 'run-vcpkg' tasks are licensed under the [MIT License](LICENSE.txt).

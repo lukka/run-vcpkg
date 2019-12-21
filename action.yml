@@ -6,85 +6,35 @@ name: 'run-vcpkg'
 description: 'Run vcpkg to build C/C++ dependencies.'
 author: 'Luca Cappa https://github.com/lukka'
 inputs:
-  cmakeListsOrSettingsJson:
-    default: "CMakeListsTxtBasic"
-    required: true
-    description: "Select between targeting a CMakeLists.txt (CMakeListsTxtBasic or CMakeListsTxtAdvanced), or leveraging a CMakeSettings.json file of Visual Studio (CMakeSettingsJson)."
-
-  cmakeListsTxtPath:
-    default: "${{ github.workspace }}/CMakeLists.txt"
+  vcpkgGitCommitId:
+    default: "master"
     required: false
-    description: "Path to CMakeLists.txt"
-
-  cmakeSettingsJsonPath:
-    description: "Path to CMakeSettings.json:",
-    default: "${{ github.workspace }}/CMakeSettings.json"
-    required: false
-
-  cmakeToolchainPath:
-    description: "Path to toolchain .cmake file."
+    description: "Specify the Git commit id that establish which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is not needed as impicitly specified by the submodule. [More information](https://github.com/lukka/CppBuildTasks/blob/master/README.md)"
+  vcpkgArguments:
     default: ""
+    required: true
+    descriptions: "Provides the arguments appended to 'vcpkg install'. It is recommended to use a response file to provide either the triplet and the list of packages to be installed. , e.g. `@<github.workspace>/vcpkg_osx.txt`. Note the 'at' prepended to the path denotes a response file."
+  vcpkgDirectory:
+    default: ${{ github.workspace }}/vcpkg
     required: false
-
-  useVcpkgToolchainFile:
-    description: "Indicates whether to use vcpkg's CMake toolchain file if VCPKG_ROOT environment variable is defined. If there is already a toolchain.cmake file passed in, that will be passed in with '-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=/path/to/toolchain.cmake'."
-    default: false
+    descriptions: "Specify the vcpkg's root directory. If not specified, it defaults to  <github.workspace>/vcpkg. When vcpkg is a Git submodule., specify the full path to it."
+  vcpkgArtifactIgnoreEntries:
+    default: "!.git\n**/*\n!installed\n!/vcpkg\n!vcpkg.exe\n!vcpkgArtifactIgnoreEntries\n"
     required: false
-
+    description: "Specify entries to append to the .artifactignore file. This file specifies which directory to ignore or to include by the Cache task. For more info: https://docs.microsoft.com/en-us/azure/devops/artifacts/reference/artifactignore?view=azure-devops . The file is created if not already existing."
+  vcpkgGitURL:
+    default: "https://github.com/microsoft/vcpkg.git"
+    required: false
+    description: "Specify the URL Git repository to download vcpkg from. Defaults to https://github.com/microsoft/vcpkg.git"
   vcpkgTriplet:
-    description: "Specify the triplet used with vcpkg. The task 'Run vcpkg' sets the default one in VCPKG_TRIPLET environment variable. Possible values are any file name with no extension present in the vcpkgroot/trplet directory, e.g. x64-linux, x64-windows, x64-osx and so forth."
-    default: "${{ env.VCPKG_TRIPLET }}"
-    required: false
-
-  cmakeBuildType:
-    description: "Select the build configuration, typically Debug or Release."
-    default: "Debug"
-    required: false
-
-  cmakeGenerator:
-    description: "Specify the CMake generator to be used."
-    default: "Ninja"
-    required: true
-
-  buildDirectory:
-    description: "Set the build directory, i.e. where CMake generates the build system files. Defaults to `$(Build.ArtifactStagingDirectory)` for CMakeLists.txt, and to `$(Build.ArtifactStagingDirectory)/{name}` for CMakeSettings.json."
-    default: ${{ runner.workspace }}
-
-  cmakeAppendedArgs:
-    description: "Provides a mean to provide all the CMake arguments. This is required when using CMakeLists.txt in Advanced mode. For CMakeSettings.json, the arguments are already inferred, but you can append your arguments providing them here."
     default: ""
     required: false
-
-  configurationRegexFilter:
-    description: "The regular expression selects which CMakeSettings.json's configuration(s) to build, one or more."
-    required: true
-    default: ".*"
-
-  ninjaPath:
-    description: "Full path to ninja build tool. If not specified, the one in PATH environment variable will be used. If not available, it will be downloaded from Internet."
-    default: ""
-    required: false
-
-  ninjaDownloadUrl:
-    description: "URL to download ninja build tool from."
-    default: ""
-    required: false
-
-  cmakeWrapperCommand:
-    description: "The shell command that woud setup the environment and then invoke the cmake command. An example is 'emcmake' of Emscripten SDK."
-    required: false
-    default: ""
-
-  buildWithCMake:
-    description: "Indicates whether to run 'cmake --build' after CMake project files have been generated successfully."
-    required: false
-    default: true
-
-  buildWithCMakeArgs:
-    description: "Additional build arguments such '-j4', '--config Debug', '--clean-first' and so forth. Separate CMake argument to the native make program arguments with '--' ."
-    required: false
-    default: ""
+    description: "Specify the vcpkg triplet. Common values are x64-windows, x64-linux and x64-osx. It is recommended to specify the triplet in the response file provided in the arguments instead than here."
 
 runs:
   using: 'node12'
-  main: '../dist/index.js'
+  main: './dist/index.js'
+
+branding:
+  icon: 'terminal'  
+  color: 'green'
