@@ -47,7 +47,8 @@ var eslinter = function () {
 // Copy shared library files to consumers.
 var copyBaseLib = function () {
   return gulp.src(
-    ['./build/libs/action-base-lib/src/*.js'])
+    ['./build/libs/action-base-lib/src/*.js',
+      './build/libs/base-lib/src/*.js'])
     .pipe(gulp.dest('./build/src/'));
 }
 

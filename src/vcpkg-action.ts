@@ -13,12 +13,12 @@ async function main(): Promise<number> {
     vcpkgUtils.setBaseLib(actionLib);
     const runner: vcpkgrunner.VcpkgRunner = new vcpkgrunner.VcpkgRunner(actionLib);
     await runner.run();
-    core.info('vcpkgSucceeded');
+    core.info('run-vcpkg action execution succeeded');
     return 0;
   } catch (err) {
     core.debug('Error: ' + err);
     core.error(err);
-    core.setFailed('vcpkgFailed');
+    core.setFailed('run-vcpkg action execution failed');
     return -1000;
   }
 }

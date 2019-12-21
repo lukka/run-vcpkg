@@ -10,6 +10,7 @@ on:
     - '**.md'
     branches:
     - master
+    - v*
 
 jobs:
   build:

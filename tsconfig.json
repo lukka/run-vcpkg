@@ -5,10 +5,12 @@
         "rootDirs": [
             "src",
             "libs/run-vcpkg-lib/src",
-            "libs/action-base-lib/src"
+            "libs/action-base-lib/src",
+            "libs/base-lib/src"
         ]
     },
     "exclude": [
-        "**/task-base-lib/**"
+        "libs/task-base-lib/**",
+        "libs/run-cmake-lib/**"
     ]
 }
