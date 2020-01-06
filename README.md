@@ -27,7 +27,7 @@ The documentation of the **'run-vcpkg"** action is identical to the [**'run-vcpk
 
 ### <a id='reference'>Action reference: all input/output parameters</a>
 
-[action.yml](https://github.com/lukka/run-vcpkg/action.yml)
+[action.yml](https://github.com/lukka/run-vcpkg/blob/v0/action.yml)
 
 ## <a id="samples">Samples</a>
 
