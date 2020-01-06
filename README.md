@@ -1,6 +1,6 @@
 [![Action Status](https://github.com/lukka/run-vcpkg/workflows/build/badge.svg)](https://github.com/lukka/run-vcpkg/actions)
 
-# [GitHub Action for vcpkg](https://marketplace.github.com/run-vcpkg)
+# [GitHub Action for vcpkg](https://github.com/marketplace/actions/run-vcpkg)
 
  ## User Manual
  * [Introduction](#intro)
