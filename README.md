@@ -1,10 +1,12 @@
 [![Action Status](https://github.com/lukka/run-vcpkg/workflows/build/badge.svg)](https://github.com/lukka/run-vcpkg/actions)
 
-# [GitHub Action for vcpkg](https://github.com/marketplace/actions/run-vcpkg)
+# [The **run-vcpkg** action for using vcpkg on GitHub](https://github.com/marketplace/actions/run-vcpkg)
+
+Build C++ software with the multi-platform **run-vcpkg** action, that runs [vcpkg](https://github.com/microsoft/vcpkg) on GitHub workflows. Samples provided use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners) and [Caching](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/caching-dependencies-to-speed-up-workflows).
+A good companion is the [run-cmake](https://github.com/marketplace/actions/run-cmake) action.
 
  ## User Manual
- * [Introduction](#intro)
- * [The <strong>run-vpkg</strong> action](#run-vcpkg)
+ * [The <strong>run-vcpkg</strong> action](#run-vcpkg)
  * [Action reference: all input/output parameters](#reference)
  * [Samples](#samples)
 
@@ -16,11 +18,9 @@
   * [Contributing](#contributing)
   * [License](#license)
 
-## <a id='intro'>Introduction</a>
-
-Build C++ software with [vcpkg](https://github.com/microsoft/vcpkg). Samples provided use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners), [Caching](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/caching-dependencies-to-speed-up-workflows).
-
 ## <a id='run-vcpkg'>The ***run-vcpkg*** action</a>
+
+This action behaves the same way as it does the [run-vcpkg](https://marketplace.visualstudio.com/items?itemName=lucappa.cmake-ninja-vcpkg-tasks) task for Azure DevOps.
 
 The documentation of the **'run-vcpkg"** action is identical to the [**'run-vcpkg'** task's one](https://github.com/lukka/CppBuildTasks/blob/master/README.md#runvcpkg
 ) for Azure DevOps.
@@ -79,4 +79,4 @@ The software is provided as is, there is no warranty of any kind. All users are 
 # License
 All the content in this repository, of the extension and of the 'run-cmake' and 'run-vcpkg' tasks are licensed under the [MIT License](LICENSE.txt).
 
-Copyright (c) 2019 Luca Cappa
+Copyright (c) 2019-2020 Luca Cappa
