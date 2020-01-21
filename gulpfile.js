@@ -8,6 +8,7 @@ const install = require('gulp-install');
 const ts = require("gulp-typescript");
 const sourcemaps = require("gulp-sourcemaps");
 const eslint = require('gulp-eslint');
+const jest = require('gulp-jest').default;
 
 var installPackages = function () {
   return gulp.src([
@@ -52,6 +53,16 @@ var copyBaseLib = function () {
     .pipe(gulp.dest('./build/src/'));
 }
 
+var test = function () {
+  return gulp.src('__tests__').pipe(jest({
+    "preprocessorIgnorePatterns": [
+      "<rootDir>/dist/", "<rootDir>/node_modules/"
+    ],
+    "automock": false
+  }));
+}
+
+gulp.task('test', test);
 gulp.task('eslint', eslinter);
 gulp.task('copyLib', copyLib);
 gulp.task('copyBaseLib', copyBaseLib);
