@@ -64,13 +64,21 @@ To build, lint validate and package the extension for release purpose, run:
 
 ## Testing
 
-No unit test are available in [run-vcpkg](https://github.com/lukka/run-vcpkg) repository.
+To build, pack and test:
+ 
+ > npm run test
 
-All unit testing is executed in the [CppBuildTasks](https://github.com/lukka/CppBuildTasks/) repository that share the core functionality in the [shared Git submodule](https://github.com/lukka/run-cmake-vcpkg-action-libs).
+ To run test directly:
+ 
+ > jest
 
-It is desirable to have unit tests implemented in this repository as well.
+Basic tests are implemented in this repository, which run the action on a simple [smoke tests](https://en.wikipedia.org/wiki/Smoke_testing_(software)).
 
-Smoke tests are run using the [Samples](#samples).
+Complex tests are executed in the builds of [CppBuildTasks](https://github.com/lukka/CppBuildTasks/) repository that shares the same engine in the [run-cmake-vcpkg-action-libs](https://github.com/lukka/run-cmake-vcpkg-action-libs) submodule.
+
+It would be desirable to have extensive unit tests implemented in this repository as well.
+
+Validation tests on various scenarios are run using the workflows of the [Samples](#samples).
 
 ## <a id='contributing'>Contributing</a>
 
