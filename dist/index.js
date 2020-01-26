@@ -1262,7 +1262,7 @@ class ActionLib {
         if (!process.env.GITHUB_WORKSPACE) {
             throw new Error("GITHUB_WORKSPACE is not set.");
         }
-        //?? HACK. How to get the {{ runner.temp }} path in JS's action?
+        //?? HACK. How to get the value of '{{ runner.temp }}' in JS's action?
         const artifactsPath = baselib.normalizePath(path.resolve(path.join(process.env.GITHUB_WORKSPACE, "../../_temp")));
         if (!fs.existsSync(artifactsPath)) {
             core.debug(`ArtifactsDir '${artifactsPath}' does not exists, creating it...`);
@@ -1348,6 +1348,9 @@ exports.vcpkgTriplet = "vcpkgTriplet";
 exports.vcpkgDirectory = "vcpkgDirectory";
 exports.vcpkgArtifactIgnoreEntries = "vcpkgArtifactIgnoreEntries";
 exports.vcpkgRemoteUrlLastFileName = 'vcpkg_remote_url.last';
+exports.cleanAfterBuild = 'cleanAfterBuild';
+exports.doNotUpdateVcpkg = 'doNotUpdateVcpkg';
+exports.vcpkgRoot = 'VCPKG_ROOT';
 
 //# sourceMappingURL=vcpkg-globals.js.map
 
@@ -1879,6 +1882,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __webpack_require__(747);
 const os = __webpack_require__(87);
+const path = __webpack_require__(622);
 let baseLib;
 exports.cachingFormatEnvName = 'AZP_CACHING_CONTENT_FORMAT';
 function setBaseLib(tl) {
@@ -1951,6 +1955,12 @@ function isDarwin() {
     return os.platform().toLowerCase() === 'Darwin';
 }
 exports.isDarwin = isDarwin;
+function getVcpkgExePath(vcpkgRoot) {
+    const vcpkgExe = isWin32() ? "vcpkg.exe" : "vcpkg";
+    const vcpkgExePath = path.join(vcpkgRoot, vcpkgExe);
+    return vcpkgExePath;
+}
+exports.getVcpkgExePath = getVcpkgExePath;
 function directoryExists(path) {
     try {
         return baseLib.stats(path).isDirectory();
@@ -2110,10 +2120,12 @@ const vcpkgUtils = __webpack_require__(693);
 const globals = __webpack_require__(373);
 class VcpkgRunner {
     constructor(tl) {
-        var _a, _b;
+        var _a, _b, _c, _d;
         this.tl = tl;
         this.options = {};
         this.vcpkgArtifactIgnoreEntries = [];
+        this.cleanAfterBuild = false;
+        this.doNotUpdateVcpkg = false;
         this.vcpkgArgs = (_a = this.tl.getInput(globals.vcpkgArguments, true), (_a !== null && _a !== void 0 ? _a : ""));
         this.defaultVcpkgUrl = 'https://github.com/microsoft/vcpkg.git';
         this.vcpkgURL =
@@ -2126,12 +2138,17 @@ class VcpkgRunner {
         }
         this.vcpkgTriplet = this.tl.getInput(globals.vcpkgTriplet, false) || "";
         this.vcpkgArtifactIgnoreEntries = this.tl.getDelimitedInput(globals.vcpkgArtifactIgnoreEntries, '\n', false);
+        this.doNotUpdateVcpkg = (_c = this.tl.getBoolInput(globals.doNotUpdateVcpkg, false), (_c !== null && _c !== void 0 ? _c : false));
+        this.cleanAfterBuild = (_d = this.tl.getBoolInput(globals.cleanAfterBuild, false), (_d !== null && _d !== void 0 ? _d : false));
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
             this.tl.debug("vcpkg runner starting...");
-            // Override the RUNVCPKG_VCPKG_ROOT value, it must point to this vcpkg instance.
+            // Set the RUNVCPKG_VCPKG_ROOT value, it could be re-used later by run-cmake task.
             vcpkgUtils.setEnvVar(globals.outVcpkgRootPath, this.vcpkgDestPath);
+            // Override the VCPKG_ROOT value, it must point to this vcpkg instance, it is used by 
+            // any invocation of the vcpkg executable in this task.
+            vcpkgUtils.setEnvVar(globals.vcpkgRoot, this.vcpkgDestPath);
             // The output variable must have a different name than the
             // one set with setVariable(), as the former get a prefix added out of our control.
             const outVarName = `${globals.outVcpkgRootPath}_OUT`;
@@ -2203,6 +2220,10 @@ class VcpkgRunner {
                     installCmd += ` --triplet ${this.vcpkgTriplet}`;
                 }
             }
+            // If required, add '--clean-after-build'
+            if (this.cleanAfterBuild) {
+                installCmd += ' --clean-after-build';
+            }
             const outVarName = `${globals.outVcpkgTriplet}_OUT`;
             if (this.vcpkgTriplet) {
                 // Set the used triplet in RUNVCPKG_VCPKG_TRIPLET environment variable.
@@ -2227,72 +2248,78 @@ class VcpkgRunner {
             // Update the source of vcpkg if needed.
             let updated = false;
             let needRebuild = false;
-            const remoteUrlAndCommitId = this.vcpkgURL + this.vcpkgCommitId;
-            const isSubmodule = yield vcpkgUtils.isVcpkgSubmodule(gitPath, this.vcpkgDestPath);
-            if (isSubmodule) {
-                // In case vcpkg it is a Git submodule...
-                console.log(`'vcpkg' is detected as a submodule, adding '.git' to the ignored entries in '.artifactignore' file (for excluding it from caching).`);
-                // Remove any existing '!.git'.
-                this.vcpkgArtifactIgnoreEntries =
-                    this.vcpkgArtifactIgnoreEntries.filter(item => !item.trim().endsWith('!.git'));
-                // Add '.git' to ignore that directory.
-                this.vcpkgArtifactIgnoreEntries.push('.git');
-                console.log(`.artifactsignore content: '${this.vcpkgArtifactIgnoreEntries.map(s => `"${s}"`).join(', ')}'`);
-                updated = true;
+            if (this.doNotUpdateVcpkg) {
+                console.log('Skipping launching git to update vcpkg directory.');
             }
-            const res = vcpkgUtils.directoryExists(this.vcpkgDestPath);
-            this.tl.debug(`exist('${this.vcpkgDestPath}') == ${res}`);
-            if (res && !isSubmodule) {
-                const [ok, remoteUrlAndCommitIdLast] = vcpkgUtils.readFile(cloneCompletedFilePath);
-                this.tl.debug(`cloned check: ${ok}, ${remoteUrlAndCommitIdLast}`);
-                if (ok) {
-                    this.tl.debug(`lastcommitid=${remoteUrlAndCommitIdLast}, actualcommitid=${remoteUrlAndCommitId}`);
-                    if (remoteUrlAndCommitIdLast == remoteUrlAndCommitId) {
-                        // Update from remote repository.
-                        this.tl.debug(`options.cwd=${this.options.cwd}`);
-                        vcpkgUtils.throwIfErrorCode(yield this.tl.exec(gitPath, ['remote', 'update'], this.options));
-                        // Use git status to understand if we need to rebuild vcpkg since the last cloned 
-                        // repository is not up to date.
-                        const gitRunner = this.tl.tool(gitPath);
-                        gitRunner.arg(['status', '-uno']);
-                        const res = yield gitRunner.execSync(this.options);
-                        const uptodate = res.stdout.match("up to date");
-                        const detached = res.stdout.match("detached");
-                        if (!uptodate && !detached) {
-                            // Update sources and force a rebuild.
-                            vcpkgUtils.throwIfErrorCode(yield this.tl.exec(gitPath, ['pull', 'origin', this.vcpkgCommitId], this.options));
-                            needRebuild = true;
-                            console.log("Building vcpkg as Git repo has been updated.");
+            else {
+                const remoteUrlAndCommitId = this.vcpkgURL + this.vcpkgCommitId;
+                const isSubmodule = yield vcpkgUtils.isVcpkgSubmodule(gitPath, this.vcpkgDestPath);
+                if (isSubmodule) {
+                    // In case vcpkg it is a Git submodule...
+                    console.log(`'vcpkg' is detected as a submodule, adding '.git' to the ignored entries in '.artifactignore' file (for excluding it from caching).`);
+                    // Remove any existing '!.git'.
+                    this.vcpkgArtifactIgnoreEntries =
+                        this.vcpkgArtifactIgnoreEntries.filter(item => !item.trim().endsWith('!.git'));
+                    // Add '.git' to ignore that directory.
+                    this.vcpkgArtifactIgnoreEntries.push('.git');
+                    console.log(`.artifactsignore content: '${this.vcpkgArtifactIgnoreEntries.map(s => `"${s}"`).join(', ')}'`);
+                    updated = true;
+                }
+                const res = vcpkgUtils.directoryExists(this.vcpkgDestPath);
+                this.tl.debug(`exist('${this.vcpkgDestPath}') == ${res}`);
+                if (res && !isSubmodule) {
+                    const [ok, remoteUrlAndCommitIdLast] = vcpkgUtils.readFile(cloneCompletedFilePath);
+                    this.tl.debug(`cloned check: ${ok}, ${remoteUrlAndCommitIdLast}`);
+                    if (ok) {
+                        this.tl.debug(`lastcommitid=${remoteUrlAndCommitIdLast}, actualcommitid=${remoteUrlAndCommitId}`);
+                        if (remoteUrlAndCommitIdLast == remoteUrlAndCommitId) {
+                            // Update from remote repository.
+                            this.tl.debug(`options.cwd=${this.options.cwd}`);
+                            vcpkgUtils.throwIfErrorCode(yield this.tl.exec(gitPath, ['remote', 'update'], this.options));
+                            // Use git status to understand if we need to rebuild vcpkg since the last cloned 
+                            // repository is not up to date.
+                            const gitRunner = this.tl.tool(gitPath);
+                            gitRunner.arg(['status', '-uno']);
+                            const res = yield gitRunner.execSync(this.options);
+                            const uptodate = res.stdout.match("up to date");
+                            const detached = res.stdout.match("detached");
+                            if (!uptodate && !detached) {
+                                // Update sources and force a rebuild.
+                                vcpkgUtils.throwIfErrorCode(yield this.tl.exec(gitPath, ['pull', 'origin', this.vcpkgCommitId], this.options));
+                                needRebuild = true;
+                                console.log("Building vcpkg as Git repo has been updated.");
+                            }
+                            updated = true;
                         }
-                        updated = true;
                     }
                 }
+                // Git clone.
+                if (!updated) {
+                    needRebuild = true;
+                    yield this.tl.rmRF(this.vcpkgDestPath);
+                    yield this.tl.mkdirP(this.vcpkgDestPath);
+                    this.tl.cd(this.vcpkgDestPath);
+                    let gitTool = this.tl.tool(gitPath);
+                    gitTool.arg(['clone', this.vcpkgURL, '-n', '.']);
+                    vcpkgUtils.throwIfErrorCode(yield gitTool.exec(this.options));
+                    gitTool = this.tl.tool(gitPath);
+                    gitTool.arg(['checkout', '--force', this.vcpkgCommitId]);
+                    vcpkgUtils.throwIfErrorCode(yield gitTool.exec(this.options));
+                    this.tl.writeFile(cloneCompletedFilePath, remoteUrlAndCommitId);
+                }
             }
-            // Git clone.
-            if (!updated) {
-                needRebuild = true;
-                yield this.tl.rmRF(this.vcpkgDestPath);
-                yield this.tl.mkdirP(this.vcpkgDestPath);
-                this.tl.cd(this.vcpkgDestPath);
-                let gitTool = this.tl.tool(gitPath);
-                gitTool.arg(['clone', this.vcpkgURL, '-n', '.']);
-                vcpkgUtils.throwIfErrorCode(yield gitTool.exec(this.options));
-                gitTool = this.tl.tool(gitPath);
-                gitTool.arg(['checkout', '--force', this.vcpkgCommitId]);
-                vcpkgUtils.throwIfErrorCode(yield gitTool.exec(this.options));
-                this.tl.writeFile(cloneCompletedFilePath, remoteUrlAndCommitId);
-            }
-            // If the executable file ./vcpkg/vcpkg is not present, force build. The fact that the repository
-            // is up to date is meaningless.
-            const vcpkgExe = vcpkgUtils.isWin32() ? "vcpkg.exe" : "vcpkg";
-            const vcpkgPath = path.join(this.vcpkgDestPath, vcpkgExe);
-            if (!vcpkgUtils.fileExists(vcpkgPath)) {
+            // If the executable file ./vcpkg/vcpkg is not present, force build. The fact that 'the repository is up to date' is meaningless.
+            const vcpkgExePath = vcpkgUtils.getVcpkgExePath(this.vcpkgDestPath);
+            if (!vcpkgUtils.fileExists(vcpkgExePath)) {
                 console.log("Building vcpkg as executable is missing.");
                 needRebuild = true;
             }
             else {
                 if (!vcpkgUtils.isWin32()) {
-                    yield this.tl.execSync('chmod', ["+x", vcpkgPath]);
+                    yield this.tl.execSync('chmod', ["+x", vcpkgExePath]);
+                }
+                if (!(yield this.executableUpToDate(vcpkgExePath))) {
+                    needRebuild = true;
                 }
             }
             return needRebuild;
@@ -2324,6 +2351,54 @@ class VcpkgRunner {
                 shTool.arg(['-c', bootstrapFullPath]);
                 vcpkgUtils.throwIfErrorCode(yield shTool.exec(this.options));
             }
+        });
+    }
+    executableUpToDate(vcpkgExePath) {
+        var _a, _b, _c, _d, _e, _f;
+        return __awaiter(this, void 0, void 0, function* () {
+            let upToDate = false;
+            this.tl.debug("executableUpToDate()<<");
+            try {
+                const options = {
+                    cwd: vcpkgExePath,
+                    failOnStdErr: false,
+                    errStream: process.stdout,
+                    outStream: process.stdout,
+                    ignoreReturnCode: true,
+                    silent: false,
+                    windowsVerbatimArguments: false,
+                    env: process.env
+                };
+                const res = yield this.tl.execSync(vcpkgExePath, ['version'], options);
+                let msg;
+                const nil = "<null>";
+                msg = `\n'vcpkg version': exit code='${_a = res.code, (_a !== null && _a !== void 0 ? _a : -1000)}' \n`;
+                msg += `'vcpkg version': stdout='${_b = res.stdout, (_b !== null && _b !== void 0 ? _b : nil)}' \n`;
+                const vcpkgVersion = (_c = res.stdout, (_c !== null && _c !== void 0 ? _c : "<nil-stdout>"));
+                msg += `'vcpkg version': stderr='${_d = res.stderr, (_d !== null && _d !== void 0 ? _d : nil)}' \n`;
+                const [ok, content] = vcpkgUtils.readFile(path.join(vcpkgExePath, 'toolsrc', 'VERSION.txt'));
+                msg += `'VERSION.txt: '${ok}', '${_f = (_e = content) === null || _e === void 0 ? void 0 : _e.toString(), (_f !== null && _f !== void 0 ? _f : nil)}' \n`;
+                if (ok && content) {
+                    const trimmedContent = content.toString().replace("\"", "");
+                    const trimmedVersion = vcpkgVersion.replace("\"", "");
+                    this.tl.debug(`trimmedContent='${trimmedContent}`);
+                    this.tl.debug(`trimmedVersion='${trimmedVersion}'`);
+                    if (trimmedContent.includes(trimmedVersion)) {
+                        upToDate = true;
+                    }
+                }
+            }
+            catch (error) {
+                this.tl.warning(error);
+                console.log(error);
+            }
+            if (upToDate) {
+                console.log("vcpkg executable is up-to-date with sources.");
+            }
+            else {
+                console.log("vcpkg executable is not up-to-date with sources.");
+            }
+            return upToDate;
         });
     }
 }

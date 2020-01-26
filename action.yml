@@ -30,7 +30,15 @@ inputs:
     default: ""
     required: false
     description: "Specify the vcpkg triplet. Common values are x64-windows, x64-linux and x64-osx. It is recommended to specify the triplet in the response file provided in the arguments instead than here."
-
+  cleanAfterBuild:
+    default: true
+    required: false
+    description: "Append the argument '--clean-after-build' to vcpkgArgument input, to clean buildtrees, packages and downloads after building each port. Default is true."
+  doNotUpdateVcpkg: 
+    default: false
+    required: false
+    description: "Avoid to update vcpkg(launching git) in the specified 'vcpkgDirectory'. This is useful when vcpkg is being checkout indipendently of the run-vcpkg task. Default is false."
+    
 runs:
   using: 'node12'
   main: './dist/index.js'
