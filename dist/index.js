@@ -2360,7 +2360,7 @@ class VcpkgRunner {
             this.tl.debug("executableUpToDate()<<");
             try {
                 const options = {
-                    cwd: vcpkgExePath,
+                    cwd: path.dirname(vcpkgExePath),
                     failOnStdErr: false,
                     errStream: process.stdout,
                     outStream: process.stdout,
@@ -2376,14 +2376,14 @@ class VcpkgRunner {
                 msg += `'vcpkg version': stdout='${_b = res.stdout, (_b !== null && _b !== void 0 ? _b : nil)}' \n`;
                 const vcpkgVersion = (_c = res.stdout, (_c !== null && _c !== void 0 ? _c : "<nil-stdout>"));
                 msg += `'vcpkg version': stderr='${_d = res.stderr, (_d !== null && _d !== void 0 ? _d : nil)}' \n`;
-                const [ok, content] = vcpkgUtils.readFile(path.join(vcpkgExePath, 'toolsrc', 'VERSION.txt'));
+                const [ok, content] = vcpkgUtils.readFile(path.join(path.dirname(vcpkgExePath), 'toolsrc', 'VERSION.txt'));
                 msg += `'VERSION.txt: '${ok}', '${_f = (_e = content) === null || _e === void 0 ? void 0 : _e.toString(), (_f !== null && _f !== void 0 ? _f : nil)}' \n`;
                 if (ok && content) {
-                    const trimmedContent = content.toString().replace("\"", "");
-                    const trimmedVersion = vcpkgVersion.replace("\"", "");
-                    this.tl.debug(`trimmedContent='${trimmedContent}`);
+                    const trimmedContent = content.toString().replace(/\'|\"/g, "").trim();
+                    const trimmedVersion = vcpkgVersion.replace(/\'|\"/g, "").trim();
+                    this.tl.debug(`trimmedContent='${trimmedContent}'`);
                     this.tl.debug(`trimmedVersion='${trimmedVersion}'`);
-                    if (trimmedContent.includes(trimmedVersion)) {
+                    if (trimmedVersion.includes(trimmedContent)) {
                         upToDate = true;
                     }
                 }
