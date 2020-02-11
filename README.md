@@ -21,7 +21,7 @@ A good companion is the [run-cmake](https://github.com/marketplace/actions/run-c
   * [Contributing](#contributing)
   * [License](#license)
 
-## <a id='quickstart'>Quick start</a>
+## <a id='quickstart'>Quickstart</a>
 
 It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lukka/CppBuildTasks/blob/master/README.md#use-vcpkg-as-a-submodule-of-your-git-repository). Here below the sample where vcpkg is a Git submodule:
 
