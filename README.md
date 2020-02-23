@@ -89,6 +89,10 @@ project: [CppOpenGLWebAssemblyCMake](https://github.com/lukka/CppOpenGLWebAssemb
 |----------|-------|
 [WASM, Linux, macOS](https://github.com/lukka/CppOpenGLWebAssemblyCMake/blob/master/.github/workflows/build.yml) | [![Actions Status](https://github.com/lukka/CppOpenGLWebAssemblyCMake/workflows/hosted-wasm-macos-linux/badge.svg)](https://github.com/lukka/CppOpenGLWebAssemblyCMake/actions)
 
+project: [codehz/wine-bdlauncher](https://github.com/codehz/wine-bdlauncher) | |
+|----------|-------|
+[Windows](https://github.com/codehz/wine-bdlauncher/blob/master/.github/workflows/ci.yml) | [![CI](https://github.com/codehz/wine-bdlauncher/workflows/CI/badge.svg)](https://github.com/codehz/wine-bdlauncher/actions)
+
 # Developers information
 
 ## Prerequisites
