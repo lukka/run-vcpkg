@@ -1,4 +1,4 @@
-[![Action Status](https://github.com/lukka/run-vcpkg/workflows/build/badge.svg)](https://github.com/lukka/run-vcpkg/actions)
+[![Action Status](https://github.com/lukka/run-vcpkg/workflows/build-test/badge.svg)](https://github.com/lukka/run-vcpkg/actions)
 
 # [The **run-vcpkg** action for using vcpkg on GitHub](https://github.com/marketplace/actions/run-vcpkg)
 
