@@ -93,6 +93,10 @@ project: [codehz/wine-bdlauncher](https://github.com/codehz/wine-bdlauncher) | |
 |----------|-------|
 [Windows](https://github.com/codehz/wine-bdlauncher/blob/master/.github/workflows/ci.yml) | [![CI](https://github.com/codehz/wine-bdlauncher/workflows/CI/badge.svg)](https://github.com/codehz/wine-bdlauncher/actions)
 
+project: [OPM/ResInsight](https://github.com/OPM/ResInsight/) | | 
+|----------|-------|
+[Windows, Linux](https://github.com/OPM/ResInsight/blob/dev/.github/workflows/main.yml) | [![CI](https://github.com/OPM/ResInsight/workflows/ResInsight%20Build/badge.svg)](https://github.com/OPM/ResInsight/actions)
+
 # Developers information
 
 ## Prerequisites
