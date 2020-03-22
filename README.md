@@ -36,6 +36,8 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
         # The key will be different each time a different version of vcpkg is used, or different ports are installed.
         key: ${{ hashFiles( env.vcpkgResponseFile ) }}-${{ hashFiles('.git/modules/vcpkg/HEAD') }}-${{ runner.os }}
 
+    # Download, build vcpkg, install requested ports. If content is restored by the previous step,
+    # it is a no-op. 
     - name: Run vcpkg
       uses: lukka/run-vcpkg@v0
       with:
@@ -56,6 +58,26 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
         # cmakeListsOrSettingsJson: CMakeSettingsJson
         # cmakeSettingsJsonPath: '${{ github.workspace }}/cmakesettings.json/CMakeSettings.json'
         # configurationRegexFilter: '${{ matrix.configuration }}'
+```
+
+The action run as setup only step, that is just install and set VCPKG_ROOT enviroment variabla without isntalling any package. You can us the provisioned vcpkg as follows in subsequent steps:
+
+```yaml
+    - name: Cache vcpkg's artifacts
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/vcpkg/
+        # The key will be different each time a different version of vcpkg is used, or different ports are installed.
+        key: ${{ hashFiles( env.vcpkgResponseFile ) }}-${{ hashFiles('.git/modules/vcpkg/HEAD') }}-${{ runner.os }}
+    # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v0
+      with:
+        setupOnly: true
+    # Now that vcpkg is installed, it is being used to run desired arguments.
+    - run: |
+        $VCPKG_ROOT/vcpkg @$vcpkgResponseFile
+        $VCPKG_ROOT/vcpkg install boost:linux-x64
 ```
 
 ## <a id='run-vcpkg'>The ***run-vcpkg*** action</a>

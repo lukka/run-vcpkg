@@ -6,12 +6,16 @@ name: 'run-vcpkg'
 description: 'Run vcpkg to build C/C++ dependencies.'
 author: 'Luca Cappa https://github.com/lukka'
 inputs:
+  setupOnly:
+    default: false
+    required: false
+    description: "Indicates whether to only setup vcpkg (i.e. installing it and setting the environment variables VCPKG_ROOT, RUNVCPK_VCPKG_ROOT), without installing any port."
   vcpkgGitCommitId:
     required: false
     description: "Specify the Git commit id that establish which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is not needed as impicitly specified by the submodule. [More information](https://github.com/lukka/CppBuildTasks/blob/master/README.md)"
   vcpkgArguments:
     default: ""
-    required: true
+    required: false
     descriptions: "Provides the arguments appended to 'vcpkg install'. It is recommended to use a response file to provide either the triplet and the list of packages to be installed. , e.g. `@<github.workspace>/vcpkg_osx.txt`. Note the 'at' prepended to the path denotes a response file."
   vcpkgDirectory:
     default: ${{ github.workspace }}/vcpkg
@@ -37,7 +41,11 @@ inputs:
     default: false
     required: false
     description: "Avoid to update vcpkg(launching git) in the specified 'vcpkgDirectory'. This is useful when vcpkg is being checkout indipendently of the run-vcpkg task. Default is false."
-    
+  useShell:
+    default: true
+    required: false
+    description: "Specify which shell to be used when launching commands. 'true' means the default shell is used. 'false' means no shell is used. It also can be an absolute path and arguments of the shell to spawn commands with."
+
 runs:
   using: 'node12'
   main: './dist/index.js'
