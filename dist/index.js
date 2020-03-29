@@ -1009,6 +1009,12 @@ const io = __webpack_require__(1);
 const fs = __webpack_require__(747);
 const path = __webpack_require__(622);
 const cp = __webpack_require__(129);
+function escapeCmdCommand(command) {
+    command = command.trim();
+    if (!/^\".*\"$/.test(command))
+        command = `\"${command}\"`;
+    return command;
+}
 function escapeShArgument(argument) {
     // escape blanks: blank -> \blank
     return argument.replace(' ', '\\ ');
@@ -1051,7 +1057,7 @@ function escapeCmdExeArgument(argument) {
  * @memberof ActionLib
  */
 function exec(commandPath, args, options2) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
         core.debug(`exec(${commandPath}, ${JSON.stringify(args)}, {${(_a = options2) === null || _a === void 0 ? void 0 : _a.cwd}})<<`);
         let useShell = false;
@@ -1075,16 +1081,20 @@ function exec(commandPath, args, options2) {
             (process.platform === 'win32' && typeof useShell === 'boolean' && useShell === true)) {
             args2 = [];
             args.map((arg) => args2.push(escapeCmdExeArgument(arg)));
+            // When using a shell, the command must be enclosed by quotes to handle blanks correctly.
+            commandPath = escapeCmdCommand(commandPath);
         }
         else if (((typeof useShell === 'string' && !useShell.includes('cmd')) ||
             (process.platform !== 'win32' && typeof useShell === 'boolean' && useShell === true))) {
             args2 = [];
             args.map((arg) => args2.push(escapeShArgument(arg)));
+            // When using a Unix shell, blanks needs to be escaped in the command as well.
+            commandPath = escapeShArgument(commandPath);
         }
         args = args2;
-        core.debug(`exec("${commandPath}", ${JSON.stringify(args)}, {cwd=${(_d = opts) === null || _d === void 0 ? void 0 : _d.cwd}, shell=${(_e = opts) === null || _e === void 0 ? void 0 : _e.shell}})`);
+        core.debug(`exec(${commandPath}, ${JSON.stringify(args)}, {cwd=${(_d = opts) === null || _d === void 0 ? void 0 : _d.cwd}, shell=${(_e = opts) === null || _e === void 0 ? void 0 : _e.shell}, env=${JSON.stringify((_f = opts) === null || _f === void 0 ? void 0 : _f.env)}})`);
         return new Promise((resolve, reject) => {
-            const child = cp.spawn(`"${commandPath}"`, args, opts);
+            const child = cp.spawn(`${commandPath}`, args, opts);
             if (options2 && child.stdout) {
                 child.stdout.on('data', (chunk) => {
                     if (options2.listeners && options2.listeners.stdout) {
@@ -1265,15 +1275,19 @@ class ActionLib {
         this.debug(`getBoolInput(${name}, ${isRequired}) -> '${value}'`);
         return value;
     }
-    getPathInput(name, isRequired) {
-        const value = core.getInput(name, { required: isRequired });
+    getPathInput(name, isRequired, checkExists) {
+        const value = path.resolve(core.getInput(name, { required: isRequired }));
         this.debug(`getPathInput(${name}) -> '${value}'`);
+        if (checkExists) {
+            if (!fs.existsSync(value))
+                throw new Error(`input path '${value}' for '${name}' does not exist.`);
+        }
         return value;
     }
     isFilePathSupplied(name) {
         var _a, _b;
         // normalize paths
-        const pathValue = this.resolve((_a = this.getPathInput(name, false), (_a !== null && _a !== void 0 ? _a : '')));
+        const pathValue = this.resolve((_a = this.getPathInput(name, false, false), (_a !== null && _a !== void 0 ? _a : '')));
         const repoRoot = this.resolve((_b = process.env.GITHUB_WORKSPACE, (_b !== null && _b !== void 0 ? _b : '')));
         const isSupplied = pathValue !== repoRoot;
         this.debug(`isFilePathSupplied(s file path=('${name}') -> '${isSupplied}'`);
@@ -1330,7 +1344,7 @@ class ActionLib {
         return __awaiter(this, void 0, void 0, function* () {
             core.debug(`"which(${name})<<`);
             const filePath = yield io.which(name, required);
-            console.log(filePath);
+            console.log(`tool: ${filePath}`);
             core.debug(`"which(${name}) >> ${filePath}`);
             return filePath;
         });
@@ -2265,7 +2279,7 @@ class VcpkgRunner {
             this.tl.getInput(globals.vcpkgGitURL, false) || this.defaultVcpkgUrl;
         this.vcpkgCommitId =
             this.tl.getInput(globals.vcpkgCommitId, false);
-        this.vcpkgDestPath = (_c = this.tl.getPathInput(globals.vcpkgDirectory, false), (_c !== null && _c !== void 0 ? _c : ""));
+        this.vcpkgDestPath = (_c = this.tl.getPathInput(globals.vcpkgDirectory, false, false), (_c !== null && _c !== void 0 ? _c : ""));
         if (!this.vcpkgDestPath) {
             this.vcpkgDestPath = path.join(this.tl.getBinDir(), 'vcpkg');
         }
