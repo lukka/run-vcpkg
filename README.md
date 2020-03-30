@@ -10,6 +10,7 @@ A good companion is the [run-cmake](https://github.com/marketplace/actions/run-c
  * [Quickstart](#quickstart)
    * [Setup vcpkg and Install ports](#install)
    * [Setup vcpkg only](#setuponly)
+   * [Flowchart](#flowchart)
  * [The <strong>run-vcpkg</strong> action](#run-vcpkg)
  * [Action reference: all input/output parameters](#reference)
  * [Samples](#samples)
@@ -64,9 +65,9 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
         # configurationRegexFilter: '${{ matrix.configuration }}'
 ```
 
-## <a id='setuponly'>Setup vcpkg only</a>
+### <a id='setuponly'>Setup vcpkg only</a>
 
-The action can run as setup only step, that is just install and set VCPKG_ROOT enviroment variabla without isntalling any package. You can us the provisioned vcpkg as follows in subsequent steps:
+When `setupOnly: true`, it only setup vcpkg and set VCPKG_ROOT enviroment variable without installing any port. The provisioned vcpkg can then be used as follows in subsequent steps:
 
 ```yaml
     - name: Cache vcpkg's artifacts
@@ -85,6 +86,11 @@ The action can run as setup only step, that is just install and set VCPKG_ROOT e
         $VCPKG_ROOT/vcpkg @$vcpkgResponseFile
         $VCPKG_ROOT/vcpkg install boost:linux-x64
 ```
+
+### <a id='flowchart'>Flowchart</a>
+
+![run-vcpkg flowchart](https://raw.githubusercontent.com/lukka/run-cmake-vcpkg-action-libs/master/run-vcpkg-lib/docs/task-vcpkg.png
+)
 
 ## <a id='run-vcpkg'>The ***run-vcpkg*** action</a>
 
@@ -106,6 +112,7 @@ The documentation of the **'run-vcpkg"** action is identical to the [**'run-vcpk
 [Linux/macOS/Windows, hosted runner, basic](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-basic.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-basic/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
 [Linux/macOS/Windows, hosted runner, advanced](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-advanced.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-advanced/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
 [Linux/macOS/Windows, hosted runner, with cache and vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-basic-cache-submod_vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-basic-cache-submod_vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
+[Linux/macOS/Windows, hosted runner, setup only with cache and vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-advanced-setup-vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-advanced-setup-vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
 
 |CMakeSettings.json samples | |
 |----------|-------|
