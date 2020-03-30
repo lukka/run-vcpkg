@@ -964,13 +964,14 @@ function main() {
             const runner = new vcpkgrunner.VcpkgRunner(actionLib);
             yield runner.run();
             core.info('run-vcpkg action execution succeeded');
-            return 0;
+            process.exitCode = 0;
         }
         catch (err) {
-            core.debug('Error: ' + err);
-            core.error(err);
+            const errorAsString = ((err !== null && err !== void 0 ? err : "undefined error")).toString();
+            core.debug('Error: ' + errorAsString);
+            core.error(errorAsString);
             core.setFailed('run-vcpkg action execution failed');
-            return -1000;
+            process.exitCode = -1000;
         }
     });
 }
@@ -1002,36 +1003,162 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const baselib = __webpack_require__(42);
 const core = __webpack_require__(470);
-const exec = __webpack_require__(986);
+const toolrunner = __webpack_require__(9);
 const ioutil = __webpack_require__(672);
 const io = __webpack_require__(1);
 const fs = __webpack_require__(747);
 const path = __webpack_require__(622);
+const cp = __webpack_require__(129);
+function escapeCmdCommand(command) {
+    command = command.trim();
+    if (!/^\".*\"$/.test(command))
+        command = `\"${command}\"`;
+    return command;
+}
+function escapeShArgument(argument) {
+    // escape blanks: blank -> \blank
+    return argument.replace(' ', '\\ ');
+}
+function escapeCmdExeArgument(argument) {
+    // \" -> \\"
+    argument = argument.replace(/(\\*)"/g, '$1$1\\"');
+    // \$ -> \\$
+    argument = argument.replace(/(\\*)$/, '$1$1');
+    // All other backslashes occur literally.
+    // Quote the whole thing:
+    argument = `"${argument}"`;
+    // Prefix with caret ^ any character to be escaped, as in:
+    // http://www.robvanderwoude.com/escapechars.php
+    // Do not escape %, let variable be passed in as is.
+    const metaCharsRegExp = /([()\][!^"`<>&|;, *?])/g;
+    argument = argument.replace(metaCharsRegExp, '^$1');
+    return argument;
+}
+/**
+ * Run a command with arguments in a shell.
+ * Note: -G Ninja or -GNinja? The former works witha shell, the second does not work without a shell.
+ * e.spawnSync('cmake', ['-GNinja', '.'], {shell:false, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> Configuring done.
+ * e.spawnSync('cmake', ['-G Ninja', '.'], {shell:false, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> CMake Error: Could not create named generator  Ninja
+ * e.spawnSync('cmake', ['-G Ninja', '.'], {shell:true, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> -- Configuring done
+ * e.spawnSync('cmake', ['-GNinja', '.'], {shell:true, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> -- Configuring done
+ * Hence the caller of this function is always using no spaces in between arguments.
+ * Exception is arbitrary text coming from the user, which will hit this problem when not useing a shell.
+ *
+ * Other corner cases:
+ * e.spawnSync('cmake', ['-GUnix Makefiles', '.'], {shell:true, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> CMake Error: Could not create named generator Unix
+ * e.spawnSync('cmake', ['-GUnix\ Makefiles', '.'], {shell:false, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> -- Configuring done
+ > e.spawnSync('cmake', ['-GUnix Makefiles', '.'], {shell:false, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> -- Configuring done
+ e.spawnSync('cmake', ['-G Unix Makefiles', '.'], {shell:false, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> CMake Error: Could not create named generator  Unix Makefiles
+ * @static
+ * @param {string} commandPath
+ * @param {string[]} args
+ * @param {baselib.ExecOptions} [options2]
+ * @returns {Promise<number>}
+ * @memberof ActionLib
+ */
+function exec(commandPath, args, options2) {
+    var _a, _b, _c, _d, _e, _f;
+    return __awaiter(this, void 0, void 0, function* () {
+        core.debug(`exec(${commandPath}, ${JSON.stringify(args)}, {${(_a = options2) === null || _a === void 0 ? void 0 : _a.cwd}})<<`);
+        let useShell = false;
+        if (process.env.INPUT_USESHELL === 'true')
+            useShell = true;
+        else if (process.env.INPUT_USESHELL === 'false') {
+            useShell = false;
+        }
+        else if (process.env.INPUT_USESHELL) {
+            useShell = process.env.INPUT_USESHELL;
+        }
+        const opts = {
+            shell: useShell,
+            windowsVerbatimArguments: false,
+            cwd: (_b = options2) === null || _b === void 0 ? void 0 : _b.cwd,
+            env: (_c = options2) === null || _c === void 0 ? void 0 : _c.env,
+            stdio: "pipe",
+        };
+        let args2 = args;
+        if ((typeof useShell === 'string' && useShell.includes('cmd')) ||
+            (process.platform === 'win32' && typeof useShell === 'boolean' && useShell === true)) {
+            args2 = [];
+            args.map((arg) => args2.push(escapeCmdExeArgument(arg)));
+            // When using a shell, the command must be enclosed by quotes to handle blanks correctly.
+            commandPath = escapeCmdCommand(commandPath);
+        }
+        else if (((typeof useShell === 'string' && !useShell.includes('cmd')) ||
+            (process.platform !== 'win32' && typeof useShell === 'boolean' && useShell === true))) {
+            args2 = [];
+            args.map((arg) => args2.push(escapeShArgument(arg)));
+            // When using a Unix shell, blanks needs to be escaped in the command as well.
+            commandPath = escapeShArgument(commandPath);
+        }
+        args = args2;
+        core.debug(`exec(${commandPath}, ${JSON.stringify(args)}, {cwd=${(_d = opts) === null || _d === void 0 ? void 0 : _d.cwd}, shell=${(_e = opts) === null || _e === void 0 ? void 0 : _e.shell}, env=${JSON.stringify((_f = opts) === null || _f === void 0 ? void 0 : _f.env)}})`);
+        return new Promise((resolve, reject) => {
+            const child = cp.spawn(`${commandPath}`, args, opts);
+            if (options2 && child.stdout) {
+                child.stdout.on('data', (chunk) => {
+                    if (options2.listeners && options2.listeners.stdout) {
+                        options2.listeners.stdout(chunk);
+                    }
+                    process.stdout.write(chunk);
+                });
+            }
+            if (options2 && child.stderr) {
+                child.stderr.on('data', (chunk) => {
+                    if (options2.listeners && options2.listeners.stderr) {
+                        options2.listeners.stderr(chunk);
+                    }
+                    process.stdout.write(chunk);
+                });
+            }
+            child.on('error', (error) => {
+                core.warning(`${error}`);
+                // Wait one second to get still some output.
+                setTimeout(() => {
+                    reject(error);
+                    child.removeAllListeners();
+                }, 1000);
+            });
+            child.on('exit', (exitCode) => {
+                core.debug(`Exit code ${exitCode} received from command '${commandPath}'`);
+                child.removeAllListeners();
+                resolve(exitCode);
+            });
+            child.on('close', (exitCode) => {
+                core.debug(`STDIO streams have closed for command '${commandPath}'`);
+                child.removeAllListeners();
+                resolve(exitCode);
+            });
+        });
+    });
+}
 class ToolRunner {
     constructor(path) {
         this.path = path;
-        this.args = [];
+        this.arguments = [];
+    }
+    _argStringToArray(text) {
+        return this.__argStringToArray(text);
     }
     exec(options) {
-        const options2 = this.convertExecOptions(options);
-        return exec.exec(`"${this.path}"`, this.args, options2);
+        return exec(this.path, this.arguments, options);
     }
     line(val) {
-        this.args = this.args.concat(this.argStringToArray(val));
+        this.arguments = this.arguments.concat(toolrunner.argStringToArray(val));
     }
     arg(val) {
         if (val instanceof Array) {
-            this.args = this.args.concat(val);
+            this.arguments = this.arguments.concat(val);
         }
         else if (typeof (val) === 'string') {
-            this.args = this.args.concat(val.trim());
+            this.arguments = this.arguments.concat(val.trim());
         }
     }
     execSync(options) {
         return __awaiter(this, void 0, void 0, function* () {
             let stdout = "";
             let stderr = "";
-            let options2 = undefined;
+            let options2;
             if (options) {
                 options2 = this.convertExecOptions(options);
                 options2.listeners = {
@@ -1043,7 +1170,7 @@ class ToolRunner {
                     }
                 };
             }
-            const exitCode = yield exec.exec(`"${this.path}"`, this.args, options2);
+            const exitCode = yield exec(this.path, this.arguments, options2);
             const res2 = {
                 code: exitCode,
                 stdout: stdout,
@@ -1081,7 +1208,7 @@ class ToolRunner {
         result.errStream = options.errStream || process.stderr;
         return result;
     }
-    argStringToArray(argString) {
+    __argStringToArray(argString) {
         const args = [];
         let inQuotes = false;
         let escaped = false;
@@ -1133,6 +1260,7 @@ class ToolRunner {
         }
         return args;
     }
+    ;
 }
 exports.ToolRunner = ToolRunner;
 class ActionLib {
@@ -1147,15 +1275,19 @@ class ActionLib {
         this.debug(`getBoolInput(${name}, ${isRequired}) -> '${value}'`);
         return value;
     }
-    getPathInput(name) {
-        const value = core.getInput(name);
+    getPathInput(name, isRequired, checkExists) {
+        const value = path.resolve(core.getInput(name, { required: isRequired }));
         this.debug(`getPathInput(${name}) -> '${value}'`);
+        if (checkExists) {
+            if (!fs.existsSync(value))
+                throw new Error(`input path '${value}' for '${name}' does not exist.`);
+        }
         return value;
     }
     isFilePathSupplied(name) {
         var _a, _b;
         // normalize paths
-        const pathValue = this.resolve((_a = this.getPathInput(name), (_a !== null && _a !== void 0 ? _a : '')));
+        const pathValue = this.resolve((_a = this.getPathInput(name, false, false), (_a !== null && _a !== void 0 ? _a : '')));
         const repoRoot = this.resolve((_b = process.env.GITHUB_WORKSPACE, (_b !== null && _b !== void 0 ? _b : '')));
         const isSupplied = pathValue !== repoRoot;
         this.debug(`isFilePathSupplied(s file path=('${name}') -> '${isSupplied}'`);
@@ -1193,12 +1325,13 @@ class ActionLib {
         return new ToolRunner(name);
     }
     exec(path, args, options) {
-        return Promise.resolve(exec.exec(`"${path}"`, args, options));
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield exec(path, args, options);
+        });
     }
     execSync(path, args, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Note: the exec.exec() fails to launch an executable that contains blanks in its path/name. Sorrounding with double quotes is mandatory.
-            const exitCode = yield exec.exec(`"${path}"`, args, options);
+            const exitCode = yield exec(`"${path}"`, args, options);
             const res2 = {
                 code: exitCode,
                 stdout: "",
@@ -1209,7 +1342,11 @@ class ActionLib {
     }
     which(name, required) {
         return __awaiter(this, void 0, void 0, function* () {
-            return io.which(name, required);
+            core.debug(`"which(${name})<<`);
+            const filePath = yield io.which(name, required);
+            console.log(`tool: ${filePath}`);
+            core.debug(`"which(${name}) >> ${filePath}`);
+            return filePath;
         });
     }
     rmRF(path) {
@@ -1229,7 +1366,10 @@ class ActionLib {
         fs.writeFileSync(path, content);
     }
     resolve(apath) {
-        return path.resolve(apath);
+        core.debug(`"resolve(${apath})<<`);
+        const resolvedPath = path.resolve(apath);
+        core.debug(`"resolve(${apath})>> '${resolvedPath})'`);
+        return resolvedPath;
     }
     stats(path) {
         return fs.statSync(path);
@@ -1351,6 +1491,7 @@ exports.vcpkgLastBuiltCommitId = 'vcpkgLastBuiltCommitId';
 exports.cleanAfterBuild = 'cleanAfterBuild';
 exports.doNotUpdateVcpkg = 'doNotUpdateVcpkg';
 exports.vcpkgRoot = 'VCPKG_ROOT';
+exports.setupOnly = 'setupOnly';
 
 //# sourceMappingURL=vcpkg-globals.js.map
 
@@ -1927,7 +2068,7 @@ function isVcpkgSubmodule(gitPath, fullVcpkgPath) {
 }
 exports.isVcpkgSubmodule = isVcpkgSubmodule;
 function throwIfErrorCode(errorCode) {
-    if (errorCode != 0) {
+    if (errorCode !== 0) {
         const errMsg = `Last command execution failed with error code '${errorCode}'.`;
         baseLib.error(errMsg);
         throw new Error(errMsg);
@@ -2125,26 +2266,27 @@ const vcpkgUtils = __webpack_require__(693);
 const globals = __webpack_require__(373);
 class VcpkgRunner {
     constructor(tl) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         this.tl = tl;
         this.options = {};
         this.vcpkgArtifactIgnoreEntries = [];
         this.cleanAfterBuild = false;
         this.doNotUpdateVcpkg = false;
-        this.vcpkgArgs = (_a = this.tl.getInput(globals.vcpkgArguments, true), (_a !== null && _a !== void 0 ? _a : ""));
+        this.setupOnly = (_a = this.tl.getBoolInput(globals.setupOnly, false), (_a !== null && _a !== void 0 ? _a : false));
+        this.vcpkgArgs = (_b = this.tl.getInput(globals.vcpkgArguments, this.setupOnly === false), (_b !== null && _b !== void 0 ? _b : ""));
         this.defaultVcpkgUrl = 'https://github.com/microsoft/vcpkg.git';
         this.vcpkgURL =
             this.tl.getInput(globals.vcpkgGitURL, false) || this.defaultVcpkgUrl;
         this.vcpkgCommitId =
             this.tl.getInput(globals.vcpkgCommitId, false);
-        this.vcpkgDestPath = (_b = this.tl.getPathInput(globals.vcpkgDirectory, false), (_b !== null && _b !== void 0 ? _b : ""));
+        this.vcpkgDestPath = (_c = this.tl.getPathInput(globals.vcpkgDirectory, false, false), (_c !== null && _c !== void 0 ? _c : ""));
         if (!this.vcpkgDestPath) {
             this.vcpkgDestPath = path.join(this.tl.getBinDir(), 'vcpkg');
         }
         this.vcpkgTriplet = this.tl.getInput(globals.vcpkgTriplet, false) || "";
         this.vcpkgArtifactIgnoreEntries = this.tl.getDelimitedInput(globals.vcpkgArtifactIgnoreEntries, '\n', false);
-        this.doNotUpdateVcpkg = (_c = this.tl.getBoolInput(globals.doNotUpdateVcpkg, false), (_c !== null && _c !== void 0 ? _c : false));
-        this.cleanAfterBuild = (_d = this.tl.getBoolInput(globals.cleanAfterBuild, false), (_d !== null && _d !== void 0 ? _d : true));
+        this.doNotUpdateVcpkg = (_d = this.tl.getBoolInput(globals.doNotUpdateVcpkg, false), (_d !== null && _d !== void 0 ? _d : false));
+        this.cleanAfterBuild = (_e = this.tl.getBoolInput(globals.cleanAfterBuild, false), (_e !== null && _e !== void 0 ? _e : true));
         // Git update or clone depending on content of vcpkgDestPath input parameter.
         this.pathToLastBuiltCommitId = path.join(this.vcpkgDestPath, globals.vcpkgLastBuiltCommitId);
         this.options = {
@@ -2203,7 +2345,9 @@ class VcpkgRunner {
                 console.log(`Storing last built vcpkg commit id '${currentCommitId}' in file '${this.pathToLastBuiltCommitId}`);
                 this.tl.writeFile(this.pathToLastBuiltCommitId, currentCommitId);
             }
-            yield this.updatePackages();
+            if (!this.setupOnly) {
+                yield this.updatePackages();
+            }
             yield this.prepareForCache();
         });
     }
@@ -2293,7 +2437,7 @@ class VcpkgRunner {
                 this.tl.debug(`git rev-parse: code=${res.code}, stdout=${vcpkgUtils.trimString(res.stdout)}, stderr=${vcpkgUtils.trimString(res.stderr)}`);
             }
             if (res.code !== 0) {
-                this.tl.warning(`error executing git: code=${res.code}, stdout=${vcpkgUtils.trimString(res.stdout)}, stderr=${vcpkgUtils.trimString(res.stderr)}`);
+                this.tl.debug(`error executing git: code=${res.code}, stdout=${vcpkgUtils.trimString(res.stdout)}, stderr=${vcpkgUtils.trimString(res.stderr)}`);
             }
             return currentCommitId;
         });
@@ -2311,7 +2455,7 @@ class VcpkgRunner {
                     this.vcpkgArtifactIgnoreEntries.filter(item => !item.trim().endsWith('!.git'));
                 // Add '.git' to ignore that directory.
                 this.vcpkgArtifactIgnoreEntries.push('.git');
-                console.log(`.artifactsignore content: '${this.vcpkgArtifactIgnoreEntries.map(s => `"${s}"`).join(', ')}'`);
+                console.log(`.artifactsignore content: '${this.vcpkgArtifactIgnoreEntries.map(s => `'${s}'`).join(', ')}'`);
                 updated = true;
                 // Issue a warning if the vcpkgCommitId is specified.
                 if (this.vcpkgCommitId) {
@@ -2320,7 +2464,7 @@ class VcpkgRunner {
             }
             else {
                 const res = vcpkgUtils.directoryExists(this.vcpkgDestPath);
-                this.tl.debug(`exist('${this.vcpkgDestPath}') == ${res}`);
+                this.tl.debug(`exist('${this.vcpkgDestPath}') === ${res}`);
                 if (res && !isSubmodule) {
                     // Use git to verify whether the repo is up to date.
                     this.tl.debug(`Current commit id of vcpkg: '${currentCommitId}'.`);
@@ -2425,50 +2569,6 @@ exports.VcpkgRunner = VcpkgRunner;
 
 //# sourceMappingURL=vcpkg-runner.js.map
 
-
-/***/ }),
-
-/***/ 986:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const tr = __webpack_require__(9);
-/**
- * Exec a command.
- * Output will be streamed to the live console.
- * Returns promise with return code
- *
- * @param     commandLine        command to execute (can include additional args). Must be correctly escaped.
- * @param     args               optional arguments for tool. Escaping is handled by the lib.
- * @param     options            optional exec options.  See ExecOptions
- * @returns   Promise<number>    exit code
- */
-function exec(commandLine, args, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const commandArgs = tr.argStringToArray(commandLine);
-        if (commandArgs.length === 0) {
-            throw new Error(`Parameter 'commandLine' cannot be null or empty.`);
-        }
-        // Path to tool to execute should be first arg
-        const toolPath = commandArgs[0];
-        args = commandArgs.slice(1).concat(args || []);
-        const runner = new tr.ToolRunner(toolPath, args, options);
-        return runner.exec();
-    });
-}
-exports.exec = exec;
-//# sourceMappingURL=exec.js.map
 
 /***/ })
 

@@ -8,6 +8,8 @@ A good companion is the [run-cmake](https://github.com/marketplace/actions/run-c
 
  ## User Manual
  * [Quickstart](#quickstart)
+   * [Setup vcpkg and Install ports](#install)
+   * [Setup vcpkg only](#setuponly)
  * [The <strong>run-vcpkg</strong> action](#run-vcpkg)
  * [Action reference: all input/output parameters](#reference)
  * [Samples](#samples)
@@ -23,6 +25,8 @@ A good companion is the [run-cmake](https://github.com/marketplace/actions/run-c
 
 ## <a id='quickstart'>Quickstart</a>
 
+### <a id='install'>Setup vcpkg and install ports</a>
+
 It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lukka/CppBuildTasks/blob/master/README.md#use-vcpkg-as-a-submodule-of-your-git-repository). Here below the sample where vcpkg is a Git submodule:
 
 ```yaml
@@ -36,6 +40,8 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
         # The key will be different each time a different version of vcpkg is used, or different ports are installed.
         key: ${{ hashFiles( env.vcpkgResponseFile ) }}-${{ hashFiles('.git/modules/vcpkg/HEAD') }}-${{ runner.os }}
 
+    # Download, build vcpkg, install requested ports. If content is restored by the previous step,
+    # it is a no-op. 
     - name: Run vcpkg
       uses: lukka/run-vcpkg@v0
       with:
@@ -56,6 +62,28 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
         # cmakeListsOrSettingsJson: CMakeSettingsJson
         # cmakeSettingsJsonPath: '${{ github.workspace }}/cmakesettings.json/CMakeSettings.json'
         # configurationRegexFilter: '${{ matrix.configuration }}'
+```
+
+## <a id='setuponly'>Setup vcpkg only</a>
+
+The action can run as setup only step, that is just install and set VCPKG_ROOT enviroment variabla without isntalling any package. You can us the provisioned vcpkg as follows in subsequent steps:
+
+```yaml
+    - name: Cache vcpkg's artifacts
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/vcpkg/
+        # The key will be different each time a different version of vcpkg is used, or different ports are installed.
+        key: ${{ hashFiles( env.vcpkgResponseFile ) }}-${{ hashFiles('.git/modules/vcpkg/HEAD') }}-${{ runner.os }}
+    # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v0
+      with:
+        setupOnly: true
+    # Now that vcpkg is installed, it is being used to run desired arguments.
+    - run: |
+        $VCPKG_ROOT/vcpkg @$vcpkgResponseFile
+        $VCPKG_ROOT/vcpkg install boost:linux-x64
 ```
 
 ## <a id='run-vcpkg'>The ***run-vcpkg*** action</a>

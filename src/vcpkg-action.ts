@@ -7,19 +7,20 @@ import * as core from '@actions/core'
 import * as vcpkgrunner from './vcpkg-runner';
 import * as vcpkgUtils from './vcpkg-utils';
 
-async function main(): Promise<number> {
+async function main(): Promise<void> {
   try {
     const actionLib = new libaction.ActionLib();
     vcpkgUtils.setBaseLib(actionLib);
     const runner: vcpkgrunner.VcpkgRunner = new vcpkgrunner.VcpkgRunner(actionLib);
     await runner.run();
     core.info('run-vcpkg action execution succeeded');
-    return 0;
+    process.exitCode = 0;
   } catch (err) {
-    core.debug('Error: ' + err);
-    core.error(err);
+    const errorAsString = (err ?? "undefined error").toString();
+    core.debug('Error: ' + errorAsString);
+    core.error(errorAsString);
     core.setFailed('run-vcpkg action execution failed');
-    return -1000;
+    process.exitCode = -1000;
   }
 }
 
