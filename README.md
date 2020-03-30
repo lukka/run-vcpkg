@@ -8,6 +8,8 @@ A good companion is the [run-cmake](https://github.com/marketplace/actions/run-c
 
  ## User Manual
  * [Quickstart](#quickstart)
+   * [Setup vcpkg and Install ports](#install)
+   * [Setup vcpkg only](#setuponly)
  * [The <strong>run-vcpkg</strong> action](#run-vcpkg)
  * [Action reference: all input/output parameters](#reference)
  * [Samples](#samples)
@@ -22,6 +24,8 @@ A good companion is the [run-cmake](https://github.com/marketplace/actions/run-c
   * [License](#license)
 
 ## <a id='quickstart'>Quickstart</a>
+
+### <a id='install'>Setup vcpkg and install ports</a>
 
 It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lukka/CppBuildTasks/blob/master/README.md#use-vcpkg-as-a-submodule-of-your-git-repository). Here below the sample where vcpkg is a Git submodule:
 
@@ -60,7 +64,9 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
         # configurationRegexFilter: '${{ matrix.configuration }}'
 ```
 
-The action run as setup only step, that is just install and set VCPKG_ROOT enviroment variabla without isntalling any package. You can us the provisioned vcpkg as follows in subsequent steps:
+## <a id='setuponly'>Setup vcpkg only</a>
+
+The action can run as setup only step, that is just install and set VCPKG_ROOT enviroment variabla without isntalling any package. You can us the provisioned vcpkg as follows in subsequent steps:
 
 ```yaml
     - name: Cache vcpkg's artifacts
