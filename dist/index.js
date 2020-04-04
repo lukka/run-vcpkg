@@ -1016,14 +1016,14 @@ function escapeCmdCommand(command) {
     return command;
 }
 function escapeShArgument(argument) {
-    // escape blanks: blank -> \blank
-    return argument.replace(' ', '\\ ');
+    // escape all blanks: blank -> \blank
+    return argument.replace(/ /g, '\\ ');
 }
 function escapeCmdExeArgument(argument) {
     // \" -> \\"
     argument = argument.replace(/(\\*)"/g, '$1$1\\"');
     // \$ -> \\$
-    argument = argument.replace(/(\\*)$/, '$1$1');
+    argument = argument.replace(/(\\*)$/g, '$1$1');
     // All other backslashes occur literally.
     // Quote the whole thing:
     argument = `"${argument}"`;
@@ -1052,14 +1052,14 @@ function escapeCmdExeArgument(argument) {
  * @static
  * @param {string} commandPath
  * @param {string[]} args
- * @param {baselib.ExecOptions} [options2]
+ * @param {baselib.ExecOptions} [execOptions]
  * @returns {Promise<number>}
  * @memberof ActionLib
  */
-function exec(commandPath, args, options2) {
-    var _a, _b, _c, _d, _e, _f;
+function exec(commandPath, args, execOptions) {
+    var _a, _b, _c, _d, _e, _f, _g;
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`exec(${commandPath}, ${JSON.stringify(args)}, {${(_a = options2) === null || _a === void 0 ? void 0 : _a.cwd}})<<`);
+        core.debug(`exec(${commandPath}, ${JSON.stringify(args)}, {${(_a = execOptions) === null || _a === void 0 ? void 0 : _a.cwd}})<<`);
         let useShell = false;
         if (process.env.INPUT_USESHELL === 'true')
             useShell = true;
@@ -1072,8 +1072,8 @@ function exec(commandPath, args, options2) {
         const opts = {
             shell: useShell,
             windowsVerbatimArguments: false,
-            cwd: (_b = options2) === null || _b === void 0 ? void 0 : _b.cwd,
-            env: (_c = options2) === null || _c === void 0 ? void 0 : _c.env,
+            cwd: (_b = execOptions) === null || _b === void 0 ? void 0 : _b.cwd,
+            env: (_c = execOptions) === null || _c === void 0 ? void 0 : _c.env,
             stdio: "pipe",
         };
         let args2 = args;
@@ -1092,21 +1092,21 @@ function exec(commandPath, args, options2) {
             commandPath = escapeShArgument(commandPath);
         }
         args = args2;
-        core.debug(`exec(${commandPath}, ${JSON.stringify(args)}, {cwd=${(_d = opts) === null || _d === void 0 ? void 0 : _d.cwd}, shell=${(_e = opts) === null || _e === void 0 ? void 0 : _e.shell}, env=${JSON.stringify((_f = opts) === null || _f === void 0 ? void 0 : _f.env)}})`);
+        core.debug(`cp.spawn(${commandPath}, ${JSON.stringify(args)}, {cwd=${(_d = opts) === null || _d === void 0 ? void 0 : _d.cwd}, shell=${(_e = opts) === null || _e === void 0 ? void 0 : _e.shell}, path=${JSON.stringify((_g = (_f = opts) === null || _f === void 0 ? void 0 : _f.env) === null || _g === void 0 ? void 0 : _g.PATH)}})`);
         return new Promise((resolve, reject) => {
             const child = cp.spawn(`${commandPath}`, args, opts);
-            if (options2 && child.stdout) {
+            if (execOptions && child.stdout) {
                 child.stdout.on('data', (chunk) => {
-                    if (options2.listeners && options2.listeners.stdout) {
-                        options2.listeners.stdout(chunk);
+                    if (execOptions.listeners && execOptions.listeners.stdout) {
+                        execOptions.listeners.stdout(chunk);
                     }
                     process.stdout.write(chunk);
                 });
             }
-            if (options2 && child.stderr) {
+            if (execOptions && child.stderr) {
                 child.stderr.on('data', (chunk) => {
-                    if (options2.listeners && options2.listeners.stderr) {
-                        options2.listeners.stderr(chunk);
+                    if (execOptions.listeners && execOptions.listeners.stderr) {
+                        execOptions.listeners.stderr(chunk);
                     }
                     process.stdout.write(chunk);
                 });
@@ -1195,7 +1195,9 @@ class ToolRunner {
                 stderr: (data) => void {
                 // Nothing to do.
                 },
-                stdline: (data) => void {},
+                stdline: (data) => void {
+                // Nothing to do.
+                },
                 errline: (data) => void {
                 // Nothing to do.
                 },
