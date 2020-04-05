@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/actions/cache.git
+	branch = releases/v1
+	commit = 70655ec8323daeeaa7ef06d7c56e1b9191396cbe
+	parent = 6009299f67e810ccb098340adad40540acfe9e53
+	cmdver = 0.3.1
