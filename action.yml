@@ -1,22 +1,25 @@
-# Copyright (c) 2019 Luca Cappa
+# Copyright (c) 2019-2020 Luca Cappa
 # Released under the term specified in file LICENSE.txt
 # SPDX short identifier: MIT
 
 name: 'run-vcpkg'
-description: 'Run vcpkg to build C/C++ dependencies.'
+description: 'Run vcpkg to build C/C++ dependencies and cache them automatically.'
 author: 'Luca Cappa https://github.com/lukka'
 inputs:
   setupOnly:
     default: false
     required: false
     description: "Indicates whether to only setup vcpkg (i.e. installing it and setting the environment variables VCPKG_ROOT, RUNVCPK_VCPKG_ROOT), without installing any port."
+  appendedCacheKey:
+    required: false
+    description: "This value is added to the precomputed key used to restore/save the cached artifacts produced by vcpkg."
   vcpkgGitCommitId:
     required: false
-    description: "Specify the Git commit id that establish which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is not needed as impicitly specified by the submodule. [More information](https://github.com/lukka/CppBuildTasks/blob/master/README.md)"
+    description: "Specify the Git commit id (not a branch name nor a tag!) that establishes which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is not needed as impicitly specified by the submodule. [More information](https://github.com/lukka/CppBuildTasks/blob/master/README.md)"
   vcpkgArguments:
     default: ""
     required: false
-    descriptions: "Provides the arguments appended to 'vcpkg install'. It is recommended to use a response file to provide either the triplet and the list of packages to be installed. , e.g. `@<github.workspace>/vcpkg_osx.txt`. Note the 'at' prepended to the path denotes a response file."
+    descriptions: "Provides the arguments appended to 'vcpkg install'. It is recommended to use a response file to provide either the triplet and the list of packages to be installed. , e.g. `@<github.workspace>/vcpkg_osx.txt`. Note the 'at' character prepended to the path denotes a response file."
   vcpkgDirectory:
     default: ${{ github.workspace }}/vcpkg
     required: false
@@ -48,7 +51,9 @@ inputs:
 
 runs:
   using: 'node12'
-  main: './dist/index.js'
+  main: 'dist/index.js'
+  post: 'dist/post/index.js'
+  post-if: 'success()'
 
 branding:
   icon: 'terminal'  

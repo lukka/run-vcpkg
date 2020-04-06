@@ -58,6 +58,9 @@ var test = function () {
     "preprocessorIgnorePatterns": [
       "<rootDir>/dist/", "<rootDir>/node_modules/"
     ],
+    "testPathIgnorePatterns" : [
+      "<rootDir>/actions/" 
+    ],
     "automock": false
   }));
 }
@@ -68,5 +71,6 @@ gulp.task('copyLib', copyLib);
 gulp.task('copyBaseLib', copyBaseLib);
 gulp.task('build', build);
 gulp.task('installPackages', installPackages);
+// 'test' must not be part of the 'default' target, as it is started explicitly *after* ncc has been run by the package.json run script.
 gulp.task('default', gulp.series('installPackages', 'eslint', 'build', 'copyLib', 'copyBaseLib'));
 
