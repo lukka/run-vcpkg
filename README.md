@@ -1,15 +1,21 @@
 [![Action Status](https://github.com/lukka/run-vcpkg/workflows/build-test/badge.svg)](https://github.com/lukka/run-vcpkg/actions)
 
-# [The **run-vcpkg** action for using vcpkg on GitHub](https://github.com/marketplace/actions/run-vcpkg)
+# [The **run-vcpkg** action for caching artifacts and using vcpkg on GitHub](https://github.com/marketplace/actions/run-vcpkg)
 
-Build C++ software with the multi-platform **run-vcpkg** action by running [vcpkg](https://github.com/microsoft/vcpkg) on GitHub workflows. [Samples](#samples) provided use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners) and [Caching](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/caching-dependencies-to-speed-up-workflows).
+The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsoft/vcpkg) along with the previously installed ports. Briefly:
+ - If there is a cache miss, vpckg is fetched and installed; the cache's key is composed by hashing the hosting OS, the command line arguments and the vcpkg's commit id.
+ - Then vcpkg is run to install the desired ports. This is a no-op if artifacts are already installed; This step can be skipped with `setupOnly:true`;
+ - Artifacts are finally cached (if needed) as a post action at the end of the `job`.
 
-A good companion is the [run-cmake](https://github.com/marketplace/actions/run-cmake) action.
+The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
+
+Good companions are the [run-cmake](https://github.com/marketplace/actions/run-cmake) action and the 
+[get-cmake](https://github.com/marketplace/actions/get-cmake)) action.
 
  ## User Manual
  * [Quickstart](#quickstart)
-   * [Setup vcpkg and Install ports](#install)
-   * [Setup vcpkg only](#setuponly)
+   * [Restore cache/install/create cache](#install)
+   * [Restore cache/do not install/create cache](#setuponly)
    * [Flowchart](#flowchart)
  * [The <strong>run-vcpkg</strong> action](#run-vcpkg)
  * [Action reference: all input/output parameters](#reference)
@@ -33,32 +39,31 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
 ```yaml
   # Sample when vcpkg is a submodule of your repository (highly recommended!)
 
-    # Cache/Restore the vcpkg's build artifacts.
-    - name: Cache vcpkg's artifacts
-      uses: actions/cache@v1
-      with:
-        path: ${{ github.workspace }}/vcpkg/
-        # The key will be different each time a different version of vcpkg is used, or different ports are installed.
-        key: ${{ hashFiles( env.vcpkgResponseFile ) }}-${{ hashFiles('.git/modules/vcpkg/HEAD') }}-${{ runner.os }}
+    #-uses: actions/cache@v1   <===== YOU DO NOT NEED THIS!
 
-    # Download, build vcpkg, install requested ports. If content is restored by the previous step,
-    # it is a no-op. 
-    - name: Run vcpkg
-      uses: lukka/run-vcpkg@v1
+    # Install latest CMake.
+    - uses: lukka/get-cmake@v2
+
+    # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
+    - name: Restore from cache and run vcpkg
+      uses: lukka/run-vcpkg@v2
       with:
-       # Response file stored in source control, it provides the list of ports and triplet(s).
+        # Response file stored in source control, it provides the list of ports and triplet(s).
         vcpkgArguments: '@${{ env.vcpkgResponseFile }}'
-       # Location of the vcpkg as submodule of the repository.
+        # Location of the vcpkg as submodule of the repository.
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+        # Since the cache must be invalidated when content of the response file changes, let's
+        # compute its hash and append this to the computed cache's key.
+        appendedCacheKey: ${{ hashFile(env.vcpkgResponseFile) }}
 
-    - name: 'Run CMake with Ninja'
-      uses: lukka/run-cmake@v1
+    - name: 'Build with CMake and Ninja'
+      uses: lukka/run-cmake@v2
       with:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/cmakesettings.json/CMakeLists.txt'
         useVcpkgToolchainFile: true
-        buildDirectory: '${{ runner.workspace }}/b//unixmakefiles'
-        cmakeAppendedArgs: '-G "Ninja" '
+        buildDirectory: '${{ runner.workspace }}/b/ninja'
+        cmakeAppendedArgs: '-GNinja Multi-Config'
         # Or build multiple configurations out of a CMakeSettings.json file created with Visual Studio.
         # cmakeListsOrSettingsJson: CMakeSettingsJson
         # cmakeSettingsJsonPath: '${{ github.workspace }}/cmakesettings.json/CMakeSettings.json'
@@ -67,18 +72,13 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
 
 ### <a id='setuponly'>Setup vcpkg only</a>
 
-When `setupOnly: true`, it only setup vcpkg and set VCPKG_ROOT enviroment variable without installing any port. The provisioned vcpkg can then be used as follows in subsequent steps:
+When `setupOnly: true`, it only setups vcpkg and set VCPKG_ROOT enviroment variable without installing any port. The provisioned vcpkg can then be used as follows in a subsequent step:
 
 ```yaml
-    - name: Cache vcpkg's artifacts
-      uses: actions/cache@v1
-      with:
-        path: ${{ github.workspace }}/vcpkg/
-        # The key will be different each time a different version of vcpkg is used, or different ports are installed.
-        key: ${{ hashFiles( env.vcpkgResponseFile ) }}-${{ hashFiles('.git/modules/vcpkg/HEAD') }}-${{ runner.os }}
-    # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
-    - name: Setup vcpkg
-      uses: lukka/run-vcpkg@v1
+    # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
+    - name: Restore from cache and install vcpkg
+      # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
+      uses: lukka/run-vcpkg@v2
       with:
         setupOnly: true
     # Now that vcpkg is installed, it is being used to run desired arguments.
@@ -92,16 +92,9 @@ When `setupOnly: true`, it only setup vcpkg and set VCPKG_ROOT enviroment variab
 ![run-vcpkg flowchart](https://raw.githubusercontent.com/lukka/run-cmake-vcpkg-action-libs/master/run-vcpkg-lib/docs/task-vcpkg.png
 )
 
-## <a id='run-vcpkg'>The ***run-vcpkg*** action</a>
-
-This action behaves the same way as it does the [run-vcpkg](https://marketplace.visualstudio.com/items?itemName=lucappa.cmake-ninja-vcpkg-tasks) task for Azure DevOps.
-
-The documentation of the **'run-vcpkg"** action is identical to the [**'run-vcpkg'** task's one](https://github.com/lukka/CppBuildTasks/blob/master/README.md#runvcpkg
-) for Azure DevOps.
-
 ### <a id='reference'>Action reference: all input/output parameters</a>
 
-[action.yml](https://github.com/lukka/run-vcpkg/blob/v1/action.yml)
+[action.yml](https://github.com/lukka/run-vcpkg/blob/master/action.yml)
 
 ## <a id="samples">Samples</a>
 
@@ -111,12 +104,12 @@ The documentation of the **'run-vcpkg"** action is identical to the [**'run-vcpk
 |----------|-------|
 [Linux/macOS/Windows, hosted runner, basic](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-basic.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-basic/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
 [Linux/macOS/Windows, hosted runner, advanced](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-advanced.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-advanced/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
-[Linux/macOS/Windows, hosted runner, with cache and vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-basic-cache-submod_vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-basic-cache-submod_vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
-[Linux/macOS/Windows, hosted runner, setup only with cache and vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-advanced-setup-vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-advanced-setup-vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
+[Linux/macOS/Windows, hosted runner, vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-basic-cache-submod_vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-basic-cache-submod_vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
+[Linux/macOS/Windows, hosted runner, setup only and vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-advanced-setup-vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-advanced-setup-vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
 
 |CMakeSettings.json samples | |
 |----------|-------|
-[Linux/macOS/Windows, hosted runner, with cache and vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-cmakesettingsjson-cache-submod_vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-cmakesettingsjson-cache-submod_vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
+[Linux/macOS/Windows, hosted runner, with vcpkg as submodule](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-cmakesettingsjson-cache-submod_vcpkg.yml)| [![Actions Status](https://github.com/lukka/CppBuildTasks-Validation/workflows/hosted-cmakesettingsjson-cache-submod_vcpkg/badge.svg)](https://github.com/lukka/CppBuildTasks-Validation/actions)
 
 ## <a id='projects'>Real world project samples</a>
 
@@ -174,6 +167,12 @@ Validation tests on various scenarios are run using the workflows of the [Sample
 The software is provided as is, there is no warranty of any kind. All users are encouraged to improve the [source code](https://github.com/lukka/run-vcpkg) with fixes and new features.
 
 # License
-All the content in this repository is licensed under the [MIT License](LICENSE.txt).
+ Except for the `actions/cache directory and its content`, all the content in this repository is licensed under the [MIT License](LICENSE.txt).
 
 Copyright (c) 2019-2020 Luca Cappa
+
+<hr>
+
+All content under [actions/cache](./actions/cache) directory is subject to this [LICENSE](./actions/cache/LICENSE)
+
+Copyright (c) 2018 GitHub, Inc. and contributors

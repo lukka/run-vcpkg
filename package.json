@@ -9,7 +9,7 @@
   "author": "Luca Cappa (https://github.com/lukka)",
   "license": "MIT",
   "scripts": {
-    "pack": "gulp && ncc build build/src/vcpkg-action.js -o dist",
+    "pack": "gulp && ncc build build/src/action.js -o dist && ncc build build/src/post-action.js -o dist/post",
     "clean": "rm -rf ./build",
     "build": "gulp build",
     "lint": "gulp eslint",

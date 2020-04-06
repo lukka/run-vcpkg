@@ -34,7 +34,7 @@ module.exports =
 /******/ 	// the startup function
 /******/ 	function startup() {
 /******/ 		// Load entry module and return exports
-/******/ 		return __webpack_require__(16);
+/******/ 		return __webpack_require__(195);
 /******/ 	};
 /******/
 /******/ 	// run startup
@@ -939,7 +939,7 @@ class ExecState extends events.EventEmitter {
 
 "use strict";
 
-// Copyright (c) 2019 Luca Cappa
+// Copyright (c) 2020 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -952,31 +952,109 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const libaction = __webpack_require__(35);
 const core = __webpack_require__(470);
 const vcpkgrunner = __webpack_require__(835);
-const vcpkgUtils = __webpack_require__(693);
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const actionLib = new libaction.ActionLib();
-            vcpkgUtils.setBaseLib(actionLib);
-            const runner = new vcpkgrunner.VcpkgRunner(actionLib);
-            yield runner.run();
-            core.info('run-vcpkg action execution succeeded');
-            process.exitCode = 0;
+const globals = __webpack_require__(471);
+const cp = __webpack_require__(129);
+const path = __webpack_require__(622);
+const fs = __webpack_require__(747);
+exports.VCPKGCACHEKEY = 'vcpkgDirectoryKey';
+/**
+ * The input's name for additional content for the cache key.
+ */
+exports.appendedCacheKey = 'appendedCacheKey';
+/**
+ * Compute an unique number given some text.
+ * @param {string} text
+ * @returns {string}
+ */
+function hashCode(text) {
+    let hash = 42;
+    if (text.length != 0) {
+        for (let i = 0; i < text.length; i++) {
+            const char = text.charCodeAt(i);
+            hash = ((hash << 5) + hash) ^ char;
         }
-        catch (err) {
-            const errorAsString = ((err !== null && err !== void 0 ? err : "undefined error")).toString();
-            core.debug('Error: ' + errorAsString);
-            core.error(errorAsString);
-            core.setFailed('run-vcpkg action execution failed');
-            process.exitCode = -1000;
-        }
-    });
+    }
+    return hash.toString();
 }
-// Main entry point of the task.
-main().catch(error => console.error("main() failed!", error));
+class VcpkgAction {
+    constructor(tl) {
+        this.tl = tl;
+    }
+    run() {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                core.startGroup('Restore vcpkg artifact from cache');
+                // Get an unique output directory name from the URL.
+                const key = this.computeKey();
+                const outPath = this.getOutputPath();
+                // Use the embedded actions/cache to cache the downloaded CMake binaries.
+                process.env.INPUT_KEY = key;
+                console.log(`Cache's key = '${key}'.`);
+                process.env.INPUT_PATH = outPath;
+                core.saveState(exports.VCPKGCACHEKEY, outPath);
+                const options = {
+                    env: process.env,
+                    stdio: "inherit",
+                };
+                const scriptPath = path.join(__dirname, '../actions/cache/dist/restore/index.js');
+                console.log(`Running restore-cache: ${(_a = cp.execSync(`node ${scriptPath}`, options)) === null || _a === void 0 ? void 0 : _a.toString()}`);
+            }
+            finally {
+                core.endGroup();
+            }
+            const runner = new vcpkgrunner.VcpkgRunner(this.tl);
+            yield runner.run();
+        });
+    }
+    getOutputPath() {
+        return core.getInput(globals.vcpkgDirectory);
+    }
+    getVcpkgCommitId() {
+        var _a;
+        let id = "";
+        const workspaceDir = (_a = process.env.GITHUB_WORKSPACE, (_a !== null && _a !== void 0 ? _a : ""));
+        if (workspaceDir) {
+            let fullVcpkgPath = "";
+            const inputVcpkgPath = core.getInput(globals.vcpkgDirectory);
+            if (path.isAbsolute(inputVcpkgPath))
+                fullVcpkgPath = path.normalize(path.resolve(inputVcpkgPath));
+            else
+                fullVcpkgPath = path.normalize(path.resolve(path.join(workspaceDir, inputVcpkgPath)));
+            core.debug(`fullVcpkgPath='${fullVcpkgPath}'`);
+            const relPath = fullVcpkgPath.replace(workspaceDir, '');
+            core.debug(`relPath='${relPath}'`);
+            const submodulePath = path.join(workspaceDir, ".git/modules", relPath, "HEAD");
+            core.debug(`submodulePath='${submodulePath}'`);
+            if (fs.existsSync(submodulePath)) {
+                id = fs.readFileSync(submodulePath).toString();
+                core.debug(`commitId='${id}'`);
+            }
+        }
+        return id.trim();
+    }
+    computeKey() {
+        let key = "";
+        const commitId = this.getVcpkgCommitId();
+        if (commitId) {
+            console.log(`vcpkg identified at commitId=${commitId}, adding it to the cache's key.`);
+            key += `submodGitId=${commitId}`;
+        }
+        else if (core.getInput(globals.vcpkgCommitId)) {
+            key += "localGitId=" + hashCode(core.getInput(globals.vcpkgCommitId));
+        }
+        else {
+            console.log(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
+        }
+        key += "-args=" + hashCode(core.getInput(globals.vcpkgArguments));
+        key += "-os=" + hashCode(process.platform);
+        key += "-appendedKey=" + hashCode(core.getInput(exports.appendedCacheKey));
+        return key;
+    }
+}
+exports.VcpkgAction = VcpkgAction;
 
 //# sourceMappingURL=vcpkg-action.js.map
 
@@ -1120,9 +1198,8 @@ function exec(commandPath, args, execOptions) {
                 }, 1000);
             });
             child.on('exit', (exitCode) => {
-                core.debug(`Exit code ${exitCode} received from command '${commandPath}'`);
-                child.removeAllListeners();
-                resolve(exitCode);
+                core.debug(`Exit code '${exitCode}' received from command '${commandPath}'`);
+                // Do not resolve yet, wait for the close event.
             });
             child.on('close', (exitCode) => {
                 core.debug(`STDIO streams have closed for command '${commandPath}'`);
@@ -1412,6 +1489,12 @@ class ActionLib {
         }
         return artifactsPath;
     }
+    beginOperation(message) {
+        core.startGroup(message);
+    }
+    endOperation() {
+        core.endGroup();
+    }
 }
 exports.ActionLib = ActionLib;
 
@@ -1461,6 +1544,56 @@ module.exports = require("os");
 /***/ (function(module) {
 
 module.exports = require("child_process");
+
+/***/ }),
+
+/***/ 195:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+// Copyright (c) 2020 Luca Cappa
+// Released under the term specified in file LICENSE.txt
+// SPDX short identifier: MIT
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const libaction = __webpack_require__(35);
+const core = __webpack_require__(470);
+const vcpkgUtils = __webpack_require__(693);
+const vcpkgAction = __webpack_require__(16);
+exports.VCPKGDIRECTORIESKEY = 'vcpkgDirectoryKey';
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const actionLib = new libaction.ActionLib();
+            vcpkgUtils.setBaseLib(actionLib);
+            const action = new vcpkgAction.VcpkgAction(actionLib);
+            yield action.run();
+            core.info('run-vcpkg action execution succeeded');
+            process.exitCode = 0;
+        }
+        catch (err) {
+            const errorAsString = ((err !== null && err !== void 0 ? err : "undefined error")).toString();
+            core.debug('Error: ' + errorAsString);
+            core.error(errorAsString);
+            core.setFailed('run-vcpkg action execution failed');
+            process.exitCode = -1000;
+        }
+    });
+}
+// Main entry point of the task.
+main().catch(error => console.error("main() failed!", error));
+
+//# sourceMappingURL=action.js.map
+
 
 /***/ }),
 
@@ -1779,6 +1912,35 @@ function getState(name) {
 }
 exports.getState = getState;
 //# sourceMappingURL=core.js.map
+
+/***/ }),
+
+/***/ 471:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+// Copyright (c) 2019-2020 Luca Cappa
+// Released under the term specified in file LICENSE.txt
+// SPDX short identifier: MIT
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.vcpkgArguments = 'vcpkgArguments';
+exports.buildDirectory = 'buildDirectory';
+exports.vcpkgGitURL = 'vcpkgGitURL';
+exports.vcpkgCommitId = 'vcpkgGitCommitId';
+exports.outVcpkgRootPath = "RUNVCPKG_VCPKG_ROOT";
+exports.outVcpkgTriplet = "RUNVCPKG_VCPKG_TRIPLET";
+exports.vcpkgTriplet = "vcpkgTriplet";
+exports.vcpkgDirectory = "vcpkgDirectory";
+exports.vcpkgArtifactIgnoreEntries = "vcpkgArtifactIgnoreEntries";
+exports.vcpkgLastBuiltCommitId = 'vcpkgLastBuiltCommitId';
+exports.cleanAfterBuild = 'cleanAfterBuild';
+exports.doNotUpdateVcpkg = 'doNotUpdateVcpkg';
+exports.vcpkgRoot = 'VCPKG_ROOT';
+exports.setupOnly = 'setupOnly';
+
+//# sourceMappingURL=vcpkg-globals.js.map
+
 
 /***/ }),
 
@@ -2232,6 +2394,32 @@ function trimString(value) {
     return _b = (_a = value) === null || _a === void 0 ? void 0 : _a.trim(), (_b !== null && _b !== void 0 ? _b : "");
 }
 exports.trimString = trimString;
+function wrapOp(name, fn) {
+    return __awaiter(this, void 0, void 0, function* () {
+        baseLib.beginOperation(name);
+        let result;
+        try {
+            result = yield fn();
+        }
+        finally {
+            baseLib.endOperation();
+        }
+        return result;
+    });
+}
+exports.wrapOp = wrapOp;
+function wrapOpSync(name, fn) {
+    baseLib.beginOperation(name);
+    let result;
+    try {
+        result = fn();
+    }
+    finally {
+        baseLib.endOperation();
+    }
+    return result;
+}
+exports.wrapOpSync = wrapOpSync;
 
 //# sourceMappingURL=vcpkg-utils.js.map
 
@@ -2305,21 +2493,10 @@ class VcpkgRunner {
     run() {
         return __awaiter(this, void 0, void 0, function* () {
             this.tl.debug("vcpkg runner starting...");
-            // Set the RUNVCPKG_VCPKG_ROOT value, it could be re-used later by run-cmake task.
-            vcpkgUtils.setEnvVar(globals.outVcpkgRootPath, this.vcpkgDestPath);
-            // Override the VCPKG_ROOT value, it must point to this vcpkg instance, it is used by 
-            // any invocation of the vcpkg executable in this task.
-            vcpkgUtils.setEnvVar(globals.vcpkgRoot, this.vcpkgDestPath);
-            // The output variable must have a different name than the
-            // one set with setVariable(), as the former get a prefix added out of our control.
-            const outVarName = `${globals.outVcpkgRootPath}_OUT`;
-            console.log(`Set task output variable '${outVarName}' to value: ${this.vcpkgDestPath}`);
-            this.tl.setOutput(`${outVarName}`, this.vcpkgDestPath);
-            // Force AZP_CACHING_CONTENT_FORMAT to "Files"
-            vcpkgUtils.setEnvVar(vcpkgUtils.cachingFormatEnvName, "Files");
+            vcpkgUtils.wrapOpSync("Set output env vars", () => this.setOutputs());
             // Ensuring `this.vcpkgDestPath` is existent, since is going to be used as current working directory.
             if (!(yield this.tl.exist(this.vcpkgDestPath))) {
-                this.tl.debug(`Creating vcpkg root directory as it is not existing.`);
+                this.tl.debug(`Creating vcpkg root directory as it is not existing: ${this.vcpkgDestPath}`);
                 yield this.tl.mkdirP(this.vcpkgDestPath);
             }
             let needRebuild = false;
@@ -2328,30 +2505,41 @@ class VcpkgRunner {
                 console.log(`Skipping any check to update vcpkg directory (${this.vcpkgDestPath}).`);
             }
             else {
-                const updated = yield this.checkRepoUpdated(currentCommitId);
+                const updated = yield vcpkgUtils.wrapOp("Check whether vcpkg repository is up to date", () => this.checkRepoUpdated(currentCommitId));
                 if (!updated) {
-                    yield this.cloneRepo();
+                    yield vcpkgUtils.wrapOp("Download vcpkg source code repository", () => this.cloneRepo());
                     needRebuild = true;
                 }
             }
             // Build is needed at the first check which is saying so.
             if (!needRebuild) {
-                needRebuild = this.checkLastBuildCommitId(currentCommitId);
+                needRebuild = vcpkgUtils.wrapOpSync("Check whether last vcpkg's build is up to date with sources", () => this.checkLastBuildCommitId(currentCommitId));
                 if (!needRebuild) {
-                    needRebuild = yield this.checkExecutable();
+                    needRebuild = yield vcpkgUtils.wrapOp("Check vcpkg executable exists", () => this.checkExecutable());
                 }
             }
             if (needRebuild) {
-                yield this.build();
-                // Keep track of last successful build commit id.
-                console.log(`Storing last built vcpkg commit id '${currentCommitId}' in file '${this.pathToLastBuiltCommitId}`);
-                this.tl.writeFile(this.pathToLastBuiltCommitId, currentCommitId);
+                yield vcpkgUtils.wrapOp("Build vcpkg", () => this.build());
             }
             if (!this.setupOnly) {
-                yield this.updatePackages();
+                yield vcpkgUtils.wrapOp("Install/Update ports", () => this.updatePackages());
             }
-            yield this.prepareForCache();
+            yield vcpkgUtils.wrapOp("Prepare vcpkg generated file for caching", () => this.prepareForCache());
         });
+    }
+    setOutputs() {
+        // Set the RUNVCPKG_VCPKG_ROOT value, it could be re-used later by run-cmake task.
+        vcpkgUtils.setEnvVar(globals.outVcpkgRootPath, this.vcpkgDestPath);
+        // Override the VCPKG_ROOT value, it must point to this vcpkg instance, it is used by 
+        // any invocation of the vcpkg executable in this task.
+        vcpkgUtils.setEnvVar(globals.vcpkgRoot, this.vcpkgDestPath);
+        // The output variable must have a different name than the
+        // one set with setVariable(), as the former get a prefix added out of our control.
+        const outVarName = `${globals.outVcpkgRootPath}_OUT`;
+        console.log(`Set task output variable '${outVarName}' to value: ${this.vcpkgDestPath}`);
+        this.tl.setOutput(`${outVarName}`, this.vcpkgDestPath);
+        // Force AZP_CACHING_CONTENT_FORMAT to "Files"
+        vcpkgUtils.setEnvVar(vcpkgUtils.cachingFormatEnvName, "Files");
     }
     prepareForCache() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -2427,25 +2615,28 @@ class VcpkgRunner {
      */
     getCommitId() {
         return __awaiter(this, void 0, void 0, function* () {
-            let currentCommitId = "";
             this.tl.debug("getCommitId()<<");
+            let currentCommitId = "";
             const gitPath = yield this.tl.which('git', true);
             // Use git to verify whether the repo is up to date.
             const gitRunner = this.tl.tool(gitPath);
             gitRunner.arg(['rev-parse', 'HEAD']);
+            console.log(`Fetching the commit id at ${this.options.cwd}`);
             const res = yield gitRunner.execSync(this.options);
             if (res.code === 0) {
                 currentCommitId = vcpkgUtils.trimString(res.stdout);
                 this.tl.debug(`git rev-parse: code=${res.code}, stdout=${vcpkgUtils.trimString(res.stdout)}, stderr=${vcpkgUtils.trimString(res.stderr)}`);
             }
-            if (res.code !== 0) {
+            else /* if (res.code !== 0) */ {
                 this.tl.debug(`error executing git: code=${res.code}, stdout=${vcpkgUtils.trimString(res.stdout)}, stderr=${vcpkgUtils.trimString(res.stderr)}`);
             }
+            this.tl.debug(`getCommitId()>> -> ${currentCommitId}`);
             return currentCommitId;
         });
     }
     checkRepoUpdated(currentCommitId) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log(`Checking whether vcpkg's repository is updated to commit id '${currentCommitId}' ...`);
             let updated = false;
             const gitPath = yield this.tl.which('git', true);
             const isSubmodule = yield vcpkgUtils.isVcpkgSubmodule(gitPath, this.vcpkgDestPath);
@@ -2457,7 +2648,7 @@ class VcpkgRunner {
                     this.vcpkgArtifactIgnoreEntries.filter(item => !item.trim().endsWith('!.git'));
                 // Add '.git' to ignore that directory.
                 this.vcpkgArtifactIgnoreEntries.push('.git');
-                console.log(`.artifactsignore content: '${this.vcpkgArtifactIgnoreEntries.map(s => `'${s}'`).join(', ')}'`);
+                console.log(`File '.artifactsignore' content: '${this.vcpkgArtifactIgnoreEntries.map(s => `'${s}'`).join(', ')}'`);
                 updated = true;
                 // Issue a warning if the vcpkgCommitId is specified.
                 if (this.vcpkgCommitId) {
@@ -2469,7 +2660,7 @@ class VcpkgRunner {
                 this.tl.debug(`exist('${this.vcpkgDestPath}') === ${res}`);
                 if (res && !isSubmodule) {
                     // Use git to verify whether the repo is up to date.
-                    this.tl.debug(`Current commit id of vcpkg: '${currentCommitId}'.`);
+                    console.log(`Current commit id of vcpkg: '${currentCommitId}'.`);
                     if (!this.vcpkgCommitId) {
                         throw new Error(`'${globals.vcpkgCommitId}' input parameter must be provided when the specified vcpkg directory (${this.vcpkgDestPath}) is not a submodule.`);
                     }
@@ -2479,10 +2670,12 @@ class VcpkgRunner {
                     }
                 }
             }
+            console.log(`Is vcpkg repository updated? ${updated ? "Yes" : "No"}`);
             return updated;
         });
     }
     checkLastBuildCommitId(vcpkgCommitId) {
+        console.log(`Checking last vcpkg build commit id in file '${this.pathToLastBuiltCommitId}' ...`);
         let rebuild = true; // Default is true.
         const [ok, lastCommitIdLast] = vcpkgUtils.readFile(this.pathToLastBuiltCommitId);
         this.tl.debug(`last build check: ${ok}, ${lastCommitIdLast}`);
@@ -2564,6 +2757,11 @@ class VcpkgRunner {
                 shTool.arg(['-c', bootstrapFullPath]);
                 vcpkgUtils.throwIfErrorCode(yield shTool.exec(this.options));
             }
+            // After a build, refetch the commit id of the vcpkg's repo, and store it into the file.
+            const builtCommitId = yield this.getCommitId();
+            vcpkgUtils.writeFile(this.pathToLastBuiltCommitId, builtCommitId);
+            // Keep track of last successful build commit id.
+            console.log(`Stored last built vcpkg commit id '${builtCommitId}' in file '${this.pathToLastBuiltCommitId}`);
         });
     }
 }
