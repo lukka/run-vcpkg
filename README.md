@@ -72,7 +72,7 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
 
 ### <a id='setuponly'>Setup vcpkg only</a>
 
-When `setupOnly: true`, it only setups vcpkg and set VCPKG_ROOT enviroment variable without installing any port. The provisioned vcpkg can then be used as follows in a subsequent step:
+When `setupOnly: true`, it only setups vcpkg and set VCPKG_ROOT environment variable without installing any port. The provisioned vcpkg can then be used as follows in a subsequent step:
 
 ```yaml
     # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
