@@ -54,7 +54,7 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
         # Since the cache must be invalidated when content of the response file changes, let's
         # compute its hash and append this to the computed cache's key.
-        appendedCacheKey: ${{ hashFile(env.vcpkgResponseFile) }}
+        appendedCacheKey: ${{ hashFiles(env.vcpkgResponseFile) }}
 
     - name: 'Build with CMake and Ninja'
       uses: lukka/run-cmake@v2
