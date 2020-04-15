@@ -27,7 +27,7 @@ function moveAway(rootDir: string): void {
 
 async function main(): Promise<void> {
   try {
-    core.startGroup('Cache vcpkg artifacts');
+    core.startGroup('Cache vcpkg and its artifacts');
     const pathsToCache = core.getState(action.VCPKGCACHEKEY);
     for (const dir of pathsToCache.split(';')) {
       core.info(`Caching path: '${dir}'`);
@@ -38,7 +38,8 @@ async function main(): Promise<void> {
         stdio: "inherit",
       };
       const scriptPath = path.join(path.dirname(path.dirname(__dirname)), 'actions/cache/dist/save/index.js');
-      console.log(cp.execSync(`node ${scriptPath}`, options)?.toString());
+      console.log(`Running store-cache`);
+      cp.execSync(`node ${scriptPath}`, options);
     }
 
     core.info('run-vcpkg post action execution succeeded');
