@@ -41,7 +41,7 @@ export class VcpkgAction {
 
   public async run(): Promise<void> {
     try {
-      core.startGroup('Restore vcpkg artifact from cache');
+      core.startGroup('Restore vcpkg and its artifacts from cache');
       // Get an unique output directory name from the URL.
       const key: string = this.computeKey();
       const outPath: string = this.getOutputPath();
@@ -56,7 +56,8 @@ export class VcpkgAction {
         stdio: "inherit",
       };
       const scriptPath = path.join(__dirname, '../actions/cache/dist/restore/index.js');
-      console.log(`Running restore-cache: ${cp.execSync(`node ${scriptPath}`, options)?.toString()}`);
+      console.log(`Running restore-cache`);
+      cp.execSync(`node ${scriptPath}`, options);
     } finally {
       core.endGroup()
     }

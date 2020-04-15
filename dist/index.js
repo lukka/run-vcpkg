@@ -983,10 +983,9 @@ class VcpkgAction {
         this.tl = tl;
     }
     run() {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                core.startGroup('Restore vcpkg artifact from cache');
+                core.startGroup('Restore vcpkg and its artifacts from cache');
                 // Get an unique output directory name from the URL.
                 const key = this.computeKey();
                 const outPath = this.getOutputPath();
@@ -1000,7 +999,8 @@ class VcpkgAction {
                     stdio: "inherit",
                 };
                 const scriptPath = path.join(__dirname, '../actions/cache/dist/restore/index.js');
-                console.log(`Running restore-cache: ${(_a = cp.execSync(`node ${scriptPath}`, options)) === null || _a === void 0 ? void 0 : _a.toString()}`);
+                console.log(`Running restore-cache`);
+                cp.execSync(`node ${scriptPath}`, options);
             }
             finally {
                 core.endGroup();
@@ -2548,14 +2548,39 @@ class VcpkgRunner {
             vcpkgUtils.writeFile(artifactFullPath, this.vcpkgArtifactIgnoreEntries.join('\n'));
         });
     }
+    static extractOverlays(args, currentDir) {
+        const overlays = args.split(' ').
+            filter((item) => item.startsWith(VcpkgRunner.overlayArgName) || item.startsWith('@'));
+        let result = [];
+        for (const item of overlays) {
+            if (item.startsWith('@')) {
+                let responseFilePath = item.slice(1);
+                if (!path.isAbsolute(responseFilePath)) {
+                    responseFilePath = path.join(currentDir, responseFilePath);
+                }
+                const [ok, content] = vcpkgUtils.readFile(responseFilePath);
+                if (ok) {
+                    const overlays2 = content.split('\n').
+                        filter((item) => item.trim().startsWith(VcpkgRunner.overlayArgName)).map((item) => item.trim());
+                    result = result.concat(overlays2);
+                }
+            }
+            else {
+                result = result.concat(item);
+            }
+        }
+        return result;
+    }
     updatePackages() {
         return __awaiter(this, void 0, void 0, function* () {
             let vcpkgPath = path.join(this.vcpkgDestPath, 'vcpkg');
             if (vcpkgUtils.isWin32()) {
                 vcpkgPath += '.exe';
             }
+            const appendedOverlaysArgs = VcpkgRunner.extractOverlays(this.vcpkgArgs, this.options.cwd);
+            const appendedString = appendedOverlaysArgs ? " " + appendedOverlaysArgs.join(' ') : "";
             // vcpkg remove --outdated --recurse
-            const removeCmd = 'remove --outdated --recurse';
+            const removeCmd = `remove --outdated --recurse${appendedString}`;
             let vcpkgTool = this.tl.tool(vcpkgPath);
             console.log(`Running 'vcpkg ${removeCmd}' in directory '${this.vcpkgDestPath}' ...`);
             vcpkgTool.line(removeCmd);
@@ -2766,6 +2791,7 @@ class VcpkgRunner {
     }
 }
 exports.VcpkgRunner = VcpkgRunner;
+VcpkgRunner.overlayArgName = "--overlay-ports=";
 
 //# sourceMappingURL=vcpkg-runner.js.map
 
