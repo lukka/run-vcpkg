@@ -3,8 +3,8 @@
 # [The **run-vcpkg** action for caching artifacts and using vcpkg on GitHub](https://github.com/marketplace/actions/run-vcpkg)
 
 The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsoft/vcpkg) along with the previously installed ports. Briefly:
- - If there is a cache miss, vpckg is fetched and installed; the cache's key is composed by hashing the hosting OS, the command line arguments and the vcpkg's commit id.
- - Then vcpkg is run to install the desired ports. This is a no-op if artifacts are already installed; This step can be skipped with `setupOnly:true`;
+ - If there is a cache miss, vpckg is fetched and installed; the cache's key is composed by hashing the hosting OS name, the command line arguments and the vcpkg's commit id.
+ - Then `vcpkg` is run to install the desired ports. This is a no-op if artifacts are already restored; This step can be skipped with `setupOnly:true`;
  - Artifacts are finally cached (if needed) as a post action at the end of the `job`.
 
 The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
@@ -17,7 +17,9 @@ Good companions are the [run-cmake](https://github.com/marketplace/actions/run-c
    * [Restore cache/install/create cache](#install)
    * [Restore cache/do not install/create cache](#setuponly)
    * [Flowchart](#flowchart)
- * [The <strong>run-vcpkg</strong> action](#run-vcpkg)
+ * [Best practices](#best-practices)
+    * [Use vcpkg as a submodule of your repository](#use-vcpkg-as-a-submodule-of-your-repository)
+    * [Use vcpkg's response file as an argument](#use-vcpkgs-response-file-as-an-argument)
  * [Action reference: all input/output parameters](#reference)
  * [Samples](#samples)
  * [Projects](#projects)
@@ -34,7 +36,7 @@ Good companions are the [run-cmake](https://github.com/marketplace/actions/run-c
 
 ### <a id='install'>Setup vcpkg and install ports</a>
 
-It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lukka/CppBuildTasks/blob/master/README.md#use-vcpkg-as-a-submodule-of-your-git-repository). Here below the sample where vcpkg is a Git submodule:
+It is __highly recommended__ to [use vcpkg as a submodule](#best-practices). Here below the sample where vcpkg is a Git submodule:
 
 ```yaml
   # Sample when vcpkg is a submodule of your repository (highly recommended!)
@@ -42,7 +44,7 @@ It is __highly recommended__ to [use vcpkg as a submodule](https://github.com/lu
     #-uses: actions/cache@v1   <===== YOU DO NOT NEED THIS!
 
     # Install latest CMake.
-    - uses: lukka/get-cmake@v2
+    - uses: lukka/get-cmake@latest
 
     # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
     - name: Restore from cache and run vcpkg
@@ -95,6 +97,37 @@ When `setupOnly: true`, it only setups vcpkg and set VCPKG_ROOT environment vari
 ### <a id='reference'>Action reference: all input/output parameters</a>
 
 [action.yml](https://github.com/lukka/run-vcpkg/blob/master/action.yml)
+
+## Best practices
+
+### Use **vcpkg** as a submodule of your repository ###
+
+When using **vcpkg**, be aware of how it works, specifically:
+ - a specific version of vcpkg must be used either locally and on build servers;
+ - a specific version of vcpkg is identified by the commit id of the used vcpkg repository;
+ - it not possible to choose which version of a port to install, instead it is the used version of vcpkg that establishes which version (just one) of a port is available;
+ 
+ To sum up, you need to _pin_ the specific version of vcpkg you want to use to keep a consistent development experience between local and remote build environments. This is accomplished by **using vcpkg as submodule of your Git repository**; this way the version of vcpkg used is implied by the commit id specified by the submodule for vcpkg.
+
+### Use vcpkg's response file as an argument
+
+vcpkg accepts a response file that contains the arguments, suitable to store the list of ports to be installed. It is useful to store this file under source control, this helps to run vcpkg the same exact way locally and remotely on the build servers. For example if you want to run:
+
+ > vcpkg install boost zlib:x64 libmodbus --triplet x64
+
+it is instead possible to run
+
+ > vcpkg install @response_file.txt
+
+ where `response_file.txt` contains (with no trailing whitespaces allowed):
+
+```yaml
+   boost
+   zlib:x64
+   libmodbus
+   --triplet
+   x64
+```
 
 ## <a id="samples">Samples</a>
 
