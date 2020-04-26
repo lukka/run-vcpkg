@@ -158,6 +158,10 @@ project: [OPM/ResInsight](https://github.com/OPM/ResInsight/) | |
 |----------|-------|
 [Windows, Linux](https://github.com/OPM/ResInsight/blob/dev/.github/workflows/main.yml) | [![CI](https://github.com/OPM/ResInsight/workflows/ResInsight%20Build/badge.svg)](https://github.com/OPM/ResInsight/actions)
 
+project: [Mudlet/Mudlet](https://github.com/Mudlet/Mudlet) | | 
+|----------|-------|
+[Linux/macOS](https://github.com/Mudlet/Mudlet/blob/development/.github/workflows/build-mudlet.yml) | [![Build Mudlet](https://github.com/Mudlet/Mudlet/workflows/Build%20Mudlet/badge.svg)](https://github.com/Mudlet/Mudlet/actions)
+
 # Developers information
 
 ## Prerequisites
