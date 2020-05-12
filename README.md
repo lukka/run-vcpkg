@@ -170,6 +170,10 @@ project: [Element-0/ElementZero](https://github.com/Element-0/ElementZero) | |
 |----------|-------|
 [Windows](https://github.com/Element-0/ElementZero/blob/master/.github/workflows/ci.yml) | [![CI](https://github.com/Element-0/ElementZero/workflows/CI/badge.svg)](https://github.com/Element-0/ElementZero/actions)
 
+project: [RaftLib/RaftLib](https://github.com/RaftLib/RaftLib) | | 
+|----------|-------|
+[Linux/macOS/Windows](https://github.com/RaftLib/RaftLib/blob/master/.github/workflows/main.yml) | [![CI](https://github.com/RaftLib/RaftLib/workflows/CI/badge.svg)](https://github.com/RaftLib/RaftLib/actions)
+
 # Developers information
 
 ## Prerequisites

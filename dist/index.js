@@ -1495,6 +1495,12 @@ class ActionLib {
     endOperation() {
         core.endGroup();
     }
+    addMatcher(file) {
+        console.log(`::add-matcher::${file}`);
+    }
+    removeMatcher(file) {
+        console.log(`::remove-matcher::${file}`);
+    }
 }
 exports.ActionLib = ActionLib;
 
@@ -1583,8 +1589,7 @@ function main() {
         catch (err) {
             const errorAsString = ((err !== null && err !== void 0 ? err : "undefined error")).toString();
             core.debug('Error: ' + errorAsString);
-            core.error(errorAsString);
-            core.setFailed('run-vcpkg action execution failed');
+            core.setFailed(`run-vcpkg action execution failed: ${errorAsString}`);
             process.exitCode = -1000;
         }
     });
