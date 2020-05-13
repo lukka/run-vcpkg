@@ -4,13 +4,13 @@
 
 The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsoft/vcpkg) along with the previously installed ports. Briefly:
  - If there is a cache miss, vpckg is fetched and installed; the cache's key is composed by hashing the hosting OS name, the command line arguments and the vcpkg's commit id.
- - Then `vcpkg` is run to install the desired ports. This is a no-op if artifacts are already restored; This step can be skipped with `setupOnly:true`;
- - Artifacts are finally cached (if needed) as a post action at the end of the `job`.
+ - Then `vcpkg` is run to install the desired ports. This is a no-op if artifacts are already restored; this step can be skipped with `setupOnly:true`;
+ - Artifacts and vcpkg are finally cached (if needed) with a post action at the end of the `job`.
 
 The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
 
 Good companions are the [run-cmake](https://github.com/marketplace/actions/run-cmake) action and the 
-[get-cmake](https://github.com/marketplace/actions/get-cmake) action.
+[get-cmake](https://github.com/marketplace/actions/get-cmake) actions.
 
  ## User Manual
  * [Quickstart](#quickstart)
@@ -24,13 +24,9 @@ Good companions are the [run-cmake](https://github.com/marketplace/actions/run-c
  * [Samples](#samples)
  * [Projects](#projects)
 
- ## Developer Manual
- * [Developers information](#developers-information)
-   * [Prerequisites](#prerequisites)
-   * [Packaging](#packaging)
-   * [Testing](#testing)
-  * [Contributing](#contributing)
-  * [License](#license)
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## <a id='quickstart'>Quickstart</a>
 
@@ -107,11 +103,11 @@ When using **vcpkg**, be aware of how it works, specifically:
  - a specific version of vcpkg is identified by the commit id of the used vcpkg repository;
  - it not possible to choose which version of a port to install, instead it is the used version of vcpkg that establishes which version (just one) of a port is available;
  
- To sum up, you need to _pin_ the specific version of vcpkg you want to use to keep a consistent development experience between local and remote build environments. This is accomplished by **using vcpkg as submodule of your Git repository**; this way the version of vcpkg used is implied by the commit id specified by the submodule for vcpkg.
+ To sum up, **you need to pin the specific version of vcpkg you want to use to keep a consistent development experience between local and remote build environments.** This is accomplished by **using vcpkg as submodule of your Git repository**; this way the version of vcpkg used is implied by the commit id specified by the submodule for vcpkg.
 
 ### Use vcpkg's response file as an argument
 
-vcpkg accepts a response file that contains the arguments, suitable to store the list of ports to be installed. It is useful to store this file under source control, this helps to run vcpkg the same exact way locally and remotely on the build servers. For example if you want to run:
+vcpkg accepts a response file that contains the arguments, suitable to store the list of ports to be installed. **It is useful to store the response file under source control, this helps to run vcpkg the same exact way locally and remotely on the build servers.** For example if you want to run:
 
  > vcpkg install boost zlib:x64 libmodbus --triplet x64
 
@@ -170,50 +166,9 @@ project: [Element-0/ElementZero](https://github.com/Element-0/ElementZero) | |
 |----------|-------|
 [Windows](https://github.com/Element-0/ElementZero/blob/master/.github/workflows/ci.yml) | [![CI](https://github.com/Element-0/ElementZero/workflows/CI/badge.svg)](https://github.com/Element-0/ElementZero/actions)
 
-project: [RaftLib/RaftLib](https://github.com/RaftLib/RaftLib) | | 
+project: [zealdocs/zeal](https://github.com/zealdocs/zeal) | | 
 |----------|-------|
-[Linux/macOS/Windows](https://github.com/RaftLib/RaftLib/blob/master/.github/workflows/main.yml) | [![CI](https://github.com/RaftLib/RaftLib/workflows/CI/badge.svg)](https://github.com/RaftLib/RaftLib/actions)
-
-# Developers information
-
-## Prerequisites
-[gulp 4](https://www.npmjs.com/package/gulp4) globally installed.
-
-## Build and lint
-Build with `tsc` running:
-
- > npm run build
-
-Launch `lint` by:
-
- > npm run lint
-
-## Packaging
-To build, lint validate and package the extension for release purpose, run:
-
-  > npm run pack
-
-## Testing
-
-To build, pack and test:
- 
- > npm run test
-
- To run test directly:
- 
- > jest
-
-[Smoke tests](https://en.wikipedia.org/wiki/Smoke_testing_(software)) are implemented in this repository, which run the action on all platforms.
-
-Rigorous tests are executed in the builds of [CppBuildTasks](https://github.com/lukka/CppBuildTasks/) repository that shares the same engine in the [run-cmake-vcpkg-action-libs](https://github.com/lukka/run-cmake-vcpkg-action-libs) submodule.
-
-It would be desirable to have extensive tests implemented in this repository as well.
-
-Validation tests on various scenarios are run using the workflows of the [Samples](#samples).
-
-## <a id='contributing'>Contributing</a>
-
-The software is provided as is, there is no warranty of any kind. All users are encouraged to improve the [source code](https://github.com/lukka/run-vcpkg) with fixes and new features.
+[Linux/Windows](https://github.com/zealdocs/zeal/blob/master/.github/workflows/build-check.yml) | [![Build Check](https://github.com/zealdocs/zeal/workflows/Build%20Check/badge.svg)](https://github.com/zealdocs/zeal/actions)
 
 # License
  Except for the `actions/cache directory and its content`, all the content in this repository is licensed under the [MIT License](LICENSE.txt).
