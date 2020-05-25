@@ -1,12 +1,11 @@
 # Contributing
-
-The software is provided as is, there is no warranty of any kind. All users are encouraged to improve the [source code](https://github.com/lukka/run-vcpkg) with fixes and new features contributed by menas of Pull Requests.
-
- # Developer Manual
   * [Prerequisites](#prerequisites)
   * [Building](#build-and-lint)
   * [Packaging](#packaging)
   * [Testing](#testing)
+
+The software is provided as is, there is no warranty of any kind. All users are encouraged to improve the [source code](https://github.com/lukka/run-vcpkg) with fixes and new features contributed by means of Pull Requests.
+
 
 ## Prerequisites
 [gulp 4](https://www.npmjs.com/package/gulp4) globally installed.
