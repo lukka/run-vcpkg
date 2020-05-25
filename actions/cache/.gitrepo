@@ -6,6 +6,6 @@
 [subrepo]
 	remote = https://github.com/actions/cache.git
 	branch = releases/v1
-	commit = 70655ec8323daeeaa7ef06d7c56e1b9191396cbe
-	parent = 6009299f67e810ccb098340adad40540acfe9e53
+	commit = d9747005de0f7240e5d35a68dca96b3f41b8b340
+	parent = 6fb82e4883859b9c38e41933fe515fda560dbf5d
 	cmdver = 0.3.1
