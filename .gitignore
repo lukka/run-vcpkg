@@ -9,8 +9,4 @@ token.txt
 .vscode
 *.tgz
 build
-dist
-__tests__/vcpkgDirectory
-__tests__/tempDirectory
-
-__tests__/response_file2
+!dist

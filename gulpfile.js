@@ -28,7 +28,7 @@ var build = function () {
 var copyLib = function () {
   return gulp.src(
     ['./build/libs/run-vcpkg-lib/src/*.js'])
-    .pipe(gulp.dest('./build/src/'))
+    .pipe(gulp.dest('./build/src/'));
 }
 
 var eslinter = function () {
@@ -57,9 +57,6 @@ var test = function () {
   return gulp.src('__tests__').pipe(jest({
     "preprocessorIgnorePatterns": [
       "<rootDir>/dist/", "<rootDir>/node_modules/"
-    ],
-    "testPathIgnorePatterns" : [
-      "<rootDir>/actions/" 
     ],
     "automock": false
   }));

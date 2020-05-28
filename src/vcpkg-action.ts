@@ -6,17 +6,28 @@ import * as core from '@actions/core'
 import * as vcpkgrunner from './vcpkg-runner';
 import { BaseLib } from './base-lib';
 import * as globals from '../libs/run-vcpkg-lib/src/vcpkg-globals'
-import * as cp from 'child_process'
 import * as path from 'path'
 import * as fs from 'fs'
+import * as cache from '@actions/cache'
 
-
-export const VCPKGCACHEKEY = 'vcpkgDirectoryKey';
+export const VCPKGCACHEKEY = 'cacheKey';
+export const VCPKGCACHEHIT = 'cacheHit';
 
 /**
  * The input's name for additional content for the cache key.
  */
 export const appendedCacheKey = 'appendedCacheKey';
+
+export function getCachedPaths(): string[] {
+  const vcpkgDir = core.getInput(globals.vcpkgDirectory);
+  const pathsToCache: string[] = [
+    path.normalize(vcpkgDir),
+    path.normalize(`!${path.join(vcpkgDir, 'packages')}`),
+    path.normalize(`!${path.join(vcpkgDir, 'buildtrees')}`),
+    path.normalize(`!${path.join(vcpkgDir, 'downloads')}`)
+  ];
+  return pathsToCache;
+}
 
 /**
  * Compute an unique number given some text.
@@ -44,30 +55,33 @@ export class VcpkgAction {
       core.startGroup('Restore vcpkg and its artifacts from cache');
       // Get an unique output directory name from the URL.
       const key: string = this.computeKey();
-      const outPath: string = this.getOutputPath();
+      const pathsToCache: string[] = getCachedPaths();
 
-      // Use the embedded actions/cache to cache the downloaded CMake binaries.
-      process.env.INPUT_KEY = key;
-      console.log(`Cache's key = '${key}'.`);
-      process.env.INPUT_PATH = outPath;
-      core.saveState(VCPKGCACHEKEY, outPath);
-      const options: cp.ExecSyncOptions = {
-        env: process.env,
-        stdio: "inherit",
-      };
-      const scriptPath = path.join(__dirname, '../actions/cache/dist/restore/index.js');
-      console.log(`Running restore-cache`);
-      cp.execSync(`node ${scriptPath}`, options);
+      core.info(`Cache's key = '${key}'.`);
+      core.saveState(VCPKGCACHEKEY, key);
+      core.info(`Running restore-cache`);
+
+      let cacheHitId: string | undefined;
+      try {
+        cacheHitId = await cache.restoreCache(pathsToCache, key);
+      }
+      catch (err) {
+        core.warning(`restoreCache() failed: '${err?.toString()}'.`)
+      }
+
+      if (cacheHitId) {
+        core.info(`Cache hit, id=${cacheHitId}.`);
+        core.saveState(VCPKGCACHEHIT, cacheHitId);
+      } else {
+        core.info(`Cache miss.`);
+      }
+
     } finally {
       core.endGroup()
     }
 
     const runner: vcpkgrunner.VcpkgRunner = new vcpkgrunner.VcpkgRunner(this.tl);
     await runner.run();
-  }
-
-  private getOutputPath(): string {
-    return core.getInput(globals.vcpkgDirectory);
   }
 
   private getVcpkgCommitId(): string {
@@ -97,12 +111,12 @@ export class VcpkgAction {
     let key = "";
     const commitId: string = this.getVcpkgCommitId();
     if (commitId) {
-      console.log(`vcpkg identified at commitId=${commitId}, adding it to the cache's key.`);
+      core.info(`vcpkg identified at commitId=${commitId}, adding it to the cache's key.`);
       key += `submodGitId=${commitId}`;
     } else if (core.getInput(globals.vcpkgCommitId)) {
       key += "localGitId=" + hashCode(core.getInput(globals.vcpkgCommitId));
     } else {
-      console.log(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
+      core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
     }
 
     key += "-args=" + hashCode(core.getInput(globals.vcpkgArguments));

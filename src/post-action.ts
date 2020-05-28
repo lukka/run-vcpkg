@@ -5,41 +5,46 @@
 
 import * as core from '@actions/core'
 import * as action from './vcpkg-action'
-import * as cp from 'child_process'
+import * as cache from '@actions/cache'
 import * as path from 'path'
-import * as fs from 'fs'
 
-function moveAway(rootDir: string): void {
-  if (process.env.RUNNER_TEMP) {
-    for (const dirName of ['buildtrees', 'downloads', 'packages'])
-      try {
-        const src: string = path.normalize(path.join(rootDir, dirName));
-        const dst: string = path.join(process.env.RUNNER_TEMP, dirName);
-        console.log(`${src} -> ${dst}`);
-        fs.renameSync(src, dst);
-        console.log(`Moved away '${dirName}' to avoid caching it.`);
-      } catch (error) {
-        // Keep going in any case.
-        core.debug(`${error}`);
-      }
-  }
+function isExactKeyMatch(key: string, cacheKey?: string): boolean {
+  return !!(
+    cacheKey &&
+    cacheKey.localeCompare(key, undefined, {
+      sensitivity: "accent"
+    }) === 0
+  );
 }
 
 async function main(): Promise<void> {
   try {
     core.startGroup('Cache vcpkg and its artifacts');
-    const pathsToCache = core.getState(action.VCPKGCACHEKEY);
-    for (const dir of pathsToCache.split(';')) {
-      core.info(`Caching path: '${dir}'`);
-      moveAway(dir);
-      process.env.INPUT_PATH = dir;
-      const options: cp.ExecSyncOptions = {
-        env: process.env,
-        stdio: "inherit",
-      };
-      const scriptPath = path.join(path.dirname(path.dirname(__dirname)), 'actions/cache/dist/save/index.js');
+    const cacheHit = core.getState(action.VCPKGCACHEHIT);
+
+    // Inputs are re-evaluted before the post action, so we want the original key used for restore
+    const cacheKey = core.getState(action.VCPKGCACHEKEY);
+    if (!cacheKey) {
+      core.warning(`Error retrieving cache's key.`);
+      return;
+    }
+
+    if (isExactKeyMatch(cacheKey, cacheHit)) {
+      core.info(`Cache hit occurred on the cache key '${cacheKey}', saving cache is skipped.`);
+      return;
+    }
+
+    else {
+      const pathsToCache: string[] = action.getCachedPaths();
+      core.info(`Caching path: '${pathsToCache}'`);
       console.log(`Running store-cache`);
-      cp.execSync(`node ${scriptPath}`, options);
+
+      try {
+        await cache.saveCache(action.getCachedPaths(), cacheKey);
+      }
+      catch (err) {
+        core.warning(`saveCache() failed: '${err?.toString()}'.`)
+      }
     }
 
     core.info('run-vcpkg post action execution succeeded');
