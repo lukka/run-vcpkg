@@ -9,10 +9,11 @@ The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsof
 
 The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
 
-Good companions are the [run-cmake](https://github.com/marketplace/actions/run-cmake) action and the 
+Good companions are the [run-cmake](https://github.com/marketplace/actions/run-cmake) action and the
 [get-cmake](https://github.com/marketplace/actions/get-cmake) actions.
 
  ## User Manual
+ * [Contributing](#contributing)
  * [Quickstart](#quickstart)
    * [Restore cache/install/create cache](#install)
    * [Restore cache/do not install/create cache](#setuponly)
@@ -44,7 +45,7 @@ It is __highly recommended__ to [use vcpkg as a submodule](#best-practices). Her
 
     # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
     - name: Restore from cache and run vcpkg
-      uses: lukka/run-vcpkg@v2
+      uses: lukka/run-vcpkg@v3
       with:
         # Response file stored in source control, it provides the list of ports and triplet(s).
         vcpkgArguments: '@${{ env.vcpkgResponseFile }}'
@@ -76,7 +77,7 @@ When `setupOnly: true`, it only setups vcpkg and set VCPKG_ROOT environment vari
     # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
     - name: Restore from cache and install vcpkg
       # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
-      uses: lukka/run-vcpkg@v2
+      uses: lukka/run-vcpkg@v3
       with:
         setupOnly: true
     # Now that vcpkg is installed, it is being used to run desired arguments.
@@ -102,7 +103,7 @@ When using **vcpkg**, be aware of how it works, specifically:
  - a specific version of vcpkg must be used either locally and on build servers;
  - a specific version of vcpkg is identified by the commit id of the used vcpkg repository;
  - it not possible to choose which version of a port to install, instead it is the used version of vcpkg that establishes which version (just one) of a port is available;
- 
+
  To sum up, **you need to pin the specific version of vcpkg you want to use to keep a consistent development experience between local and remote build environments.** This is accomplished by **using vcpkg as submodule of your Git repository**; this way the version of vcpkg used is implied by the commit id specified by the submodule for vcpkg.
 
 ### Use vcpkg's response file as an argument
@@ -150,23 +151,23 @@ project: [codehz/wine-bdlauncher](https://github.com/codehz/wine-bdlauncher) | |
 |----------|-------|
 [Windows](https://github.com/codehz/wine-bdlauncher/blob/master/.github/workflows/ci.yml) | [![CI](https://github.com/codehz/wine-bdlauncher/workflows/CI/badge.svg)](https://github.com/codehz/wine-bdlauncher/actions)
 
-project: [OPM/ResInsight](https://github.com/OPM/ResInsight/) | | 
+project: [OPM/ResInsight](https://github.com/OPM/ResInsight/) | |
 |----------|-------|
 [Windows/Linux](https://github.com/OPM/ResInsight/blob/dev/.github/workflows/main.yml) | [![CI](https://github.com/OPM/ResInsight/workflows/ResInsight%20Build/badge.svg)](https://github.com/OPM/ResInsight/actions)
 
-project: [Mudlet/Mudlet](https://github.com/Mudlet/Mudlet) | | 
+project: [Mudlet/Mudlet](https://github.com/Mudlet/Mudlet) | |
 |----------|-------|
 [Linux/macOS](https://github.com/Mudlet/Mudlet/blob/development/.github/workflows/build-mudlet.yml) | [![Build Mudlet](https://github.com/Mudlet/Mudlet/workflows/Build%20Mudlet/badge.svg)](https://github.com/Mudlet/Mudlet/actions)
 
-project: [otland/forgottenserver](https://github.com/otland/forgottenserver) | | 
+project: [otland/forgottenserver](https://github.com/otland/forgottenserver) | |
 |----------|-------|
 [Linux/macOS/Windows](https://github.com/otland/forgottenserver/blob/master/.github/workflows/build-vcpkg.yml) | [![Build with vcpkg](https://github.com/otland/forgottenserver/workflows/Build%20with%20vcpkg/badge.svg)](https://github.com/otland/forgottenserver/actions)
 
-project: [Element-0/ElementZero](https://github.com/Element-0/ElementZero) | | 
+project: [Element-0/ElementZero](https://github.com/Element-0/ElementZero) | |
 |----------|-------|
 [Windows](https://github.com/Element-0/ElementZero/blob/master/.github/workflows/ci.yml) | [![CI](https://github.com/Element-0/ElementZero/workflows/CI/badge.svg)](https://github.com/Element-0/ElementZero/actions)
 
-project: [zealdocs/zeal](https://github.com/zealdocs/zeal) | | 
+project: [zealdocs/zeal](https://github.com/zealdocs/zeal) | |
 |----------|-------|
 [Linux/Windows](https://github.com/zealdocs/zeal/blob/master/.github/workflows/build-check.yml) | [![Build Check](https://github.com/zealdocs/zeal/workflows/Build%20Check/badge.svg)](https://github.com/zealdocs/zeal/actions)
 
