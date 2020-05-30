@@ -172,12 +172,6 @@ project: [zealdocs/zeal](https://github.com/zealdocs/zeal) | |
 [Linux/Windows](https://github.com/zealdocs/zeal/blob/master/.github/workflows/build-check.yml) | [![Build Check](https://github.com/zealdocs/zeal/workflows/Build%20Check/badge.svg)](https://github.com/zealdocs/zeal/actions)
 
 # License
- Except for the `actions/cache directory and its content`, all the content in this repository is licensed under the [MIT License](LICENSE.txt).
+ All the content in this repository is licensed under the [MIT License](LICENSE.txt).
 
 Copyright (c) 2019-2020 Luca Cappa
-
-<hr>
-
-All content under [actions/cache](./actions/cache) directory is subject to this [LICENSE](./actions/cache/LICENSE)
-
-Copyright (c) 2018 GitHub, Inc. and contributors
