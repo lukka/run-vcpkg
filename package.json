@@ -41,13 +41,17 @@
     "@actions/exec": "^1.0.1",
     "@actions/github": "^1.1.0",
     "@actions/io": "^1.0.1",
+    "@lukka/base-lib": "0.14.1",
+    "@lukka/base-util-lib": "0.14.1",
+    "@lukka/action-lib": "0.14.1",
+    "@lukka/run-vcpkg-lib": "0.14.1",
     "@types/adm-zip": "^0.4.32",
     "@types/follow-redirects": "^1.8.0",
     "@types/jest": "^24.9.0",
     "adm-zip": "^0.4.13",
+    "follow-redirects": "^1.9.0",
     "jest-cli": "^24.9.0",
-    "strip-json-comments": "^3.0.1",
     "lodash.template": ">=4.5.0",
-    "follow-redirects": "^1.9.0"
+    "strip-json-comments": "^3.0.1"
   }
 }

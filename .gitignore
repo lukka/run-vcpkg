@@ -10,3 +10,4 @@ token.txt
 *.tgz
 build
 !dist
+.npmrc

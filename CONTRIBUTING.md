@@ -34,10 +34,4 @@ To build, pack and test:
  
  > jest
 
-[Smoke tests](https://en.wikipedia.org/wiki/Smoke_testing_(software)) are implemented in this repository, which run the action on all platforms.
-
-Rigorous tests are executed in the builds of [CppBuildTasks](https://github.com/lukka/CppBuildTasks/) repository that shares the same engine in the [run-cmake-vcpkg-action-libs](https://github.com/lukka/run-cmake-vcpkg-action-libs) submodule.
-
-It would be desirable to have extensive tests implemented in this repository as well.
-
 Validation tests on various scenarios are run using the workflows of the [Samples](./README.md#samples).
