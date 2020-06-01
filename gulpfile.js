@@ -24,13 +24,6 @@ var build = function () {
     .pipe(gulp.dest(path.join('build')))
 }
 
-// Copy action's library to its deployment directory.
-var copyLib = function () {
-  return gulp.src(
-    ['./build/libs/run-vcpkg-lib/src/*.js'])
-    .pipe(gulp.dest('./build/src/'));
-}
-
 var eslinter = function () {
   // lint only the files of the action, e.g. not of the /libs/
   return gulp.src(['src/**/*.ts'])
@@ -45,14 +38,6 @@ var eslinter = function () {
     .pipe(eslint.failAfterError());
 }
 
-// Copy shared library files to consumers.
-var copyBaseLib = function () {
-  return gulp.src(
-    ['./build/libs/action-base-lib/src/*.js',
-      './build/libs/base-lib/src/*.js'])
-    .pipe(gulp.dest('./build/src/'));
-}
-
 var test = function () {
   return gulp.src('__tests__').pipe(jest({
     "preprocessorIgnorePatterns": [
@@ -64,10 +49,8 @@ var test = function () {
 
 gulp.task('test', test);
 gulp.task('eslint', eslinter);
-gulp.task('copyLib', copyLib);
-gulp.task('copyBaseLib', copyBaseLib);
 gulp.task('build', build);
 gulp.task('installPackages', installPackages);
 // 'test' must not be part of the 'default' target, as it is started explicitly *after* ncc has been run by the package.json run script.
-gulp.task('default', gulp.series('installPackages', 'eslint', 'build', 'copyLib', 'copyBaseLib'));
+gulp.task('default', gulp.series('installPackages', 'eslint', 'build'));
 

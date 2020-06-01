@@ -1,3 +1,7 @@
+// Copyright (c) 2019-2020 Luca Cappa
+// Released under the term specified in file LICENSE.txt
+// SPDX short identifier: MIT
+
 module.exports = {
   parser: '@typescript-eslint/parser',  // Specifies the ESLint parser
   extends: [

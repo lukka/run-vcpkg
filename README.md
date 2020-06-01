@@ -45,7 +45,7 @@ It is __highly recommended__ to [use vcpkg as a submodule](#best-practices). Her
 
     # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
     - name: Restore from cache and run vcpkg
-      uses: lukka/run-vcpkg@v3
+      uses: lukka/run-vcpkg@v4
       with:
         # Response file stored in source control, it provides the list of ports and triplet(s).
         vcpkgArguments: '@${{ env.vcpkgResponseFile }}'
@@ -56,7 +56,7 @@ It is __highly recommended__ to [use vcpkg as a submodule](#best-practices). Her
         appendedCacheKey: ${{ hashFiles(env.vcpkgResponseFile) }}
 
     - name: 'Build with CMake and Ninja'
-      uses: lukka/run-cmake@v2
+      uses: lukka/run-cmake@v3
       with:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/cmakesettings.json/CMakeLists.txt'
@@ -77,7 +77,7 @@ When `setupOnly: true`, it only setups vcpkg and set VCPKG_ROOT environment vari
     # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
     - name: Restore from cache and install vcpkg
       # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
-      uses: lukka/run-vcpkg@v3
+      uses: lukka/run-vcpkg@v4
       with:
         setupOnly: true
     # Now that vcpkg is installed, it is being used to run desired arguments.
