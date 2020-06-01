@@ -1,17 +1,6 @@
 {
     "extends": "./tsconfig-base.json",
     "compilerOptions": {
-        "outDir": "build",
-        "rootDirs": [
-            "src",
-            "libs/run-vcpkg-lib/src",
-            "libs/action-base-lib/src",
-            "libs/base-lib/src"
-        ]
-    },
-    "exclude": [
-        "libs/task-base-lib/**",
-        "libs/run-cmake-lib/**",
-        "actions/**"
-    ]
+        "outDir": "build"
+    }
 }
