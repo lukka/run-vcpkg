@@ -84,6 +84,7 @@ When `setupOnly: true`, it only setups vcpkg and set VCPKG_ROOT environment vari
     - run: |
         $VCPKG_ROOT/vcpkg @$vcpkgResponseFile
         $VCPKG_ROOT/vcpkg install boost:linux-x64
+      shell: bash
 ```
 
 ### <a id='flowchart'>Flowchart</a>
