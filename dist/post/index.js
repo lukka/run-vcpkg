@@ -1128,14 +1128,25 @@ const fs = __webpack_require__(747);
 const cache = __webpack_require__(692);
 exports.VCPKGCACHEKEY = 'cacheKey';
 exports.VCPKGCACHEHIT = 'cacheHit';
+function ensureDirExists(path) {
+    try {
+        fs.mkdirSync(path, { recursive: true });
+    }
+    catch (err) {
+        if (err.code !== 'EEXIST') {
+            core.warning(`Failed to create directory '${path}', error='${err}'.`);
+        }
+    }
+}
 /**
  * The input's name for additional content for the cache key.
  */
 exports.appendedCacheKey = 'appendedCacheKey';
 function getCachedPaths() {
-    const vcpkgDir = core.getInput(globals.vcpkgDirectory);
+    const vcpkgDir = path.normalize(core.getInput(globals.vcpkgDirectory));
+    ensureDirExists(vcpkgDir);
     const pathsToCache = [
-        path.normalize(vcpkgDir),
+        vcpkgDir,
         path.normalize(`!${path.join(vcpkgDir, 'packages')}`),
         path.normalize(`!${path.join(vcpkgDir, 'buildtrees')}`),
         path.normalize(`!${path.join(vcpkgDir, 'downloads')}`)
