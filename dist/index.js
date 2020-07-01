@@ -1245,6 +1245,10 @@ class VcpkgAction {
         key += "-args=" + hashCode(core.getInput(globals.vcpkgArguments));
         key += "-os=" + hashCode(process.platform);
         key += "-appendedKey=" + hashCode(core.getInput(exports.appendedCacheKey));
+        // Add the triplet only if it is provided.
+        const triplet = core.getInput(globals.vcpkgTriplet);
+        if (triplet)
+            key += "-triplet=" + hashCode(triplet);
         return key;
     }
 }
