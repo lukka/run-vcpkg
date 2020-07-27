@@ -48,6 +48,10 @@ inputs:
     default: true
     required: false
     description: "Specify which shell to be used when launching commands. 'true' means the default shell is used. 'false' means no shell is used. It also can be an absolute path and arguments of the shell to spawn commands with."
+  doNotCache: 
+    default: false
+    required: false
+    description: "Disable the automatic caching mechanism by setting it to true. Default is false."
 
 runs:
   using: 'node12'

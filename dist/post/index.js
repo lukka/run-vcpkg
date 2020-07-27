@@ -1126,8 +1126,11 @@ const globals = __webpack_require__(471);
 const path = __webpack_require__(622);
 const fs = __webpack_require__(747);
 const cache = __webpack_require__(692);
+// State's keys.
 exports.VCPKGCACHEKEY = 'cacheKey';
 exports.VCPKGCACHEHIT = 'cacheHit';
+// Input name for run-vcpkg only.
+exports.doNotCache = 'doNotCache';
 function ensureDirExists(path) {
     try {
         fs.mkdirSync(path, { recursive: true });
@@ -1176,27 +1179,32 @@ class VcpkgAction {
     run() {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            core.startGroup('Restore vcpkg and its artifacts from cache');
             try {
-                core.startGroup('Restore vcpkg and its artifacts from cache');
-                // Get an unique output directory name from the URL.
-                const key = this.computeKey();
-                const pathsToCache = getCachedPaths();
-                core.info(`Cache's key = '${key}'.`);
-                core.saveState(exports.VCPKGCACHEKEY, key);
-                core.info(`Running restore-cache`);
-                let cacheHitId;
-                try {
-                    cacheHitId = yield cache.restoreCache(pathsToCache, key);
-                }
-                catch (err) {
-                    core.warning(`restoreCache() failed: '${(_a = err) === null || _a === void 0 ? void 0 : _a.toString()}'.`);
-                }
-                if (cacheHitId) {
-                    core.info(`Cache hit, id=${cacheHitId}.`);
-                    core.saveState(exports.VCPKGCACHEHIT, cacheHitId);
+                if (core.getInput(exports.doNotCache).toLowerCase() === "true") {
+                    core.info(`Caching is disabled (${exports.doNotCache}=true)`);
                 }
                 else {
-                    core.info(`Cache miss.`);
+                    // Get an unique output directory name from the URL.
+                    const key = this.computeKey();
+                    const pathsToCache = getCachedPaths();
+                    core.info(`Cache's key = '${key}'.`);
+                    core.saveState(exports.VCPKGCACHEKEY, key);
+                    core.info(`Running restore-cache`);
+                    let cacheHitId;
+                    try {
+                        cacheHitId = yield cache.restoreCache(pathsToCache, key);
+                    }
+                    catch (err) {
+                        core.warning(`restoreCache() failed: '${(_a = err) === null || _a === void 0 ? void 0 : _a.toString()}'.`);
+                    }
+                    if (cacheHitId) {
+                        core.info(`Cache hit, id=${cacheHitId}.`);
+                        core.saveState(exports.VCPKGCACHEHIT, cacheHitId);
+                    }
+                    else {
+                        core.info(`Cache miss.`);
+                    }
                 }
             }
             finally {
@@ -5853,27 +5861,37 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             core.startGroup('Cache vcpkg and its artifacts');
-            const cacheHit = core.getState(action.VCPKGCACHEHIT);
-            // Inputs are re-evaluted before the post action, so we want the original key used for restore
-            const cacheKey = core.getState(action.VCPKGCACHEKEY);
-            if (!cacheKey) {
-                core.warning(`Error retrieving cache's key.`);
-                return;
-            }
-            if (isExactKeyMatch(cacheKey, cacheHit)) {
-                core.info(`Cache hit occurred on the cache key '${cacheKey}', saving cache is skipped.`);
-                return;
-            }
-            else {
-                const pathsToCache = action.getCachedPaths();
-                core.info(`Caching path: '${pathsToCache}'`);
-                console.log(`Running store-cache`);
-                try {
-                    yield cache.saveCache(action.getCachedPaths(), cacheKey);
+            try {
+                if (core.getInput(action.doNotCache).toLowerCase() === "true") {
+                    core.info(`Caching is disabled (${action.doNotCache}=true)`);
                 }
-                catch (err) {
-                    core.warning(`saveCache() failed: '${(_a = err) === null || _a === void 0 ? void 0 : _a.toString()}'.`);
+                else {
+                    const cacheHit = core.getState(action.VCPKGCACHEHIT);
+                    // Inputs are re-evaluted before the post action, so we want the original key used for restore
+                    const cacheKey = core.getState(action.VCPKGCACHEKEY);
+                    if (!cacheKey) {
+                        core.warning(`Error retrieving cache's key.`);
+                        return;
+                    }
+                    if (isExactKeyMatch(cacheKey, cacheHit)) {
+                        core.info(`Cache hit occurred on the cache key '${cacheKey}', saving cache is skipped.`);
+                        return;
+                    }
+                    else {
+                        const pathsToCache = action.getCachedPaths();
+                        core.info(`Caching path: '${pathsToCache}'`);
+                        console.log(`Running store-cache`);
+                        try {
+                            yield cache.saveCache(action.getCachedPaths(), cacheKey);
+                        }
+                        catch (err) {
+                            core.warning(`saveCache() failed: '${(_a = err) === null || _a === void 0 ? void 0 : _a.toString()}'.`);
+                        }
+                    }
                 }
+            }
+            finally {
+                core.endGroup();
             }
             core.info('run-vcpkg post action execution succeeded');
             process.exitCode = 0;
