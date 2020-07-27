@@ -10,8 +10,11 @@ import * as path from 'path'
 import * as fs from 'fs'
 import * as cache from '@actions/cache'
 
+// State's keys.
 export const VCPKGCACHEKEY = 'cacheKey';
 export const VCPKGCACHEHIT = 'cacheHit';
+// Input name for run-vcpkg only.
+export const doNotCache = 'doNotCache';
 
 function ensureDirExists(path: string): void {
   try {
@@ -63,31 +66,34 @@ export class VcpkgAction {
   }
 
   public async run(): Promise<void> {
+    core.startGroup('Restore vcpkg and its artifacts from cache');
     try {
-      core.startGroup('Restore vcpkg and its artifacts from cache');
-      // Get an unique output directory name from the URL.
-      const key: string = this.computeKey();
-      const pathsToCache: string[] = getCachedPaths();
-
-      core.info(`Cache's key = '${key}'.`);
-      core.saveState(VCPKGCACHEKEY, key);
-      core.info(`Running restore-cache`);
-
-      let cacheHitId: string | undefined;
-      try {
-        cacheHitId = await cache.restoreCache(pathsToCache, key);
-      }
-      catch (err) {
-        core.warning(`restoreCache() failed: '${err?.toString()}'.`)
-      }
-
-      if (cacheHitId) {
-        core.info(`Cache hit, id=${cacheHitId}.`);
-        core.saveState(VCPKGCACHEHIT, cacheHitId);
+      if (core.getInput(doNotCache).toLowerCase() === "true") {
+        core.info(`Caching is disabled (${doNotCache}=true)`);
       } else {
-        core.info(`Cache miss.`);
-      }
+        // Get an unique output directory name from the URL.
+        const key: string = this.computeKey();
+        const pathsToCache: string[] = getCachedPaths();
 
+        core.info(`Cache's key = '${key}'.`);
+        core.saveState(VCPKGCACHEKEY, key);
+        core.info(`Running restore-cache`);
+
+        let cacheHitId: string | undefined;
+        try {
+          cacheHitId = await cache.restoreCache(pathsToCache, key);
+        }
+        catch (err) {
+          core.warning(`restoreCache() failed: '${err?.toString()}'.`)
+        }
+
+        if (cacheHitId) {
+          core.info(`Cache hit, id=${cacheHitId}.`);
+          core.saveState(VCPKGCACHEHIT, cacheHitId);
+        } else {
+          core.info(`Cache miss.`);
+        }
+      }
     } finally {
       core.endGroup()
     }

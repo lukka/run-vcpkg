@@ -6,7 +6,6 @@
 import * as core from '@actions/core'
 import * as action from './vcpkg-action'
 import * as cache from '@actions/cache'
-import * as path from 'path'
 
 function isExactKeyMatch(key: string, cacheKey?: string): boolean {
   return !!(
@@ -20,33 +19,41 @@ function isExactKeyMatch(key: string, cacheKey?: string): boolean {
 async function main(): Promise<void> {
   try {
     core.startGroup('Cache vcpkg and its artifacts');
-    const cacheHit = core.getState(action.VCPKGCACHEHIT);
+    try {
+      if (core.getInput(action.doNotCache).toLowerCase() === "true") {
+        core.info(`Caching is disabled (${action.doNotCache}=true)`);
+      } else {
+        const cacheHit = core.getState(action.VCPKGCACHEHIT);
 
-    // Inputs are re-evaluted before the post action, so we want the original key used for restore
-    const cacheKey = core.getState(action.VCPKGCACHEKEY);
-    if (!cacheKey) {
-      core.warning(`Error retrieving cache's key.`);
-      return;
-    }
+        // Inputs are re-evaluted before the post action, so we want the original key used for restore
+        const cacheKey = core.getState(action.VCPKGCACHEKEY);
+        if (!cacheKey) {
+          core.warning(`Error retrieving cache's key.`);
+          return;
+        }
 
-    if (isExactKeyMatch(cacheKey, cacheHit)) {
-      core.info(`Cache hit occurred on the cache key '${cacheKey}', saving cache is skipped.`);
-      return;
-    }
+        if (isExactKeyMatch(cacheKey, cacheHit)) {
+          core.info(`Cache hit occurred on the cache key '${cacheKey}', saving cache is skipped.`);
+          return;
+        }
 
-    else {
-      const pathsToCache: string[] = action.getCachedPaths();
-      core.info(`Caching path: '${pathsToCache}'`);
-      console.log(`Running store-cache`);
+        else {
+          const pathsToCache: string[] = action.getCachedPaths();
+          core.info(`Caching path: '${pathsToCache}'`);
+          console.log(`Running store-cache`);
 
-      try {
-        await cache.saveCache(action.getCachedPaths(), cacheKey);
+          try {
+            await cache.saveCache(action.getCachedPaths(), cacheKey);
+          }
+          catch (err) {
+            core.warning(`saveCache() failed: '${err?.toString()}'.`)
+          }
+        }
       }
-      catch (err) {
-        core.warning(`saveCache() failed: '${err?.toString()}'.`)
-      }
     }
-
+    finally {
+      core.endGroup();
+    }
     core.info('run-vcpkg post action execution succeeded');
     process.exitCode = 0;
   } catch (err) {
