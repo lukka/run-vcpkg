@@ -3,9 +3,9 @@
 # [The **run-vcpkg** action for caching artifacts and using vcpkg on GitHub](https://github.com/marketplace/actions/run-vcpkg)
 
 The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsoft/vcpkg) along with the previously installed ports. Briefly:
- - If there is a cache miss, vpckg is fetched and installed; the cache's key is composed by hashing the hosting OS name, the command line arguments and the vcpkg's commit id.
+ - If there is a cache miss, vpckg is fetched and installed; the cache's key is composed by hashing the hosting OS name, the command line arguments and the vcpkg's commit id;
  - Then `vcpkg` is run to install the desired ports. This is a no-op if artifacts are already restored; this step can be skipped with `setupOnly:true`;
- - Artifacts and vcpkg are finally cached (if needed) with a post action at the end of the `job`.
+ - Artifacts and vcpkg are finally cached (if needed) with a post action at the end of the `job`;
 
 The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
 
