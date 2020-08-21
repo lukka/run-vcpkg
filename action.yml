@@ -43,7 +43,7 @@ inputs:
   doNotUpdateVcpkg: 
     default: false
     required: false
-    description: "Avoid to update vcpkg(launching git) in the specified 'vcpkgDirectory'. This is useful when vcpkg is being checkout indipendently of the run-vcpkg task. Default is false."
+    description: "Avoid to update vcpkg(launching git) in the specified 'vcpkgDirectory'. This is useful when vcpkg is being checkout independently of the run-vcpkg task. Default is false."
   useShell:
     default: true
     required: false
