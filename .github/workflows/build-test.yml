@@ -40,7 +40,7 @@ jobs:
     - name: basic test for run-vcpkg
       uses: ./
       with:
-        vcppkgDirectory: ${{ github.workspace }}/vcpkg
+        vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
         vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
