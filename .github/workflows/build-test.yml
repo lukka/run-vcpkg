@@ -9,8 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        # windows-latest] # Commented because vcpkg fails on the test...
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v1
@@ -31,8 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        # windows-latest] # Commented because vcpkg fails on the test...
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - name: checkout this action
       uses: actions/checkout@v1
@@ -44,8 +42,8 @@ jobs:
       with:
         vcppkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
-        vcpkgGitUrl: 'https://github.com/lukka/vcpkg.git'
-        vcpkgGitCommitId: 'c5f01e1dee0d41b8014ac6f1eeafda974917ba17'
+        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
+        vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
         useShell: true
 
     - name: basic test for run-vcpkg with setupOnly
@@ -53,8 +51,8 @@ jobs:
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
-        vcpkgGitUrl: 'https://github.com/lukka/vcpkg.git'
-        vcpkgGitCommitId: 'c5f01e1dee0d41b8014ac6f1eeafda974917ba17'
+        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
+        vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
         useShell: true
         setupOnly: true
 
@@ -63,6 +61,6 @@ jobs:
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: '--overlay-ports=../__tests__/assets/1 sqlite3 @../__tests__/assets/tempDirectory/response_file1 --overlay-ports=../__tests__/assets/subdir/2 @../__tests__/assets/response_file2'
-        vcpkgGitUrl: 'https://github.com/lukka/vcpkg.git'
-        vcpkgGitCommitId: 'c5f01e1dee0d41b8014ac6f1eeafda974917ba17'
+        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
+        vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
         useShell: true
