@@ -1,3 +1,0 @@
-[submodule "libs"]
-	path = libs
-	url = https://github.com/lukka/run-cmake-vcpkg-action-libs.git
