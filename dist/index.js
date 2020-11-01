@@ -673,143 +673,146 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VcpkgAction = exports.getCachedPaths = exports.appendedCacheKey = exports.doNotCache = exports.VCPKGCACHEHIT = exports.VCPKGCACHEKEY = void 0;
-const core = __webpack_require__(470);
+exports.VcpkgAction = exports.doNotCacheInput = void 0;
 const path = __webpack_require__(622);
-const fs = __webpack_require__(747);
+const core = __webpack_require__(470);
 const cache = __webpack_require__(692);
 const runvcpkglib = __webpack_require__(496);
-// State's keys.
-exports.VCPKGCACHEKEY = 'cacheKey';
-exports.VCPKGCACHEHIT = 'cacheHit';
+const vcpkg_utils_1 = __webpack_require__(693);
 // Input name for run-vcpkg only.
-exports.doNotCache = 'doNotCache';
-function ensureDirExists(path) {
-    try {
-        fs.mkdirSync(path, { recursive: true });
-    }
-    catch (err) {
-        if (err.code !== 'EEXIST') {
-            core.warning(`Failed to create directory '${path}', error='${err}'.`);
-        }
-    }
-}
-/**
- * The input's name for additional content for the cache key.
- */
-exports.appendedCacheKey = 'appendedCacheKey';
-function getCachedPaths() {
-    const vcpkgDir = path.normalize(core.getInput(runvcpkglib.vcpkgDirectory));
-    ensureDirExists(vcpkgDir);
-    const pathsToCache = [
-        vcpkgDir,
-        path.normalize(`!${path.join(vcpkgDir, 'packages')}`),
-        path.normalize(`!${path.join(vcpkgDir, 'buildtrees')}`),
-        path.normalize(`!${path.join(vcpkgDir, 'downloads')}`)
-    ];
-    return pathsToCache;
-}
-exports.getCachedPaths = getCachedPaths;
-/**
- * Compute an unique number given some text.
- * @param {string} text
- * @returns {string}
- */
-function hashCode(text) {
-    let hash = 42;
-    if (text.length != 0) {
-        for (let i = 0; i < text.length; i++) {
-            const char = text.charCodeAt(i);
-            hash = ((hash << 5) + hash) ^ char;
-        }
-    }
-    return hash.toString();
-}
+exports.doNotCacheInput = 'doNotCache';
 class VcpkgAction {
-    constructor(tl) {
-        this.tl = tl;
+    constructor(baseUtilLib) {
+        this.baseUtilLib = baseUtilLib;
+        /**
+         * The input's name for additional content for the cache key.
+         */
+        this.appendedCacheKey = 'appendedCacheKey';
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
-            core.startGroup('Restore vcpkg and its artifacts from cache');
+            yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache());
+            const runner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
+            yield runner.run();
+            yield this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache());
+        });
+    }
+    computeCacheKey() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let key = "";
+            const inputVcpkgPath = core.getInput(runvcpkglib.vcpkgDirectory);
+            const commitId = yield vcpkg_utils_1.getVcpkgCommitId(this.baseUtilLib, inputVcpkgPath);
+            const userProvidedCommitId = core.getInput(runvcpkglib.vcpkgCommitId);
+            if (commitId) {
+                core.info(`vcpkg identified at commitId='${commitId}', adding it to the cache's key.`);
+                key += `submodGitId=${commitId}`;
+            }
+            else if (userProvidedCommitId) {
+                key += "localGitId=" + vcpkg_utils_1.hashCode(userProvidedCommitId);
+            }
+            else {
+                core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
+            }
+            key += "-args=" + vcpkg_utils_1.hashCode(core.getInput(runvcpkglib.vcpkgArguments));
+            key += "-os=" + vcpkg_utils_1.hashCode(process.platform);
+            key += "-appendedKey=" + vcpkg_utils_1.hashCode(core.getInput(this.appendedCacheKey));
+            // Add the triplet only if it is provided.
+            const triplet = core.getInput(runvcpkglib.vcpkgTriplet);
+            if (triplet)
+                key += "-triplet=" + vcpkg_utils_1.hashCode(triplet);
+            return key;
+        });
+    }
+    saveCache() {
+        return __awaiter(this, void 0, void 0, function* () {
             try {
-                if (core.getInput(exports.doNotCache).toLowerCase() === "true") {
-                    core.info(`Caching is disabled (${exports.doNotCache}=true)`);
+                if (core.getInput(exports.doNotCacheInput).toLowerCase() === "true") {
+                    core.info(`Caching is disabled (${exports.doNotCacheInput}=true)`);
                 }
                 else {
-                    // Get an unique output directory name from the URL.
-                    const key = this.computeKey();
-                    const pathsToCache = getCachedPaths();
-                    core.info(`Cache's key = '${key}'.`);
-                    core.saveState(exports.VCPKGCACHEKEY, key);
-                    core.info(`Running restore-cache`);
-                    let cacheHitId;
+                    if (!this.vcpkgCacheComputedKey) {
+                        core.warning(`Error retrieving cache's key.`);
+                        return;
+                    }
+                    if (vcpkg_utils_1.isExactKeyMatch(this.vcpkgCacheComputedKey, this.VCPKGCACHEHIT)) {
+                        core.info(`Cache hit occurred on the cache key '${this.vcpkgCacheComputedKey}', saving cache is skipped.`);
+                        return;
+                    }
+                    else {
+                        const pathsToCache = this.getCachedPaths();
+                        core.info(`Caching paths: '${pathsToCache}'`);
+                        console.log(`Running save-cache`);
+                        try {
+                            yield cache.saveCache(this.getCachedPaths(), this.vcpkgCacheComputedKey);
+                        }
+                        catch (error) {
+                            if (error.name === cache.ValidationError.name) {
+                                throw error;
+                            }
+                            else if (error.name === cache.ReserveCacheError.name) {
+                                core.info(error.message);
+                            }
+                            else {
+                                core.warning(error.message);
+                            }
+                        }
+                    }
+                }
+                core.info('run-vcpkg post action execution succeeded');
+                process.exitCode = 0;
+            }
+            catch (err) {
+                const errorAsString = (err !== null && err !== void 0 ? err : "undefined error").toString();
+                core.error(errorAsString);
+                core.setFailed('run-vcpkg post action execution failed');
+                process.exitCode = -1000;
+            }
+        });
+    }
+    getCachedPaths() {
+        const vcpkgDir = path.normalize(core.getInput(runvcpkglib.vcpkgDirectory));
+        vcpkg_utils_1.ensureDirExists(vcpkgDir);
+        const pathsToCache = [
+            vcpkgDir,
+            path.normalize(`!${path.join(vcpkgDir, 'packages')}`),
+            path.normalize(`!${path.join(vcpkgDir, 'buildtrees')}`),
+            path.normalize(`!${path.join(vcpkgDir, 'downloads')}`)
+        ];
+        return pathsToCache;
+    }
+    restoreCache() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (core.getInput(exports.doNotCacheInput).toLowerCase() === "true") {
+                core.info(`Caching is disabled (${exports.doNotCacheInput}=true)`);
+            }
+            else {
+                const key = yield this.computeCacheKey();
+                const pathsToCache = this.getCachedPaths();
+                core.info(`Cache's key = '${key}'.`);
+                this.vcpkgCacheComputedKey = key;
+                core.info(`Running restore-cache`);
+                let cacheHitId;
+                try {
+                    cacheHitId = yield cache.restoreCache(pathsToCache, key);
+                }
+                catch (err) {
                     try {
+                        core.warning(`restoreCache() failed once: '${err === null || err === void 0 ? void 0 : err.toString()}' , retrying...`);
                         cacheHitId = yield cache.restoreCache(pathsToCache, key);
                     }
                     catch (err) {
-                        core.warning(`restoreCache() failed: '${err === null || err === void 0 ? void 0 : err.toString()}'.`);
-                    }
-                    if (cacheHitId) {
-                        core.info(`Cache hit, id=${cacheHitId}.`);
-                        core.saveState(exports.VCPKGCACHEHIT, cacheHitId);
-                    }
-                    else {
-                        core.info(`Cache miss.`);
+                        core.warning(`restoreCache() failed again: '${err === null || err === void 0 ? void 0 : err.toString()}'.`);
                     }
                 }
+                if (cacheHitId) {
+                    core.info(`Cache hit, id=${cacheHitId}.`);
+                    this.VCPKGCACHEHIT = cacheHitId;
+                }
+                else {
+                    core.info(`Cache miss.`);
+                }
             }
-            finally {
-                core.endGroup();
-            }
-            const runner = new runvcpkglib.VcpkgRunner(this.tl);
-            yield runner.run();
         });
-    }
-    getVcpkgCommitId() {
-        var _a;
-        let id = "";
-        const workspaceDir = (_a = process.env.GITHUB_WORKSPACE) !== null && _a !== void 0 ? _a : "";
-        if (workspaceDir) {
-            let fullVcpkgPath = "";
-            const inputVcpkgPath = core.getInput(runvcpkglib.vcpkgDirectory);
-            if (path.isAbsolute(inputVcpkgPath))
-                fullVcpkgPath = path.normalize(path.resolve(inputVcpkgPath));
-            else
-                fullVcpkgPath = path.normalize(path.resolve(path.join(workspaceDir, inputVcpkgPath)));
-            core.debug(`fullVcpkgPath='${fullVcpkgPath}'`);
-            const relPath = fullVcpkgPath.replace(workspaceDir, '');
-            core.debug(`relPath='${relPath}'`);
-            const submodulePath = path.join(workspaceDir, ".git/modules", relPath, "HEAD");
-            core.debug(`submodulePath='${submodulePath}'`);
-            if (fs.existsSync(submodulePath)) {
-                id = fs.readFileSync(submodulePath).toString();
-                core.debug(`commitId='${id}'`);
-            }
-        }
-        return id.trim();
-    }
-    computeKey() {
-        let key = "";
-        const commitId = this.getVcpkgCommitId();
-        if (commitId) {
-            core.info(`vcpkg identified at commitId=${commitId}, adding it to the cache's key.`);
-            key += `submodGitId=${commitId}`;
-        }
-        else if (core.getInput(runvcpkglib.vcpkgCommitId)) {
-            key += "localGitId=" + hashCode(core.getInput(runvcpkglib.vcpkgCommitId));
-        }
-        else {
-            core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
-        }
-        key += "-args=" + hashCode(core.getInput(runvcpkglib.vcpkgArguments));
-        key += "-os=" + hashCode(process.platform);
-        key += "-appendedKey=" + hashCode(core.getInput(exports.appendedCacheKey));
-        // Add the triplet only if it is provided.
-        const triplet = core.getInput(runvcpkglib.vcpkgTriplet);
-        if (triplet)
-            key += "-triplet=" + hashCode(triplet);
-        return key;
     }
 }
 exports.VcpkgAction = VcpkgAction;
@@ -2648,7 +2651,7 @@ class VcpkgRunner {
         this.vcpkgArtifactIgnoreEntries = [];
         this.cleanAfterBuild = false;
         this.doNotUpdateVcpkg = false;
-        this.baseUtils = new baseutillib.BaseLibUtils(tl);
+        this.baseUtils = new baseutillib.BaseUtilLib(tl);
         this.setupOnly = (_a = this.tl.getBoolInput(globals.setupOnly, false)) !== null && _a !== void 0 ? _a : false;
         this.vcpkgArgs = (_b = this.tl.getInput(globals.vcpkgArguments, this.setupOnly === false)) !== null && _b !== void 0 ? _b : "";
         this.defaultVcpkgUrl = 'https://github.com/microsoft/vcpkg.git';
@@ -2687,7 +2690,7 @@ class VcpkgRunner {
                 yield this.tl.mkdirP(this.vcpkgDestPath);
             }
             let needRebuild = false;
-            const currentCommitId = yield this.getCommitId();
+            const currentCommitId = yield VcpkgRunner.getCommitId(this.baseUtils, this.options.cwd);
             if (this.doNotUpdateVcpkg) {
                 this.tl.info(`Skipping any check to update vcpkg directory (${this.vcpkgDestPath}).`);
             }
@@ -2726,7 +2729,7 @@ class VcpkgRunner {
         this.tl.info(`Set task output variable '${outVarName}' to value: ${this.vcpkgDestPath}`);
         this.tl.setOutput(`${outVarName}`, this.vcpkgDestPath);
         // Force AZP_CACHING_CONTENT_FORMAT to "Files"
-        this.baseUtils.setEnvVar(baseutillib.BaseLibUtils.cachingFormatEnvName, "Files");
+        this.baseUtils.setEnvVar(baseutillib.BaseUtilLib.cachingFormatEnvName, "Files");
     }
     prepareForCache() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -2778,7 +2781,7 @@ class VcpkgRunner {
             // Get the triplet specified in the task.
             let vcpkgTripletUsed = this.vcpkgTriplet;
             // Extract triplet from arguments for vcpkg.
-            const extractedTriplet = baseutillib.BaseLibUtils.extractTriplet(installCmd, (p) => this.baseUtils.readFile(p));
+            const extractedTriplet = baseutillib.BaseUtilLib.extractTriplet(installCmd, (p) => this.baseUtils.readFile(p));
             // Append triplet, only if provided by the user in the task arguments
             if (extractedTriplet !== null) {
                 if (vcpkgTripletUsed) {
@@ -2820,29 +2823,42 @@ class VcpkgRunner {
         });
     }
     /**
-     * Get the commit id of the vcpkg directory specified in 'vcpkgDirectory' input.
-     * @private
-     * @returns {Promise<string>} the commit id
+     *
+     * Get the commit id of the repository at the directory specified in 'path' parameter.
+     * @static
+     * @param {baseutillib.BaseUtilLib} baseUtilLib The BaseUtilLib instance to use.
+     * @param {string} path Path of the repository.
+     * @returns {Promise<string>} The commit id of the repository at given path.
      * @memberof VcpkgRunner
      */
-    getCommitId() {
+    static getCommitId(baseUtilLib, path) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.tl.debug("getCommitId()<<");
+            const options = {
+                cwd: path,
+                failOnStdErr: false,
+                errStream: process.stdout,
+                outStream: process.stdout,
+                ignoreReturnCode: true,
+                silent: false,
+                windowsVerbatimArguments: false,
+                env: process.env
+            };
+            baseUtilLib.baseLib.debug("getCommitId()<<");
             let currentCommitId = "";
-            const gitPath = yield this.tl.which('git', true);
+            const gitPath = yield baseUtilLib.baseLib.which('git', true);
             // Use git to verify whether the repo is up to date.
-            const gitRunner = this.tl.tool(gitPath);
+            const gitRunner = baseUtilLib.baseLib.tool(gitPath);
             gitRunner.arg(['rev-parse', 'HEAD']);
-            this.tl.info(`Fetching the commit id at ${this.options.cwd}`);
-            const res = yield gitRunner.execSync(this.options);
+            baseUtilLib.baseLib.info(`Fetching the commit id at ${path}`);
+            const res = yield gitRunner.execSync(options);
             if (res.code === 0) {
-                currentCommitId = this.baseUtils.trimString(res.stdout);
-                this.tl.debug(`git rev-parse: code=${res.code}, stdout=${this.baseUtils.trimString(res.stdout)}, stderr=${this.baseUtils.trimString(res.stderr)}`);
+                currentCommitId = baseUtilLib.trimString(res.stdout);
+                baseUtilLib.baseLib.debug(`git rev-parse: code=${res.code}, stdout=${baseUtilLib.trimString(res.stdout)}, stderr=${baseUtilLib.trimString(res.stderr)}`);
             }
             else /* if (res.code !== 0) */ {
-                this.tl.debug(`error executing git: code=${res.code}, stdout=${this.baseUtils.trimString(res.stdout)}, stderr=${this.baseUtils.trimString(res.stderr)}`);
+                baseUtilLib.baseLib.debug(`error executing git: code=${res.code}, stdout=${baseUtilLib.trimString(res.stdout)}, stderr=${baseUtilLib.trimString(res.stderr)}`);
             }
-            this.tl.debug(`getCommitId()>> -> ${currentCommitId}`);
+            baseUtilLib.baseLib.debug(`getCommitId()>> -> ${currentCommitId}`);
             return currentCommitId;
         });
     }
@@ -2939,6 +2955,7 @@ class VcpkgRunner {
                 if (!this.baseUtils.isWin32()) {
                     yield this.tl.execSync('chmod', ["+x", vcpkgExePath]);
                 }
+                this.tl.info(`vcpkg executable exists at: '${vcpkgExePath}'.`);
             }
             return needRebuild;
         });
@@ -2970,7 +2987,7 @@ class VcpkgRunner {
                 this.baseUtils.throwIfErrorCode(yield shTool.exec(this.options));
             }
             // After a build, refetch the commit id of the vcpkg's repo, and store it into the file.
-            const builtCommitId = yield this.getCommitId();
+            const builtCommitId = yield VcpkgRunner.getCommitId(this.baseUtils, this.options.cwd);
             this.baseUtils.writeFile(this.pathToLastBuiltCommitId, builtCommitId);
             // Keep track of last successful build commit id.
             this.tl.info(`Stored last built vcpkg commit id '${builtCommitId}' in file '${this.pathToLastBuiltCommitId}`);
@@ -4299,6 +4316,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VCPKGDIRECTORIESKEY = void 0;
 const actionlib = __webpack_require__(778);
+const baseUtilLib = __webpack_require__(758);
 const core = __webpack_require__(470);
 const vcpkgAction = __webpack_require__(16);
 exports.VCPKGDIRECTORIESKEY = 'vcpkgDirectoryKey';
@@ -4306,7 +4324,8 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const actionLib = new actionlib.ActionLib();
-            const action = new vcpkgAction.VcpkgAction(actionLib);
+            const baseUtil = new baseUtilLib.BaseUtilLib(actionLib);
+            const action = new vcpkgAction.VcpkgAction(baseUtil);
             yield action.run();
             core.info('run-vcpkg action execution succeeded');
             process.exitCode = 0;
@@ -11934,7 +11953,7 @@ class ActionLib {
         if (!process.env.GITHUB_WORKSPACE) {
             throw new Error("GITHUB_WORKSPACE is not set.");
         }
-        const binPath = utils.BaseLibUtils.normalizePath(path.join(process.env.GITHUB_WORKSPACE, "../b/"));
+        const binPath = utils.BaseUtilLib.normalizePath(path.join(process.env.GITHUB_WORKSPACE, "../b/"));
         if (!fs.existsSync(binPath)) {
             core.debug(`BinDir '${binPath}' does not exists, creating it...`);
             fs.mkdirSync(binPath);
@@ -11945,7 +11964,7 @@ class ActionLib {
         if (!process.env.GITHUB_WORKSPACE) {
             throw new Error("GITHUB_WORKSPACE env var is not set.");
         }
-        const srcPath = utils.BaseLibUtils.normalizePath(process.env.GITHUB_WORKSPACE);
+        const srcPath = utils.BaseUtilLib.normalizePath(process.env.GITHUB_WORKSPACE);
         if (!fs.existsSync(srcPath)) {
             throw new Error(`SourceDir '${srcPath}' does not exists.`);
         }
@@ -11956,7 +11975,7 @@ class ActionLib {
             throw new Error("GITHUB_WORKSPACE is not set.");
         }
         //?? HACK. How to get the value of '{{ runner.temp }}' in JS's action?
-        const artifactsPath = utils.BaseLibUtils.normalizePath(path.join(process.env.GITHUB_WORKSPACE, "../../_temp"));
+        const artifactsPath = utils.BaseUtilLib.normalizePath(path.join(process.env.GITHUB_WORKSPACE, "../../_temp"));
         if (!fs.existsSync(artifactsPath)) {
             core.debug(`ArtifactsDir '${artifactsPath}' does not exists, creating it...`);
             fs.mkdirSync(artifactsPath);
@@ -17109,6 +17128,13 @@ module.exports = (function() {
 
 /***/ }),
 
+/***/ 630:
+/***/ (function(module) {
+
+module.exports = require("perf_hooks");
+
+/***/ }),
+
 /***/ 631:
 /***/ (function(module) {
 
@@ -19402,6 +19428,101 @@ exports.saveCache = saveCache;
 
 /***/ }),
 
+/***/ 693:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+// Copyright (c) 2020 Luca Cappa
+// Released under the term specified in file LICENSE.txt
+// SPDX short identifier: MIT
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getVcpkgCommitId = exports.isExactKeyMatch = exports.hashCode = exports.ensureDirExists = void 0;
+const path = __webpack_require__(622);
+const fs = __webpack_require__(747);
+const core = __webpack_require__(470);
+const runVcpkgLib = __webpack_require__(496);
+function ensureDirExists(path) {
+    try {
+        fs.mkdirSync(path, { recursive: true });
+    }
+    catch (err) {
+        if (err.code !== 'EEXIST') {
+            core.warning(`Failed to create directory '${path}', error='${err}'.`);
+        }
+    }
+}
+exports.ensureDirExists = ensureDirExists;
+/**
+ * Compute an unique string given some text.
+ * @param {string} text The text to computer an hash for.
+ * @returns {string} The unique hash of 'text'.
+ */
+function hashCode(text) {
+    let hash = 42;
+    if (text.length != 0) {
+        for (let i = 0; i < text.length; i++) {
+            const char = text.charCodeAt(i);
+            hash = ((hash << 5) + hash) ^ char;
+        }
+    }
+    return hash.toString();
+}
+exports.hashCode = hashCode;
+function isExactKeyMatch(key, cacheKey) {
+    if (cacheKey)
+        return cacheKey.localeCompare(key, undefined, { sensitivity: "accent" }) === 0;
+    else
+        return false;
+}
+exports.isExactKeyMatch = isExactKeyMatch;
+function getVcpkgCommitId(baseUtils, vcpkgDirectory) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        let id = undefined;
+        const workspaceDir = (_a = process.env.GITHUB_WORKSPACE) !== null && _a !== void 0 ? _a : "";
+        if (workspaceDir) {
+            let fullVcpkgPath = "";
+            core.debug(`inputVcpkgPath=${vcpkgDirectory}`);
+            if (path.isAbsolute(vcpkgDirectory))
+                fullVcpkgPath = path.normalize(path.resolve(vcpkgDirectory));
+            else
+                fullVcpkgPath = path.normalize(path.resolve(path.join(workspaceDir, vcpkgDirectory)));
+            core.debug(`fullVcpkgPath='${fullVcpkgPath}'`);
+            const relPath = fullVcpkgPath.replace(workspaceDir, '');
+            core.debug(`relPath='${relPath}'`);
+            const submodulePath = path.join(workspaceDir, ".git/modules", relPath, "HEAD");
+            core.debug(`submodulePath='${submodulePath}'`);
+            // Check whether it is a submodule.
+            if (fs.existsSync(submodulePath)) {
+                id = fs.readFileSync(submodulePath).toString();
+                core.debug(`commitId='${id}'`);
+            }
+            else {
+                id = yield runVcpkgLib.VcpkgRunner.getCommitId(baseUtils, fullVcpkgPath);
+            }
+            id = id === null || id === void 0 ? void 0 : id.trim();
+        }
+        // Normalize any error to undefined.
+        return id !== null && id !== void 0 ? id : undefined;
+    });
+}
+exports.getVcpkgCommitId = getVcpkgCommitId;
+
+//# sourceMappingURL=vcpkg-utils.js.map
+
+
+/***/ }),
+
 /***/ 697:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -21569,6 +21690,7 @@ function fastqueue (context, worker, concurrency) {
   var queueHead = null
   var queueTail = null
   var _running = 0
+  var errorHandler = null
 
   var self = {
     push: push,
@@ -21585,7 +21707,8 @@ function fastqueue (context, worker, concurrency) {
     unshift: unshift,
     empty: noop,
     kill: kill,
-    killAndDrain: killAndDrain
+    killAndDrain: killAndDrain,
+    error: error
   }
 
   return self
@@ -21642,6 +21765,7 @@ function fastqueue (context, worker, concurrency) {
     current.release = release
     current.value = value
     current.callback = done || noop
+    current.errorHandler = errorHandler
 
     if (_running === self.concurrency || self.paused) {
       if (queueTail) {
@@ -21717,6 +21841,10 @@ function fastqueue (context, worker, concurrency) {
     self.drain()
     self.drain = noop
   }
+
+  function error (handler) {
+    errorHandler = handler
+  }
 }
 
 function noop () {}
@@ -21727,13 +21855,19 @@ function Task () {
   this.next = null
   this.release = noop
   this.context = null
+  this.errorHandler = null
 
   var self = this
 
   this.worked = function worked (err, result) {
     var callback = self.callback
+    var errorHandler = self.errorHandler
+    var val = self.value
     self.value = null
     self.callback = noop
+    if (self.errorHandler) {
+      errorHandler(err, val)
+    }
     callback.call(self.context, err, result)
     self.release(self)
   }
@@ -22556,6 +22690,7 @@ exports.isEmpty = isEmpty;
 /***/ 885:
 /***/ (function(module) {
 
+/*! run-parallel. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 module.exports = runParallel
 
 function runParallel (tasks, cb) {
@@ -23135,14 +23270,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Matcher = exports.BaseLibUtils = void 0;
+exports.Matcher = exports.BaseUtilLib = void 0;
 const fs = __importStar(__webpack_require__(747));
 const os = __importStar(__webpack_require__(87));
 const path = __importStar(__webpack_require__(622));
 const adm_zip_1 = __importDefault(__webpack_require__(639));
 const http = __importStar(__webpack_require__(549));
 const del = __importStar(__webpack_require__(245));
-class BaseLibUtils {
+const perf_hooks_1 = __webpack_require__(630);
+class BaseUtilLib {
     constructor(baseLib) {
         this.baseLib = baseLib;
     }
@@ -23285,7 +23421,7 @@ class BaseLibUtils {
             if (arg.startsWith("@")) {
                 const [ok, content] = readFile(arg.substring(1));
                 if (ok) {
-                    const t = BaseLibUtils.extractTriplet(content, readFile);
+                    const t = BaseUtilLib.extractTriplet(content, readFile);
                     if (t) {
                         return t.trim();
                     }
@@ -23305,7 +23441,7 @@ class BaseLibUtils {
             arg = arg.replace(/\s/, '');
             let isResponseFile = false;
             if (arg.startsWith("@")) {
-                const resolvedFilePath = BaseLibUtils.normalizePath(arg);
+                const resolvedFilePath = BaseUtilLib.normalizePath(arg);
                 if (this.baseLib.exist(resolvedFilePath)) {
                     const [ok, content] = readFile(resolvedFilePath);
                     if (ok && content) {
@@ -23335,11 +23471,13 @@ class BaseLibUtils {
         return __awaiter(this, void 0, void 0, function* () {
             this.baseLib.beginOperation(name);
             let result;
+            const startTime = perf_hooks_1.performance.now();
             try {
                 result = yield fn();
             }
             finally {
                 this.baseLib.endOperation();
+                this.baseLib.info(`⏱ elapsed: ${((perf_hooks_1.performance.now() - startTime) / 1000.).toFixed(3)} seconds`);
             }
             return result;
         });
@@ -23347,11 +23485,13 @@ class BaseLibUtils {
     wrapOpSync(name, fn) {
         this.baseLib.beginOperation(name);
         let result;
+        const startTime = perf_hooks_1.performance.now();
         try {
             result = fn();
         }
         finally {
             this.baseLib.endOperation();
+            this.baseLib.info(`⏱ elapsed: ${((perf_hooks_1.performance.now() - startTime) / 1000.).toFixed(3)} seconds`);
         }
         return result;
     }
@@ -23546,8 +23686,8 @@ class BaseLibUtils {
             throw new Error(`Agument '${name}' is undefined`);
     }
 }
-exports.BaseLibUtils = BaseLibUtils;
-BaseLibUtils.cachingFormatEnvName = 'AZP_CACHING_CONTENT_FORMAT';
+exports.BaseUtilLib = BaseUtilLib;
+BaseUtilLib.cachingFormatEnvName = 'AZP_CACHING_CONTENT_FORMAT';
 class Matcher {
     constructor(name, baseLib, fromPath) {
         this.name = name;

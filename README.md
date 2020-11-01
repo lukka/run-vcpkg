@@ -1,11 +1,16 @@
 [![Action Status](https://github.com/lukka/run-vcpkg/workflows/build-test/badge.svg)](https://github.com/lukka/run-vcpkg/actions)
 
+[![Coverage Status](https://coveralls.io/repos/github/lukka/run-vcpkg/badge.svg?branch=main)](https://coveralls.io/github/lukka/run-vcpkg?branch=main)
+
 # [The **run-vcpkg** action for caching artifacts and using vcpkg on GitHub](https://github.com/marketplace/actions/run-vcpkg)
 
 The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsoft/vcpkg) along with the previously installed ports. Briefly:
  - If there is a cache miss, vpckg is fetched and installed; the cache's key is composed by hashing the hosting OS name, the command line arguments and the vcpkg's commit id.
- - Then `vcpkg` is run to install the desired ports. This is a no-op if artifacts are already restored; this step can be skipped with `setupOnly:true`;
- - Artifacts and vcpkg are finally cached (if needed) with a post action at the end of the `job`.
+    - Restoring from cache can be skipped with `doNotCache:true`.
+ - Then `vcpkg` is run to install the desired ports. This is a no-op if artifacts are already restored. 
+    - This step can be skipped with `setupOnly:true`.
+ - Artifacts and vcpkg are then saved in cache (if it was a 'cache miss').
+    - Saving to cache can be skipped with `doNotCache:true`.
 
 The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
 
@@ -45,7 +50,7 @@ It is __highly recommended__ to [use vcpkg as a submodule](#best-practices). Her
 
     # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
     - name: Restore from cache and run vcpkg
-      uses: lukka/run-vcpkg@v4
+      uses: lukka/run-vcpkg@v5
       with:
         # Response file stored in source control, it provides the list of ports and triplet(s).
         vcpkgArguments: '@${{ env.vcpkgResponseFile }}'
@@ -77,7 +82,7 @@ When `setupOnly: true`, it only setups vcpkg and set VCPKG_ROOT environment vari
     # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
     - name: Restore from cache and install vcpkg
       # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
-      uses: lukka/run-vcpkg@v4
+      uses: lukka/run-vcpkg@v5
       with:
         setupOnly: true
     # Now that vcpkg is installed, it is being used to run desired arguments.

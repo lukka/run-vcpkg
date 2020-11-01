@@ -29,6 +29,10 @@ jobs:
         npm run test
       name: build and test
       shell: bash
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
   tests:
     name: '${{ matrix.os }}: functional tests'

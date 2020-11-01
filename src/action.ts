@@ -3,7 +3,7 @@
 // SPDX short identifier: MIT
 
 import * as actionlib from '@lukka/action-lib'
-import * as runvcpkglib from '@lukka/run-vcpkg-lib';
+import * as baseUtilLib from '@lukka/base-util-lib'
 import * as core from '@actions/core';
 import * as vcpkgAction from './vcpkg-action';
 
@@ -12,7 +12,8 @@ export const VCPKGDIRECTORIESKEY = 'vcpkgDirectoryKey';
 async function main(): Promise<void> {
   try {
     const actionLib = new actionlib.ActionLib();
-    const action = new vcpkgAction.VcpkgAction(actionLib);
+    const baseUtil = new baseUtilLib.BaseUtilLib(actionLib);
+    const action = new vcpkgAction.VcpkgAction(baseUtil);
     await action.run();
     core.info('run-vcpkg action execution succeeded');
     process.exitCode = 0;
