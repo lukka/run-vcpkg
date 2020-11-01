@@ -11,3 +11,4 @@ token.txt
 build
 !dist
 .npmrc
+coverage
