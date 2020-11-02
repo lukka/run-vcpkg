@@ -11680,7 +11680,7 @@ function exec(commandPath, args, execOptions) {
                 });
             }
             child.on('error', (error) => {
-                core.warning(`${error}`);
+                core.debug(`${error}`);
                 // Wait one second to get still some output.
                 setTimeout(() => {
                     reject(error);
