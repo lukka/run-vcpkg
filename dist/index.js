@@ -673,143 +673,111 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VcpkgAction = exports.doNotCacheInput = void 0;
+exports.VcpkgAction = exports.VCPKG_DO_CACHE_ON_POST_ACTION_KEY = exports.VCPKG_ROOT_KEY = exports.VCPKG_ADDED_CACHEKEY_KEY = exports.VCPKG_DO_NOT_CACHE_KEY = exports.VCPKG_CACHE_HIT_KEY = exports.VCPKG_CACHE_COMPUTED_KEY = exports.appendedCacheKeyInput = exports.additionalCachedPathsInput = exports.doNotCacheInput = void 0;
 const path = __webpack_require__(622);
 const core = __webpack_require__(470);
 const cache = __webpack_require__(692);
 const runvcpkglib = __webpack_require__(496);
-const vcpkg_utils_1 = __webpack_require__(693);
-// Input name for run-vcpkg only.
+const vcpkgutil = __webpack_require__(693);
+// Input names for run-vcpkg only.
 exports.doNotCacheInput = 'doNotCache';
+exports.additionalCachedPathsInput = 'additionalCachedPaths';
+/**
+ * The input's name for additional content for the cache key.
+ */
+exports.appendedCacheKeyInput = 'appendedCacheKey';
+// Saved data in the action, and consumed by post-action.
+exports.VCPKG_CACHE_COMPUTED_KEY = "VCPKG_CACHE_COMPUTED_KEY";
+exports.VCPKG_CACHE_HIT_KEY = "VCPKG_CACHE_HIT_KEY";
+exports.VCPKG_DO_NOT_CACHE_KEY = "VCPKG_DO_NOT_CACHE_KEY";
+exports.VCPKG_ADDED_CACHEKEY_KEY = "VCPKG_ADDED_CACHEKEY_KEY";
+exports.VCPKG_ROOT_KEY = "VCPKG_ROOT_KEY";
+exports.VCPKG_DO_CACHE_ON_POST_ACTION_KEY = "VCPKG_DO_CACHE_ON_POST_ACTION_KEY";
 class VcpkgAction {
     constructor(baseUtilLib) {
         this.baseUtilLib = baseUtilLib;
-        /**
-         * The input's name for additional content for the cache key.
-         */
-        this.appendedCacheKey = 'appendedCacheKey';
+        this.doNotCache = false;
+        this.doNotCache = core.getInput(exports.doNotCacheInput).toLowerCase() === "true";
+        core.saveState(exports.VCPKG_DO_NOT_CACHE_KEY, this.doNotCache ? "true" : "false");
+        this.appendedCacheKey = core.getInput(exports.appendedCacheKeyInput);
+        this.vcpkgRootDir = path.normalize(core.getInput(runvcpkglib.vcpkgDirectory));
+        core.saveState(exports.VCPKG_ROOT_KEY, this.vcpkgRootDir);
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache());
-            const runner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
-            yield runner.run();
-            yield this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache());
-        });
-    }
-    computeCacheKey() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let key = "";
-            const inputVcpkgPath = core.getInput(runvcpkglib.vcpkgDirectory);
-            const commitId = yield vcpkg_utils_1.getVcpkgCommitId(this.baseUtilLib, inputVcpkgPath);
-            const userProvidedCommitId = core.getInput(runvcpkglib.vcpkgCommitId);
-            if (commitId) {
-                core.info(`vcpkg identified at commitId='${commitId}', adding it to the cache's key.`);
-                key += `submodGitId=${commitId}`;
-            }
-            else if (userProvidedCommitId) {
-                key += "localGitId=" + vcpkg_utils_1.hashCode(userProvidedCommitId);
-            }
-            else {
-                core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
-            }
-            key += "-args=" + vcpkg_utils_1.hashCode(core.getInput(runvcpkglib.vcpkgArguments));
-            key += "-os=" + vcpkg_utils_1.hashCode(process.platform);
-            key += "-appendedKey=" + vcpkg_utils_1.hashCode(core.getInput(this.appendedCacheKey));
-            // Add the triplet only if it is provided.
-            const triplet = core.getInput(runvcpkglib.vcpkgTriplet);
-            if (triplet)
-                key += "-triplet=" + vcpkg_utils_1.hashCode(triplet);
-            return key;
-        });
-    }
-    saveCache() {
-        return __awaiter(this, void 0, void 0, function* () {
             try {
-                if (core.getInput(exports.doNotCacheInput).toLowerCase() === "true") {
-                    core.info(`Caching is disabled (${exports.doNotCacheInput}=true)`);
+                const computedCacheKey = yield vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+                core.saveState(exports.VCPKG_CACHE_COMPUTED_KEY, computedCacheKey);
+                yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache());
+                const runner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
+                yield runner.run();
+                if (core.getInput(runvcpkglib.setupOnly).toLowerCase() !== "true") {
+                    yield this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache());
                 }
                 else {
-                    if (!this.vcpkgCacheComputedKey) {
-                        core.warning(`Error retrieving cache's key.`);
-                        return;
-                    }
-                    if (vcpkg_utils_1.isExactKeyMatch(this.vcpkgCacheComputedKey, this.VCPKGCACHEHIT)) {
-                        core.info(`Cache hit occurred on the cache key '${this.vcpkgCacheComputedKey}', saving cache is skipped.`);
-                        return;
-                    }
-                    else {
-                        const pathsToCache = this.getCachedPaths();
-                        core.info(`Caching paths: '${pathsToCache}'`);
-                        console.log(`Running save-cache`);
-                        try {
-                            yield cache.saveCache(this.getCachedPaths(), this.vcpkgCacheComputedKey);
-                        }
-                        catch (error) {
-                            if (error.name === cache.ValidationError.name) {
-                                throw error;
-                            }
-                            else if (error.name === cache.ReserveCacheError.name) {
-                                core.info(error.message);
-                            }
-                            else {
-                                core.warning(error.message);
-                            }
-                        }
-                    }
+                    // If 'setupOnly' is true, trigger the saving of the cache during the post-action execution.
+                    core.saveState(exports.VCPKG_DO_CACHE_ON_POST_ACTION_KEY, "true");
                 }
-                core.info('run-vcpkg post action execution succeeded');
+                core.info('run-vcpkg  action execution succeeded');
                 process.exitCode = 0;
             }
             catch (err) {
+                const error = err;
+                if (error === null || error === void 0 ? void 0 : error.stack) {
+                    core.info(error.stack);
+                }
                 const errorAsString = (err !== null && err !== void 0 ? err : "undefined error").toString();
-                core.error(errorAsString);
-                core.setFailed('run-vcpkg post action execution failed');
+                core.setFailed(`run-vcpkg action execution failed: '${errorAsString}`);
                 process.exitCode = -1000;
             }
         });
     }
-    getCachedPaths() {
-        const vcpkgDir = path.normalize(core.getInput(runvcpkglib.vcpkgDirectory));
-        vcpkg_utils_1.ensureDirExists(vcpkgDir);
-        const pathsToCache = [
-            vcpkgDir,
-            path.normalize(`!${path.join(vcpkgDir, 'packages')}`),
-            path.normalize(`!${path.join(vcpkgDir, 'buildtrees')}`),
-            path.normalize(`!${path.join(vcpkgDir, 'downloads')}`)
-        ];
-        return pathsToCache;
+    saveCache() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const computedCacheKey = yield vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+            yield vcpkgutil.Utils.saveCache(this.doNotCache, computedCacheKey, this.hitCacheKey, vcpkgutil.Utils.getCachedPaths(this.vcpkgRootDir));
+        });
     }
     restoreCache() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (core.getInput(exports.doNotCacheInput).toLowerCase() === "true") {
-                core.info(`Caching is disabled (${exports.doNotCacheInput}=true)`);
-            }
-            else {
-                const key = yield this.computeCacheKey();
-                const pathsToCache = this.getCachedPaths();
-                core.info(`Cache's key = '${key}'.`);
-                this.vcpkgCacheComputedKey = key;
-                core.info(`Running restore-cache`);
-                let cacheHitId;
-                try {
-                    cacheHitId = yield cache.restoreCache(pathsToCache, key);
+            try {
+                if (this.doNotCache) {
+                    core.info(`Caching is disabled (${exports.doNotCacheInput}=true)`);
                 }
-                catch (err) {
+                else {
+                    const key = yield vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+                    const pathsToCache = vcpkgutil.Utils.getCachedPaths(this.vcpkgRootDir);
+                    core.info(`Cache's key = '${key}'.`);
+                    this.vcpkgCacheComputedKey = key;
+                    core.saveState(exports.VCPKG_CACHE_COMPUTED_KEY, this.vcpkgCacheComputedKey);
+                    core.info(`Running restore-cache...`);
+                    let cacheHitId;
                     try {
-                        core.warning(`restoreCache() failed once: '${err === null || err === void 0 ? void 0 : err.toString()}' , retrying...`);
                         cacheHitId = yield cache.restoreCache(pathsToCache, key);
                     }
                     catch (err) {
-                        core.warning(`restoreCache() failed again: '${err === null || err === void 0 ? void 0 : err.toString()}'.`);
+                        try {
+                            core.warning(`restoreCache() failed once: '${err === null || err === void 0 ? void 0 : err.toString()}' , retrying...`);
+                            cacheHitId = yield cache.restoreCache(pathsToCache, key);
+                        }
+                        catch (err) {
+                            core.warning(`restoreCache() failed again: '${err === null || err === void 0 ? void 0 : err.toString()}'.`);
+                        }
+                    }
+                    if (cacheHitId) {
+                        core.info(`Cache hit, id=${cacheHitId}.`);
+                        this.hitCacheKey = cacheHitId;
+                        core.saveState(exports.VCPKG_CACHE_HIT_KEY, cacheHitId);
+                    }
+                    else {
+                        core.info(`Cache miss.`);
                     }
                 }
-                if (cacheHitId) {
-                    core.info(`Cache hit, id=${cacheHitId}.`);
-                    this.VCPKGCACHEHIT = cacheHitId;
-                }
-                else {
-                    core.info(`Cache miss.`);
+            }
+            catch (err) {
+                const error = err;
+                if (error === null || error === void 0 ? void 0 : error.stack) {
+                    core.info(error.stack);
                 }
             }
         });
@@ -2718,18 +2686,20 @@ class VcpkgRunner {
         });
     }
     setOutputs() {
-        // Set the RUNVCPKG_VCPKG_ROOT value, it could be re-used later by run-cmake task.
+        // Set the RUNVCPKG_VCPKG_ROOT value, it could be re-used later by run-cmake.
         this.baseUtils.setEnvVar(globals.outVcpkgRootPath, this.vcpkgDestPath);
         // Override the VCPKG_ROOT value, it must point to this vcpkg instance, it is used by 
-        // any invocation of the vcpkg executable in this task.
+        // any subsequent invocation of the vcpkg executable.
         this.baseUtils.setEnvVar(globals.vcpkgRoot, this.vcpkgDestPath);
         // The output variable must have a different name than the
         // one set with setVariable(), as the former get a prefix added out of our control.
         const outVarName = `${globals.outVcpkgRootPath}_OUT`;
-        this.tl.info(`Set task output variable '${outVarName}' to value: ${this.vcpkgDestPath}`);
+        this.tl.info(`Set the output variable '${outVarName}' to value: ${this.vcpkgDestPath}`);
         this.tl.setOutput(`${outVarName}`, this.vcpkgDestPath);
         // Force AZP_CACHING_CONTENT_FORMAT to "Files"
         this.baseUtils.setEnvVar(baseutillib.BaseUtilLib.cachingFormatEnvName, "Files");
+        // Set output env and var for the triplet.
+        this.setEnvOutTriplet(globals.outVcpkgTriplet, globals.outVarVcpkgTriplet, this.vcpkgTriplet);
     }
     prepareForCache() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -2806,16 +2776,12 @@ class VcpkgRunner {
             if (this.cleanAfterBuild) {
                 installCmd += ' --clean-after-build';
             }
-            const outVarName = `${globals.outVcpkgTriplet}_OUT`;
             if (vcpkgTripletUsed) {
-                // Set the used triplet in RUNVCPKG_VCPKG_TRIPLET environment variable.
-                this.baseUtils.setEnvVar(globals.outVcpkgTriplet, vcpkgTripletUsed);
-                // Set output variable containing the use triplet
-                this.tl.info(`Set task output variable '${outVarName}' to value: ${vcpkgTripletUsed}`);
-                this.tl.setVariable(outVarName, vcpkgTripletUsed);
+                // Set the used triplet in RUNVCPKG_VCPKG_TRIPLET environment/output variables.
+                this.setEnvOutTriplet(globals.outVcpkgTriplet, globals.outVarVcpkgTriplet, vcpkgTripletUsed);
             }
             else {
-                this.tl.info(`${globals.outVcpkgTriplet}' nor '${outVarName}' have NOT been set by the step since there is no default triplet specified.`);
+                this.tl.info(`${globals.outVcpkgTriplet}' nor '${globals.outVarVcpkgTriplet}' have NOT been set by the step since there is no default triplet specified.`);
             }
             vcpkgTool.line(installCmd);
             this.tl.info(`Running 'vcpkg ${installCmd}' in directory '${this.vcpkgDestPath}' ...`);
@@ -2992,6 +2958,12 @@ class VcpkgRunner {
             // Keep track of last successful build commit id.
             this.tl.info(`Stored last built vcpkg commit id '${builtCommitId}' in file '${this.pathToLastBuiltCommitId}`);
         });
+    }
+    setEnvOutTriplet(envVarName, outVarName, triplet) {
+        this.baseUtils.setEnvVar(envVarName, triplet);
+        this.tl.info(`Set the environment variable '${envVarName}' to value: ${triplet}`);
+        this.tl.setVariable(outVarName, triplet);
+        this.tl.info(`Set the output variable '${outVarName}' to value: ${triplet}`);
     }
 }
 exports.VcpkgRunner = VcpkgRunner;
@@ -11610,7 +11582,7 @@ function escapeCmdExeArgument(argument) {
  * e.spawnSync('cmake', ['-G Ninja', '.'], {shell:true, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> -- Configuring done
  * e.spawnSync('cmake', ['-GNinja', '.'], {shell:true, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> -- Configuring done
  * Hence the caller of this function is always using no spaces in between arguments.
- * Exception is arbitrary text coming from the user, which will hit this problem when not useing a shell.
+ * Exception is arbitrary text coming from the user, which will hit this problem when not using a shell.
  *
  * Other corner cases:
  * e.spawnSync('cmake', ['-GUnix Makefiles', '.'], {shell:true, stdio:'inherit', cwd:'/Users/git_repos/cmake-task-tests/'}) -> CMake Error: Could not create named generator Unix
@@ -11660,7 +11632,7 @@ function exec(commandPath, args, execOptions) {
             commandPath = escapeShArgument(commandPath);
         }
         args = args2;
-        core.debug(`cp.spawn(${commandPath}, ${JSON.stringify(args)}, {cwd=${opts === null || opts === void 0 ? void 0 : opts.cwd}, shell=${opts === null || opts === void 0 ? void 0 : opts.shell}, path=${JSON.stringify((_a = opts === null || opts === void 0 ? void 0 : opts.env) === null || _a === void 0 ? void 0 : _a.PATH)}})`);
+        core.debug(`cp.spawn("${commandPath}", ${JSON.stringify(args)}, {cwd=${opts === null || opts === void 0 ? void 0 : opts.cwd}, shell=${opts === null || opts === void 0 ? void 0 : opts.shell}, path=${JSON.stringify((_a = opts === null || opts === void 0 ? void 0 : opts.env) === null || _a === void 0 ? void 0 : _a.PATH)}})`);
         return new Promise((resolve, reject) => {
             const child = cp.spawn(`${commandPath}`, args, opts);
             if (execOptions && child.stdout) {
@@ -11903,13 +11875,13 @@ class ActionLib {
     }
     execSync(path, args, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            const exitCode = yield exec(`"${path}"`, args, options);
-            const res2 = {
+            const exitCode = yield exec(path, args, options);
+            const result = {
                 code: exitCode,
                 stdout: "",
                 stderr: ""
             };
-            return Promise.resolve(res2);
+            return Promise.resolve(result);
         });
     }
     which(name, required) {
@@ -19446,77 +19418,161 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVcpkgCommitId = exports.isExactKeyMatch = exports.hashCode = exports.ensureDirExists = void 0;
+exports.Utils = void 0;
 const path = __webpack_require__(622);
 const fs = __webpack_require__(747);
 const core = __webpack_require__(470);
-const runVcpkgLib = __webpack_require__(496);
-function ensureDirExists(path) {
-    try {
-        fs.mkdirSync(path, { recursive: true });
-    }
-    catch (err) {
-        if (err.code !== 'EEXIST') {
-            core.warning(`Failed to create directory '${path}', error='${err}'.`);
+const runvcpkglib = __webpack_require__(496);
+const baseutillib = __webpack_require__(758);
+const actionlib = __webpack_require__(778);
+const cache = __webpack_require__(692);
+class Utils {
+    static ensureDirExists(path) {
+        try {
+            fs.mkdirSync(path, { recursive: true });
+        }
+        catch (err) {
+            if (err.code !== 'EEXIST') {
+                core.warning(`Failed to create directory '${path}', error='${err}'.`);
+            }
         }
     }
-}
-exports.ensureDirExists = ensureDirExists;
-/**
- * Compute an unique string given some text.
- * @param {string} text The text to computer an hash for.
- * @returns {string} The unique hash of 'text'.
- */
-function hashCode(text) {
-    let hash = 42;
-    if (text.length != 0) {
-        for (let i = 0; i < text.length; i++) {
-            const char = text.charCodeAt(i);
-            hash = ((hash << 5) + hash) ^ char;
+    /**
+     * Compute an unique string given some text.
+     * @param {string} text The text to computer an hash for.
+     * @returns {string} The unique hash of 'text'.
+     */
+    static hashCode(text) {
+        let hash = 42;
+        if (text.length != 0) {
+            for (let i = 0; i < text.length; i++) {
+                const char = text.charCodeAt(i);
+                hash = ((hash << 5) + hash) ^ char;
+            }
         }
+        return hash.toString();
     }
-    return hash.toString();
-}
-exports.hashCode = hashCode;
-function isExactKeyMatch(key, cacheKey) {
-    if (cacheKey)
-        return cacheKey.localeCompare(key, undefined, { sensitivity: "accent" }) === 0;
-    else
-        return false;
-}
-exports.isExactKeyMatch = isExactKeyMatch;
-function getVcpkgCommitId(baseUtils, vcpkgDirectory) {
-    var _a;
-    return __awaiter(this, void 0, void 0, function* () {
-        let id = undefined;
-        const workspaceDir = (_a = process.env.GITHUB_WORKSPACE) !== null && _a !== void 0 ? _a : "";
-        if (workspaceDir) {
-            let fullVcpkgPath = "";
-            core.debug(`inputVcpkgPath=${vcpkgDirectory}`);
-            if (path.isAbsolute(vcpkgDirectory))
-                fullVcpkgPath = path.normalize(path.resolve(vcpkgDirectory));
-            else
-                fullVcpkgPath = path.normalize(path.resolve(path.join(workspaceDir, vcpkgDirectory)));
-            core.debug(`fullVcpkgPath='${fullVcpkgPath}'`);
-            const relPath = fullVcpkgPath.replace(workspaceDir, '');
-            core.debug(`relPath='${relPath}'`);
-            const submodulePath = path.join(workspaceDir, ".git/modules", relPath, "HEAD");
-            core.debug(`submodulePath='${submodulePath}'`);
-            // Check whether it is a submodule.
-            if (fs.existsSync(submodulePath)) {
-                id = fs.readFileSync(submodulePath).toString();
-                core.debug(`commitId='${id}'`);
+    static isExactKeyMatch(key, cacheKey) {
+        if (cacheKey)
+            return cacheKey.localeCompare(key, undefined, { sensitivity: "accent" }) === 0;
+        else
+            return false;
+    }
+    static getVcpkgCommitId(baseUtils, vcpkgDirectory) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            let id = undefined;
+            const workspaceDir = (_a = process.env.GITHUB_WORKSPACE) !== null && _a !== void 0 ? _a : "";
+            if (workspaceDir) {
+                let fullVcpkgPath = "";
+                core.debug(`inputVcpkgPath=${vcpkgDirectory}`);
+                if (path.isAbsolute(vcpkgDirectory))
+                    fullVcpkgPath = path.normalize(path.resolve(vcpkgDirectory));
+                else
+                    fullVcpkgPath = path.normalize(path.resolve(path.join(workspaceDir, vcpkgDirectory)));
+                core.debug(`fullVcpkgPath='${fullVcpkgPath}'`);
+                const relPath = fullVcpkgPath.replace(workspaceDir, '');
+                core.debug(`relPath='${relPath}'`);
+                const submodulePath = path.join(workspaceDir, ".git/modules", relPath, "HEAD");
+                core.debug(`submodulePath='${submodulePath}'`);
+                // Check whether it is a submodule.
+                if (fs.existsSync(submodulePath)) {
+                    id = fs.readFileSync(submodulePath).toString();
+                    core.debug(`commitId='${id}'`);
+                }
+                else {
+                    id = yield runvcpkglib.VcpkgRunner.getCommitId(baseUtils, fullVcpkgPath);
+                }
+                id = id === null || id === void 0 ? void 0 : id.trim();
+            }
+            // Normalize any error to undefined.
+            return id !== null && id !== void 0 ? id : undefined;
+        });
+    }
+    static computeCacheKey(appendedCacheKey) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let key = "";
+            const inputVcpkgPath = core.getInput(runvcpkglib.vcpkgDirectory);
+            const actionLib = new actionlib.ActionLib();
+            const baseUtil = new baseutillib.BaseUtilLib(actionLib);
+            const commitId = yield Utils.getVcpkgCommitId(baseUtil, inputVcpkgPath);
+            const userProvidedCommitId = core.getInput(runvcpkglib.vcpkgCommitId);
+            if (commitId) {
+                core.info(`vcpkg identified at commitId='${commitId}', adding it to the cache's key.`);
+                key += `submodGitId=${commitId}`;
+            }
+            else if (userProvidedCommitId) {
+                key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
             }
             else {
-                id = yield runVcpkgLib.VcpkgRunner.getCommitId(baseUtils, fullVcpkgPath);
+                core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
             }
-            id = id === null || id === void 0 ? void 0 : id.trim();
-        }
-        // Normalize any error to undefined.
-        return id !== null && id !== void 0 ? id : undefined;
-    });
+            key += "-args=" + Utils.hashCode(core.getInput(runvcpkglib.vcpkgArguments));
+            key += "-os=" + Utils.hashCode(process.platform);
+            key += "-appendedKey=" + Utils.hashCode(appendedCacheKey);
+            // Add the triplet only if it is provided.
+            const triplet = core.getInput(runvcpkglib.vcpkgTriplet);
+            if (triplet)
+                key += "-triplet=" + Utils.hashCode(triplet);
+            return key;
+        });
+    }
+    static saveCache(doNotCache, vcpkgCacheComputedKey, hitCacheKey, cachedPaths) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (doNotCache) {
+                    core.info(`Caching is disabled, saving cache is skipped.`);
+                }
+                else {
+                    if (!vcpkgCacheComputedKey) {
+                        core.warning(`Error retrieving cache's key.`);
+                        return;
+                    }
+                    if (Utils.isExactKeyMatch(vcpkgCacheComputedKey, hitCacheKey)) {
+                        core.info(`Cache hit occurred on the cache key '${vcpkgCacheComputedKey}', saving cache is skipped.`);
+                    }
+                    else {
+                        const pathsToCache = cachedPaths;
+                        core.info(`Caching paths: '${pathsToCache}'`);
+                        console.log(`Running save-cache...`);
+                        try {
+                            yield cache.saveCache(pathsToCache, vcpkgCacheComputedKey);
+                        }
+                        catch (error) {
+                            if (error.name === cache.ValidationError.name) {
+                                throw error;
+                            }
+                            else if (error.name === cache.ReserveCacheError.name) {
+                                core.info(error.message);
+                            }
+                            else {
+                                core.warning(error.message);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                core.info("vcpkg-utils.saveCache() failed!");
+                const error = err;
+                if (error === null || error === void 0 ? void 0 : error.stack) {
+                    core.info(error.stack);
+                }
+            }
+        });
+    }
+    static getCachedPaths(vcpkgRoot) {
+        Utils.ensureDirExists(vcpkgRoot);
+        const pathsToCache = [
+            vcpkgRoot,
+            path.normalize(`!${path.join(vcpkgRoot, 'packages')}`),
+            path.normalize(`!${path.join(vcpkgRoot, 'buildtrees')}`),
+            path.normalize(`!${path.join(vcpkgRoot, 'downloads')}`)
+        ];
+        return pathsToCache;
+    }
 }
-exports.getVcpkgCommitId = getVcpkgCommitId;
+exports.Utils = Utils;
 
 //# sourceMappingURL=vcpkg-utils.js.map
 
@@ -22338,12 +22394,13 @@ module.exports = function isGlob(str, options) {
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setupOnly = exports.vcpkgRoot = exports.doNotUpdateVcpkg = exports.cleanAfterBuild = exports.vcpkgLastBuiltCommitId = exports.vcpkgArtifactIgnoreEntries = exports.vcpkgDirectory = exports.vcpkgTriplet = exports.outVcpkgTriplet = exports.outVcpkgRootPath = exports.vcpkgCommitId = exports.vcpkgGitURL = exports.vcpkgArguments = void 0;
+exports.setupOnly = exports.vcpkgRoot = exports.doNotUpdateVcpkg = exports.cleanAfterBuild = exports.vcpkgLastBuiltCommitId = exports.vcpkgArtifactIgnoreEntries = exports.vcpkgDirectory = exports.vcpkgTriplet = exports.outVarVcpkgTriplet = exports.outVcpkgTriplet = exports.outVcpkgRootPath = exports.vcpkgCommitId = exports.vcpkgGitURL = exports.vcpkgArguments = void 0;
 exports.vcpkgArguments = 'vcpkgArguments';
 exports.vcpkgGitURL = 'vcpkgGitURL';
 exports.vcpkgCommitId = 'vcpkgGitCommitId';
 exports.outVcpkgRootPath = "RUNVCPKG_VCPKG_ROOT";
 exports.outVcpkgTriplet = "RUNVCPKG_VCPKG_TRIPLET";
+exports.outVarVcpkgTriplet = "RUNVCPKG_VCPKG_TRIPLET_OUT";
 exports.vcpkgTriplet = "vcpkgTriplet";
 exports.vcpkgDirectory = "vcpkgDirectory";
 exports.vcpkgArtifactIgnoreEntries = "vcpkgArtifactIgnoreEntries";

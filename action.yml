@@ -56,6 +56,8 @@ inputs:
 runs:
   using: 'node12'
   main: 'dist/index.js'
+  post: 'dist/post/index.js'
+  post-if: 'success()'
 
 branding:
   icon: 'terminal'  
