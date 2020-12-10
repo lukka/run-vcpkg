@@ -37,9 +37,9 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## <a id='quickstart'>Quickstart</a>
 
-### <a id='manifest'>Setup vcpkg and use CMake with a vcpkg.json to install dependencies and build your project</a>
+### <a id='manifest'>Setup vcpkg and use CMake with a vcpkg.json manifest to install dependencies and build your project</a>
 
-It is __highly recommended__ to either [use vcpkg as a submodule](#vcpkgsubmodule) and to [use vcpkg.json](#vcpkgjson) to declaratively specify the dependencies.
+It is __highly recommended__ to use both [vcpkg as a submodule](#vcpkgsubmodule) and a [vcpkg.json](#vcpkgjson) manifest file to declaratively specify the dependencies.
 
 Both suggestions are shown in the [hosted-advanced-setup-vcpkg-manifest.yml](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-advanced-setup-vcpkg-manifest.yml) workflow, here below an excerpt:
 
