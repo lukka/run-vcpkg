@@ -28,7 +28,6 @@ export const VCPKG_DO_CACHE_ON_POST_ACTION_KEY = "VCPKG_DO_CACHE_ON_POST_ACTION_
 export class VcpkgAction {
 
   private readonly doNotCache: boolean = false;
-  private vcpkgCacheComputedKey: string | undefined;
   private hitCacheKey: string | undefined;
   private readonly appendedCacheKey: string;
   private readonly vcpkgRootDir: string;
@@ -43,23 +42,27 @@ export class VcpkgAction {
 
   public async run(): Promise<void> {
     try {
-      const computedCacheKey = await vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
-      core.saveState(VCPKG_CACHE_COMPUTED_KEY, computedCacheKey);
-
-      await this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache',
-        () => this.restoreCache());
-      const runner: runvcpkglib.VcpkgRunner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
-      await runner.run();
-
-      if (core.getInput(runvcpkglib.setupOnly).toLowerCase() !== "true") {
-        await this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache());
+      const vcpkgCacheComputedKey = await vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+      if (!vcpkgCacheComputedKey) {
+        core.error("Computation for the cache key failed!");
       } else {
-        // If 'setupOnly' is true, trigger the saving of the cache during the post-action execution.
-        core.saveState(VCPKG_DO_CACHE_ON_POST_ACTION_KEY, "true");
-      }
+        core.saveState(VCPKG_CACHE_COMPUTED_KEY, vcpkgCacheComputedKey);
+        core.info(`Cache's key = '${vcpkgCacheComputedKey}'.`);
+        await this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache',
+          () => this.restoreCache(vcpkgCacheComputedKey as string));
+        const runner: runvcpkglib.VcpkgRunner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
+        await runner.run();
 
-      core.info('run-vcpkg  action execution succeeded');
-      process.exitCode = 0;
+        if (core.getInput(runvcpkglib.setupOnly).toLowerCase() !== "true") {
+          await this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache(vcpkgCacheComputedKey as string));
+        } else {
+          // If 'setupOnly' is true, trigger the saving of the cache during the post-action execution.
+          core.saveState(VCPKG_DO_CACHE_ON_POST_ACTION_KEY, "true");
+        }
+
+        core.info('run-vcpkg  action execution succeeded');
+        process.exitCode = 0;
+      }
     }
     catch (err) {
       const error: Error = err as Error;
@@ -72,23 +75,19 @@ export class VcpkgAction {
     }
   }
 
-  private async saveCache(): Promise<void> {
-    const computedCacheKey = await vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
-    await vcpkgutil.Utils.saveCache(this.doNotCache, computedCacheKey, this.hitCacheKey,
+  private async saveCache(key: string): Promise<void> {
+
+    await vcpkgutil.Utils.saveCache(this.doNotCache, key, this.hitCacheKey,
       vcpkgutil.Utils.getCachedPaths(this.vcpkgRootDir));
   }
 
-  private async restoreCache(): Promise<void> {
+  private async restoreCache(key: string): Promise<void> {
     try {
       if (this.doNotCache) {
         core.info(`Caching is disabled (${doNotCacheInput}=true)`);
       } else {
-        const key: string = await vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
         const pathsToCache: string[] = vcpkgutil.Utils.getCachedPaths(this.vcpkgRootDir);
-
         core.info(`Cache's key = '${key}'.`);
-        this.vcpkgCacheComputedKey = key;
-        core.saveState(VCPKG_CACHE_COMPUTED_KEY, this.vcpkgCacheComputedKey);
         core.info(`Running restore-cache...`);
 
         let cacheHitId: string | undefined;

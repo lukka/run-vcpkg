@@ -46,8 +46,18 @@ export class Utils {
       return false;
   }
 
-  public static async getVcpkgCommitId(baseUtils: baseutillib.BaseUtilLib, vcpkgDirectory: string): Promise<string | undefined> {
+  /**
+   * Retrieve the commit id of the Git repository at vcpkgDirectory.
+   *
+   * @static
+   * @param {baseutillib.BaseUtilLib} baseUtils
+   * @param {string} vcpkgDirectory
+   * @returns {(Promise<[string | undefined, boolean | undefined]>)}
+   * @memberof Utils
+   */
+  public static async getVcpkgCommitId(baseUtils: baseutillib.BaseUtilLib, vcpkgDirectory: string): Promise<[string | undefined, boolean | undefined]> {
     let id = undefined;
+    let isSubmodule = undefined;
     const workspaceDir = process.env.GITHUB_WORKSPACE ?? "";
     if (workspaceDir) {
       let fullVcpkgPath = "";
@@ -65,14 +75,16 @@ export class Utils {
       if (fs.existsSync(submodulePath)) {
         id = fs.readFileSync(submodulePath).toString();
         core.debug(`commitId='${id}'`);
+        isSubmodule = true;
       } else {
         id = await runvcpkglib.VcpkgRunner.getCommitId(baseUtils, fullVcpkgPath);
+        isSubmodule = false;
       }
       id = id?.trim();
     }
 
     // Normalize any error to undefined.
-    return id ?? undefined;
+    return [id, isSubmodule];
   }
 
   public static async computeCacheKey(appendedCacheKey: string): Promise<string> {
@@ -82,12 +94,17 @@ export class Utils {
     const actionLib = new actionlib.ActionLib();
     const baseUtil = new baseutillib.BaseUtilLib(actionLib);
 
-    const commitId: string | undefined = await Utils.getVcpkgCommitId(baseUtil, inputVcpkgPath);
+    const [commitId, isSubmodule] = await Utils.getVcpkgCommitId(baseUtil, inputVcpkgPath);
     const userProvidedCommitId = core.getInput(runvcpkglib.vcpkgCommitId);
     if (commitId) {
       core.info(`vcpkg identified at commitId='${commitId}', adding it to the cache's key.`);
-      key += `submodGitId=${commitId}`;
+      if (isSubmodule) {
+        key += `submodGitId=${commitId}`;
+      } else {
+        key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
+      }
     } else if (userProvidedCommitId) {
+      core.info(`Using user provided vcpkg's Git commit id='${commitId}', adding it to the cache's key.`);
       key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
     } else {
       core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
