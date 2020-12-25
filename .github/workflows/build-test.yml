@@ -17,7 +17,7 @@ jobs:
         submodules: true
     - uses: actions/setup-node@v1
       with:
-        node-version: '12.x'
+        node-version: '14.x'
       # How to consume GitHub packages, from this message (!): https://github.community/t/download-from-github-package-registry-without-authentication/14407/35
       # Inspired from here: https://github.com/jcansdale-test/npmrc-configurations/blob/master/.github/workflows/blank.yml
     - name: Authenticate to GitHub Packages
@@ -53,7 +53,7 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
+        vcpkgGitCommitId: 'a8ac047e6c40b806ac89ac4d7281d45d7c0aaf29'
         useShell: true
 
     - name: basic test for run-vcpkg with setupOnly
@@ -62,7 +62,7 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
+        vcpkgGitCommitId: 'a8ac047e6c40b806ac89ac4d7281d45d7c0aaf29'
         useShell: true
         setupOnly: true
 
@@ -72,5 +72,5 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: '--overlay-ports=../__tests__/assets/1 sqlite3 @../__tests__/assets/tempDirectory/response_file1 --overlay-ports=../__tests__/assets/subdir/2 @../__tests__/assets/response_file2'
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: '6185aa76504a5025f36754324abf307cc776f3da'
+        vcpkgGitCommitId: 'a8ac047e6c40b806ac89ac4d7281d45d7c0aaf29'
         useShell: true
