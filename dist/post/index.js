@@ -323,7 +323,7 @@ class Utils {
                 }
             }
             else if (userProvidedCommitId) {
-                core.info(`Using user provided vcpkg's Git commit id='${commitId}', adding it to the cache's key.`);
+                core.info(`Using user provided vcpkg's Git commit id='${userProvidedCommitId}', adding it to the cache's key.`);
                 key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
             }
             else {

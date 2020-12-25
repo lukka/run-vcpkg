@@ -104,7 +104,7 @@ export class Utils {
         key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
       }
     } else if (userProvidedCommitId) {
-      core.info(`Using user provided vcpkg's Git commit id='${commitId}', adding it to the cache's key.`);
+      core.info(`Using user provided vcpkg's Git commit id='${userProvidedCommitId}', adding it to the cache's key.`);
       key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
     } else {
       core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
