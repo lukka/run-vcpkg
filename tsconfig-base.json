@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es6",
+        "target": "es2020",
         "sourceMap": true,
         "strict": true,
         // https://github.com/microsoft/TypeScript/issues/9858: 
