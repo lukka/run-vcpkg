@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Luca Cappa
+// Copyright (c) 2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 

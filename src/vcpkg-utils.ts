@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Luca Cappa
+// Copyright (c) 2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 
@@ -6,11 +6,15 @@ import * as path from 'path'
 import * as fs from 'fs'
 import * as core from '@actions/core'
 import * as runvcpkglib from '@lukka/run-vcpkg-lib'
+import * as baselib from '@lukka/base-lib'
 import * as baseutillib from '@lukka/base-util-lib'
 import * as actionlib from '@lukka/action-lib'
 import * as cache from '@actions/cache'
+import { additionalCachedPathsInput } from './vcpkg-action'
 
 export class Utils {
+
+  private static readonly VCPKG_ADDITIONAL_CACHED_PATHS_KEY = "VCPKG_ADDITIONAL_CACHED_PATHS_KEY";
 
   public static ensureDirExists(path: string): void {
     try {
@@ -136,9 +140,9 @@ export class Utils {
         } else {
           const pathsToCache: string[] = cachedPaths;
           core.info(`Caching paths: '${pathsToCache}'`);
-          console.log(`Running save-cache...`);
 
           try {
+            core.info(`Running save-cache with key '${vcpkgCacheComputedKey}' ...`);
             await cache.saveCache(pathsToCache, vcpkgCacheComputedKey);
           }
           catch (error) {
@@ -161,14 +165,28 @@ export class Utils {
     }
   }
 
-  public static getCachedPaths(vcpkgRoot: string): string[] {
-    Utils.ensureDirExists(vcpkgRoot);
-    const pathsToCache: string[] = [
-      vcpkgRoot,
-      path.normalize(`!${path.join(vcpkgRoot, 'packages')}`),
-      path.normalize(`!${path.join(vcpkgRoot, 'buildtrees')}`),
-      path.normalize(`!${path.join(vcpkgRoot, 'downloads')}`)
-    ];
-    return pathsToCache;
+  public static addCachedPaths(paths: string): void {
+    core.debug(`Set VCPKG_ADDITIONAL_CACHED_PATHS_KEY=${paths}`);
+    core.saveState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths);
+    core.exportVariable(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths)
+  }
+
+  public static getAllCachedPaths(baselib: baselib.BaseLib, vcpkgRootDir: string): string[] {
+    let paths = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
+
+    let additionalCachedPaths: string | undefined = core.getState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY);
+    if (!additionalCachedPaths) {
+      additionalCachedPaths = process.env[Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY];
+    }
+    core.debug(`Get VCPKG_ADDITIONAL_CACHED_PATHS_KEY=${additionalCachedPaths}`);
+    if (additionalCachedPaths) {
+      paths = paths.concat(additionalCachedPaths.split(';'));
+    }
+
+    // Remove empty entries.
+    paths = paths.map(s => s.trim()).filter(Boolean);
+
+    // Remove duplicates.
+    return [...new Set(paths)];
   }
 }

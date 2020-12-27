@@ -7,7 +7,7 @@ module.exports =
 
 "use strict";
 
-// Copyright (c) 2020 Luca Cappa
+// Copyright (c) 2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -43,7 +43,7 @@ function main() {
                     const cacheHit = core.getState(vcpkgaction.VCPKG_CACHE_HIT_KEY);
                     const computedCacheKey = core.getState(vcpkgaction.VCPKG_CACHE_COMPUTED_KEY);
                     const vcpkgRoot = core.getState(vcpkgaction.VCPKG_ROOT_KEY);
-                    const cachedPaths = vcpkgutil.Utils.getCachedPaths(vcpkgRoot);
+                    const cachedPaths = vcpkgutil.Utils.getAllCachedPaths(actionLib, vcpkgRoot);
                     yield vcpkgutil.Utils.saveCache(doNotCache, computedCacheKey, cacheHit, cachedPaths);
                 }
             }));
@@ -72,7 +72,7 @@ main().catch(error => console.error("main() failed!", error));
 
 "use strict";
 
-// Copyright (c) 2020 Luca Cappa
+// Copyright (c) 2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -109,11 +109,15 @@ class VcpkgAction {
     constructor(baseUtilLib) {
         this.baseUtilLib = baseUtilLib;
         this.doNotCache = false;
+        this.isSetupOnly = false;
         this.doNotCache = core.getInput(exports.doNotCacheInput).toLowerCase() === "true";
         core.saveState(exports.VCPKG_DO_NOT_CACHE_KEY, this.doNotCache ? "true" : "false");
         this.appendedCacheKey = core.getInput(exports.appendedCacheKeyInput);
         this.vcpkgRootDir = path.normalize(core.getInput(runvcpkglib.vcpkgDirectory));
+        vcpkgutil.Utils.ensureDirExists(this.vcpkgRootDir);
         core.saveState(exports.VCPKG_ROOT_KEY, this.vcpkgRootDir);
+        vcpkgutil.Utils.addCachedPaths(core.getInput(exports.additionalCachedPathsInput));
+        this.isSetupOnly = core.getInput(runvcpkglib.setupOnly).toLowerCase() !== "true";
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -128,7 +132,7 @@ class VcpkgAction {
                     yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache(vcpkgCacheComputedKey));
                     const runner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
                     yield runner.run();
-                    if (core.getInput(runvcpkglib.setupOnly).toLowerCase() !== "true") {
+                    if (this.isSetupOnly) {
                         yield this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache(vcpkgCacheComputedKey));
                     }
                     else {
@@ -152,7 +156,7 @@ class VcpkgAction {
     }
     saveCache(key) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield vcpkgutil.Utils.saveCache(this.doNotCache, key, this.hitCacheKey, vcpkgutil.Utils.getCachedPaths(this.vcpkgRootDir));
+            yield vcpkgutil.Utils.saveCache(this.doNotCache, key, this.hitCacheKey, vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir));
         });
     }
     restoreCache(key) {
@@ -162,8 +166,8 @@ class VcpkgAction {
                     core.info(`Caching is disabled (${exports.doNotCacheInput}=true)`);
                 }
                 else {
-                    const pathsToCache = vcpkgutil.Utils.getCachedPaths(this.vcpkgRootDir);
-                    core.info(`Cache's key = '${key}'.`);
+                    const pathsToCache = vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir);
+                    core.info(`Cache's key = '${key}', paths = '${pathsToCache}'`);
                     core.info(`Running restore-cache...`);
                     let cacheHitId;
                     try {
@@ -209,7 +213,7 @@ exports.VcpkgAction = VcpkgAction;
 
 "use strict";
 
-// Copyright (c) 2020 Luca Cappa
+// Copyright (c) 2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -356,8 +360,8 @@ class Utils {
                     else {
                         const pathsToCache = cachedPaths;
                         core.info(`Caching paths: '${pathsToCache}'`);
-                        console.log(`Running save-cache...`);
                         try {
+                            core.info(`Running save-cache with key '${vcpkgCacheComputedKey}' ...`);
                             yield cache.saveCache(pathsToCache, vcpkgCacheComputedKey);
                         }
                         catch (error) {
@@ -383,18 +387,29 @@ class Utils {
             }
         });
     }
-    static getCachedPaths(vcpkgRoot) {
-        Utils.ensureDirExists(vcpkgRoot);
-        const pathsToCache = [
-            vcpkgRoot,
-            path.normalize(`!${path.join(vcpkgRoot, 'packages')}`),
-            path.normalize(`!${path.join(vcpkgRoot, 'buildtrees')}`),
-            path.normalize(`!${path.join(vcpkgRoot, 'downloads')}`)
-        ];
-        return pathsToCache;
+    static addCachedPaths(paths) {
+        core.debug(`Set VCPKG_ADDITIONAL_CACHED_PATHS_KEY=${paths}`);
+        core.saveState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths);
+        core.exportVariable(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths);
+    }
+    static getAllCachedPaths(baselib, vcpkgRootDir) {
+        let paths = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
+        let additionalCachedPaths = core.getState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY);
+        if (!additionalCachedPaths) {
+            additionalCachedPaths = process.env[Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY];
+        }
+        core.debug(`Get VCPKG_ADDITIONAL_CACHED_PATHS_KEY=${additionalCachedPaths}`);
+        if (additionalCachedPaths) {
+            paths = paths.concat(additionalCachedPaths.split(';'));
+        }
+        // Remove empty entries.
+        paths = paths.map(s => s.trim()).filter(Boolean);
+        // Remove duplicates.
+        return [...new Set(paths)];
     }
 }
 exports.Utils = Utils;
+Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY = "VCPKG_ADDITIONAL_CACHED_PATHS_KEY";
 
 //# sourceMappingURL=vcpkg-utils.js.map
 
@@ -5340,7 +5355,52 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 __exportStar(__webpack_require__(4408), exports);
 __exportStar(__webpack_require__(2914), exports);
+__exportStar(__webpack_require__(9841), exports);
 //# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 9841:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+// Copyright (c) 2020 Luca Cappa
+// Released under the term specified in file LICENSE.txt
+// SPDX short identifier: MIT
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getOrdinaryCachedPaths = void 0;
+const path = __importStar(__webpack_require__(5622));
+function getOrdinaryCachedPaths(vcpkgRootDir) {
+    const pathsToCache = [
+        vcpkgRootDir,
+        path.normalize(`!${path.join(vcpkgRootDir, 'packages')}`),
+        path.normalize(`!${path.join(vcpkgRootDir, 'buildtrees')}`),
+        path.normalize(`!${path.join(vcpkgRootDir, 'downloads')}`)
+    ];
+    return pathsToCache;
+}
+exports.getOrdinaryCachedPaths = getOrdinaryCachedPaths;
+//# sourceMappingURL=utils.js.map
 
 /***/ }),
 
@@ -5617,7 +5677,7 @@ class VcpkgRunner {
             // Use git to verify whether the repo is up to date.
             const gitRunner = baseUtilLib.baseLib.tool(gitPath);
             gitRunner.arg(['rev-parse', 'HEAD']);
-            baseUtilLib.baseLib.info(`Fetching the commit id at ${path}`);
+            baseUtilLib.baseLib.info(`Fetching the Git commit id at '${path}' ...`);
             const res = yield gitRunner.execSync(options);
             if (res.code === 0) {
                 currentCommitId = baseUtilLib.trimString(res.stdout);
@@ -5625,6 +5685,7 @@ class VcpkgRunner {
             }
             else /* if (res.code !== 0) */ {
                 baseUtilLib.baseLib.debug(`error executing git: code=${res.code}, stdout=${baseUtilLib.trimString(res.stdout)}, stderr=${baseUtilLib.trimString(res.stderr)}`);
+                baseUtilLib.baseLib.info(`Git commit id not found.`);
             }
             baseUtilLib.baseLib.debug(`getCommitId()>> -> ${currentCommitId}`);
             return currentCommitId;

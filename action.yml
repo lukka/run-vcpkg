@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Luca Cappa
+# Copyright (c) 2019-2020-2021 Luca Cappa
 # Released under the term specified in file LICENSE.txt
 # SPDX short identifier: MIT
 
@@ -10,6 +10,9 @@ inputs:
     default: false
     required: false
     description: "Indicates whether to only setup vcpkg (i.e. installing it and setting the environment variables VCPKG_ROOT, RUNVCPK_VCPKG_ROOT), without installing any port."
+  additionalCachedPaths:
+    required: false
+    description: "Specify a semi-colon separated list of additional paths to be cached."
   appendedCacheKey:
     required: false
     description: "This value is added to the precomputed key used to restore/save the cached artifacts produced by vcpkg."

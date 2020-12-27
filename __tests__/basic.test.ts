@@ -36,6 +36,10 @@ function clearInputs(): void {
 beforeAll(async () => {
     process.env.GITHUB_WORKSPACE = "/var/tmp/";
     jest.resetAllMocks();
+    jest.spyOn(runvcpkglib, "getOrdinaryCachedPaths").mockImplementation(
+        function (vcpkgRoot): string[] {
+            return [vcpkgRoot];
+        });    
 });
 
 beforeEach(() => {
@@ -63,6 +67,7 @@ test('run-vcpkg: cache hit scenario test', async () => {
     const restoreCacheSpy = jest.spyOn(cache, "restoreCache").mockImplementation(
         function (a, b, c): Promise<string> { return Promise.resolve("hit"); });
     const keyMatchMock = jest.spyOn(vcpkgutils.Utils, "isExactKeyMatch").mockReturnValue(true);
+    process.env.INPUT_VCPKGDIRECTORY = "/var/tmp/vcpkg";
 
     // Act.
     const vcpkg: vcpkgaction.VcpkgAction = new vcpkgaction.VcpkgAction(

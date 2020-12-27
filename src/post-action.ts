@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Luca Cappa
+// Copyright (c) 2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
           const cacheHit = core.getState(vcpkgaction.VCPKG_CACHE_HIT_KEY);
           const computedCacheKey = core.getState(vcpkgaction.VCPKG_CACHE_COMPUTED_KEY);
           const vcpkgRoot = core.getState(vcpkgaction.VCPKG_ROOT_KEY);
-          const cachedPaths = vcpkgutil.Utils.getCachedPaths(vcpkgRoot);
+          const cachedPaths: string[] = vcpkgutil.Utils.getAllCachedPaths(actionLib, vcpkgRoot);
 
           await vcpkgutil.Utils.saveCache(doNotCache, computedCacheKey, cacheHit, cachedPaths);
         }
