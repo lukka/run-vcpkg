@@ -4352,7 +4352,7 @@ function copyFile(srcFile, destFile, force) {
 
 "use strict";
 
-// Copyright (c) 2019-2020 Luca Cappa
+// Copyright (c) 2019-2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -4863,7 +4863,7 @@ __exportStar(__webpack_require__(9951), exports);
 
 "use strict";
 
-// Copyright (c) 2019-2020 Luca Cappa
+// Copyright (c) 2019-2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -5365,7 +5365,7 @@ __exportStar(__webpack_require__(9841), exports);
 
 "use strict";
 
-// Copyright (c) 2020 Luca Cappa
+// Copyright (c) 2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -5409,7 +5409,7 @@ exports.getOrdinaryCachedPaths = getOrdinaryCachedPaths;
 
 "use strict";
 
-// Copyright (c) 2019-2020 Luca Cappa
+// Copyright (c) 2019-2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -5437,7 +5437,7 @@ exports.setupOnly = 'setupOnly';
 
 "use strict";
 
-// Copyright (c) 2019-2020 Luca Cappa
+// Copyright (c) 2019-2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
