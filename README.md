@@ -47,7 +47,7 @@ Both suggestions are shown in the [hosted-advanced-setup-vcpkg-manifest.yml](htt
 jobs: 
   build:
     env:
-      buildDir: '${{ github.workspace }}/b/vcpkg_submod_manifest'
+      buildDir: '${{ github.workspace }}/build/'
     steps:
       #-uses: actions/cache@v1   <===== YOU DO NOT NEED THIS!
       
@@ -66,7 +66,7 @@ jobs:
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg_manifest/vcpkg.json' ) }}
           vcpkgTriplet: ${{ matrix.triplet }}
-          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed'.
+          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed' directory.
           additionalCachedPaths: ${{ env.buildDir }}/vcpkg_installed
 
       - name: Run CMake to install the dependencies specified in the vcpkg.json manifest, generate project file and build the project
@@ -74,6 +74,7 @@ jobs:
         with:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/vcpkg_manifest/CMakeLists.txt'
+          buildDirectory: ${{ env.buildDir }}
           # This input tells run-cmake to consume the vcpkg.cmake toolchain file set by run-vcpkg.
           useVcpkgToolchainFile: true
           buildWithCMake: true
