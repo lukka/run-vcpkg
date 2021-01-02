@@ -65,9 +65,6 @@ export class VcpkgAction {
           // If 'setupOnly' is true, trigger the saving of the cache during the post-action execution.
           core.saveState(VCPKG_DO_CACHE_ON_POST_ACTION_KEY, "true");
         }
-
-        core.info('run-vcpkg  action execution succeeded');
-        process.exitCode = 0;
       }
     }
     catch (err) {
