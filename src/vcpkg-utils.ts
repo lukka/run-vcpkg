@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Luca Cappa
+// Copyright (c) 2020-2021 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 
@@ -6,11 +6,15 @@ import * as path from 'path'
 import * as fs from 'fs'
 import * as core from '@actions/core'
 import * as runvcpkglib from '@lukka/run-vcpkg-lib'
+import * as baselib from '@lukka/base-lib'
 import * as baseutillib from '@lukka/base-util-lib'
 import * as actionlib from '@lukka/action-lib'
 import * as cache from '@actions/cache'
+import { additionalCachedPathsInput } from './vcpkg-action'
 
 export class Utils {
+
+  private static readonly VCPKG_ADDITIONAL_CACHED_PATHS_KEY = "VCPKG_ADDITIONAL_CACHED_PATHS_KEY";
 
   public static ensureDirExists(path: string): void {
     try {
@@ -46,8 +50,18 @@ export class Utils {
       return false;
   }
 
-  public static async getVcpkgCommitId(baseUtils: baseutillib.BaseUtilLib, vcpkgDirectory: string): Promise<string | undefined> {
+  /**
+   * Retrieve the commit id of the Git repository at vcpkgDirectory.
+   *
+   * @static
+   * @param {baseutillib.BaseUtilLib} baseUtils
+   * @param {string} vcpkgDirectory
+   * @returns {(Promise<[string | undefined, boolean | undefined]>)}
+   * @memberof Utils
+   */
+  public static async getVcpkgCommitId(baseUtils: baseutillib.BaseUtilLib, vcpkgDirectory: string): Promise<[string | undefined, boolean | undefined]> {
     let id = undefined;
+    let isSubmodule = undefined;
     const workspaceDir = process.env.GITHUB_WORKSPACE ?? "";
     if (workspaceDir) {
       let fullVcpkgPath = "";
@@ -65,14 +79,16 @@ export class Utils {
       if (fs.existsSync(submodulePath)) {
         id = fs.readFileSync(submodulePath).toString();
         core.debug(`commitId='${id}'`);
+        isSubmodule = true;
       } else {
         id = await runvcpkglib.VcpkgRunner.getCommitId(baseUtils, fullVcpkgPath);
+        isSubmodule = false;
       }
       id = id?.trim();
     }
 
     // Normalize any error to undefined.
-    return id ?? undefined;
+    return [id, isSubmodule];
   }
 
   public static async computeCacheKey(appendedCacheKey: string): Promise<string> {
@@ -82,12 +98,17 @@ export class Utils {
     const actionLib = new actionlib.ActionLib();
     const baseUtil = new baseutillib.BaseUtilLib(actionLib);
 
-    const commitId: string | undefined = await Utils.getVcpkgCommitId(baseUtil, inputVcpkgPath);
+    const [commitId, isSubmodule] = await Utils.getVcpkgCommitId(baseUtil, inputVcpkgPath);
     const userProvidedCommitId = core.getInput(runvcpkglib.vcpkgCommitId);
     if (commitId) {
       core.info(`vcpkg identified at commitId='${commitId}', adding it to the cache's key.`);
-      key += `submodGitId=${commitId}`;
+      if (isSubmodule) {
+        key += `submodGitId=${commitId}`;
+      } else {
+        key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
+      }
     } else if (userProvidedCommitId) {
+      core.info(`Using user provided vcpkg's Git commit id='${userProvidedCommitId}', adding it to the cache's key.`);
       key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
     } else {
       core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
@@ -119,9 +140,9 @@ export class Utils {
         } else {
           const pathsToCache: string[] = cachedPaths;
           core.info(`Caching paths: '${pathsToCache}'`);
-          console.log(`Running save-cache...`);
 
           try {
+            core.info(`Running save-cache with key '${vcpkgCacheComputedKey}' ...`);
             await cache.saveCache(pathsToCache, vcpkgCacheComputedKey);
           }
           catch (error) {
@@ -144,14 +165,28 @@ export class Utils {
     }
   }
 
-  public static getCachedPaths(vcpkgRoot: string): string[] {
-    Utils.ensureDirExists(vcpkgRoot);
-    const pathsToCache: string[] = [
-      vcpkgRoot,
-      path.normalize(`!${path.join(vcpkgRoot, 'packages')}`),
-      path.normalize(`!${path.join(vcpkgRoot, 'buildtrees')}`),
-      path.normalize(`!${path.join(vcpkgRoot, 'downloads')}`)
-    ];
-    return pathsToCache;
+  public static addCachedPaths(paths: string): void {
+    core.debug(`Set VCPKG_ADDITIONAL_CACHED_PATHS_KEY=${paths}`);
+    core.saveState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths);
+    core.exportVariable(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths)
+  }
+
+  public static getAllCachedPaths(baselib: baselib.BaseLib, vcpkgRootDir: string): string[] {
+    let paths = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
+
+    let additionalCachedPaths: string | undefined = core.getState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY);
+    if (!additionalCachedPaths) {
+      additionalCachedPaths = process.env[Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY];
+    }
+    core.debug(`Get VCPKG_ADDITIONAL_CACHED_PATHS_KEY=${additionalCachedPaths}`);
+    if (additionalCachedPaths) {
+      paths = paths.concat(additionalCachedPaths.split(';'));
+    }
+
+    // Remove empty entries.
+    paths = paths.map(s => s.trim()).filter(Boolean);
+
+    // Remove duplicates.
+    return [...new Set(paths)];
   }
 }

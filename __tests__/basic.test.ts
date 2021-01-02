@@ -36,6 +36,10 @@ function clearInputs(): void {
 beforeAll(async () => {
     process.env.GITHUB_WORKSPACE = "/var/tmp/";
     jest.resetAllMocks();
+    jest.spyOn(runvcpkglib, "getOrdinaryCachedPaths").mockImplementation(
+        function (vcpkgRoot): string[] {
+            return [vcpkgRoot];
+        });    
 });
 
 beforeEach(() => {
@@ -63,6 +67,7 @@ test('run-vcpkg: cache hit scenario test', async () => {
     const restoreCacheSpy = jest.spyOn(cache, "restoreCache").mockImplementation(
         function (a, b, c): Promise<string> { return Promise.resolve("hit"); });
     const keyMatchMock = jest.spyOn(vcpkgutils.Utils, "isExactKeyMatch").mockReturnValue(true);
+    process.env.INPUT_VCPKGDIRECTORY = "/var/tmp/vcpkg";
 
     // Act.
     const vcpkg: vcpkgaction.VcpkgAction = new vcpkgaction.VcpkgAction(
@@ -134,22 +139,38 @@ test('getVcpkgCommitId tests', async () => {
     const p = path.resolve(path.join(__dirname, ".."));
     const baseUtils = new baseutil.BaseUtilLib(new actionlib.ActionLib());
     // It must return undefined when GITHUB_WORKSPACE is not defined.
-    process.env.GITHUB_WORKSPACE = undefined;
-    expect(await vcpkgutils.Utils.getVcpkgCommitId(baseUtils, p)).toBe(undefined);
+    delete process.env.GITHUB_WORKSPACE;
+    expect(await vcpkgutils.Utils.getVcpkgCommitId(baseUtils, p)).toStrictEqual([undefined, undefined]);
 
     // It must return undefined when there is no vcpkg repository.
     process.env.GITHUB_WORKSPACE = "/var/tmp/anything";
     process.env.INPUT_VCPKGDIRECTORY = "fafsadfdsds";
-    expect(await vcpkgutils.Utils.getVcpkgCommitId(baseUtils, p)).toBeFalsy();
+    expect(await vcpkgutils.Utils.getVcpkgCommitId(baseUtils, p)).toStrictEqual([undefined, false]);
 
-    const expectedVcpkgSubmoduleCommitId = "commit_id_sha";
-    // A commit SHA is 40 characters long.
-    jest.spyOn(fs, 'readFileSync').mockImplementationOnce(function (filePath) {
-        return expectedVcpkgSubmoduleCommitId;
-    });
-    jest.spyOn(fs, 'existsSync').mockImplementationOnce(function (filePath) {
-        return true;
-    });
-    const commitId = await vcpkgutils.Utils.getVcpkgCommitId(baseUtils, p);
-    expect(commitId).toBe(expectedVcpkgSubmoduleCommitId);
+    {
+        // vcpkg submodule scenario.
+        const expectedVcpkgSubmoduleCommitId = "commit_id_sha";
+        jest.spyOn(fs, 'readFileSync').mockImplementationOnce(function (filePath) {
+            return expectedVcpkgSubmoduleCommitId;
+        });
+        jest.spyOn(fs, 'existsSync').mockImplementationOnce(function (filePath) {
+            return true;
+        });
+        const commitId = await vcpkgutils.Utils.getVcpkgCommitId(baseUtils, p);
+        expect(commitId).toStrictEqual([expectedVcpkgSubmoduleCommitId, true]);
+    }
+
+    {
+        // vcpkg non-submodule scenario.
+        const expectedVcpkgSubmoduleCommitId = "commit_id_sha";
+        jest.spyOn(fs, 'existsSync').mockImplementationOnce(function (filePath) {
+            return false;
+        });
+        jest.spyOn(runvcpkglib.VcpkgRunner, "getCommitId").mockImplementation(
+            function (baseUtils, fullVcpkgPath): Promise<string> {
+                return Promise.resolve<string>(expectedVcpkgSubmoduleCommitId);
+            });
+        const commitId = await vcpkgutils.Utils.getVcpkgCommitId(baseUtils, p);
+        expect(commitId).toStrictEqual([expectedVcpkgSubmoduleCommitId, false]);
+    }
 });

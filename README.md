@@ -44,36 +44,45 @@ It is __highly recommended__ to use both [vcpkg as a submodule](#vcpkgsubmodule)
 Both suggestions are shown in the [hosted-advanced-setup-vcpkg-manifest.yml](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-advanced-setup-vcpkg-manifest.yml) workflow, here below an excerpt:
 
 ```yaml
-     #-uses: actions/cache@v1   <===== YOU DO NOT NEED THIS!
+jobs: 
+  build:
+    env:
+      buildDir: '${{ github.workspace }}/build/'
+    steps:
+      #-uses: actions/cache@v1   <===== YOU DO NOT NEED THIS!
+      
+      # Install latest CMake.
+      - uses: lukka/get-cmake@latest
 
-     # Install latest CMake.
-     - uses: lukka/get-cmake@latest
+      # Restore from cache the previously built ports. If a "cache miss" occurs, then vcpkg is bootstrapped. Since a the vcpkg.json is being used later on to install the packages when run-cmake runs, no packages are installed at this time and the input 'setupOnly:true' is mandatory.
+      - name: Restore artifacts, or setup vcpkg (do not install any package)
+        uses: lukka/run-vcpkg@v6
+        with:
+          # Just install vcpkg for now, do not install any ports in this step yet.
+          setupOnly: true
+          # Location of the vcpkg submodule in the Git repository.
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
+          # compute its hash and append this to the computed cache's key.
+          appendedCacheKey: ${{ hashFiles( '**/vcpkg_manifest/vcpkg.json' ) }}
+          vcpkgTriplet: ${{ matrix.triplet }}
+          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed' directory.
+          additionalCachedPaths: ${{ env.buildDir }}/vcpkg_installed
 
-     # Restore from cache the previously built ports. If a "cache miss" occurs, then vcpkg is bootstrapped.
-     - name: Restore artifacts, or setup vcpkg (do not install any package)
-       uses: lukka/run-vcpkg@v6
-       with:
-         # Just install vcpkg for now, do not install any ports in this step yet.
-         setupOnly: true
-         # Location of the vcpkg as submodule of the repository.
-         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-         # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
-         # compute its hash and append this to the computed cache's key.
-         appendedCacheKey: ${{ hashFiles( '**/vcpkg_manifest/vcpkg.json' ) }}
-         vcpkgTriplet: ${{ matrix.triplet }}
-     - name: Run CMake to install the dependencies with vcpkg.json manifest and build the project
-       uses: lukka/run-cmake@v3
-       with:
-         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-         cmakeListsTxtPath: '${{ github.workspace }}/vcpkg_manifest/CMakeLists.txt'
-         # This will pass to CMake the vcpkg.cmake toolchain file.
-         useVcpkgToolchainFile: true
-         buildWithCMake: true
+      - name: Run CMake to install the dependencies specified in the vcpkg.json manifest, generate project file and build the project
+        uses: lukka/run-cmake@v3
+        with:
+          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+          cmakeListsTxtPath: '${{ github.workspace }}/vcpkg_manifest/CMakeLists.txt'
+          buildDirectory: ${{ env.buildDir }}
+          # This input tells run-cmake to consume the vcpkg.cmake toolchain file set by run-vcpkg.
+          useVcpkgToolchainFile: true
+          buildWithCMake: true
 ```
 
 ### <a id='setuponly'>Setup vcpkg only and use your own scripts</a>
 
-When `setupOnly: true`, it only setups `vcpkg` without installing any port. The provisioned `vcpkg` can then be used in a subsequent step:
+When `setupOnly: true`, it only setups `vcpkg` without installing any port. The provisioned `vcpkg` can then be used in a subsequent step as shown:
 
 ```yaml
     # Restore from cache the previously built ports. If cache-miss, download and build vcpkg (aka "bootstrap vcpkg").
@@ -110,8 +119,15 @@ When using **vcpkg**, be aware of how it works, specifically:
 
 ### <a id='vcpkgjson'>Use vcpkg's vcpkg.json file to specify the dependencies</a>
 
-`vcpkg` can consume a [vcpkg.json](https://github.com/microsoft/vcpkg/blob/master/docs/specifications/manifests.md) file, that declaratively specifies the dependencies.
-**Putting this manifest-like file under source control is highly recommended as this helps to run vcpkg the same exact way locally and remotely on the build servers.**
+The [vcpkg.json](https://github.com/microsoft/vcpkg/blob/master/docs/specifications/manifests.md) is a manifest file that declaratively specifies the dependencies to be installed.
+The file is being used automatically by running CMake when:
+ - starting CMake with the `vcpkg.cmake` toolchain file.
+ - the root CMake source directory contains a [vcpkg.json](https://github.com/microsoft/vcpkg/blob/master/docs/specifications/manifests.md) file.
+
+When conditions are satisfied, the toolchain execution starts [vcpkg](https://github.com/microsoft/vcpkg) to install the packages declared in the manifest file.
+
+ *Putting this manifest-like file under source control is highly recommended as this helps to run vcpkg the same exact way locally and remotely on the build servers.**
+The dependencies specified in the vcpkg.json file are installed when CMake runs (i.e. at run-cmake time), hence the 'run-vcpkg' step must have the input `setupOnly: true`.
 
 ## <a id="samples">Samples</a>
 
@@ -143,12 +159,13 @@ When using **vcpkg**, be aware of how it works, specifically:
 |[marian-nmt/marian-dev](https://github.com/marian-nmt/marian-dev) | [Windows](https://github.com/marian-nmt/marian-dev/blob/master/.github/workflows/windows.yml)/[Linux](https://github.com/marian-nmt/marian-dev/blob/master/.github/workflows/ubuntu.yml)/[macOS](https://github.com/marian-nmt/marian-dev/blob/master/.github/workflows/macos.yml)|[![Windows](https://github.com/marian-nmt/marian-dev/workflows/Windows/badge.svg)](https://github.com/marian-nmt/marian-dev/actions/) [![Linux](https://github.com/marian-nmt/marian-dev/workflows/Ubuntu/badge.svg)](https://github.com/marian-nmt/marian-dev/actions/) [![macOS](https://github.com/marian-nmt/marian-dev/workflows/MacOS/badge.svg)](https://github.com/marian-nmt/marian-dev/actions/) 
 |[GrinPlusPlus](https://github.com/GrinPlusPlus/GrinPlusPlus) | [Linux/Windows/macOS](https://github.com/GrinPlusPlus/GrinPlusPlus/blob/master/.github/workflows/ci.yml) | [![ci](https://github.com/GrinPlusPlus/GrinPlusPlus/workflows/ci/badge.svg)](https://github.com/GrinPlusPlus/GrinPlusPlus/actions/)
 |[OpenTDD](https://github.com/OpenTTD/OpenTTD) | [Windows/macOS](https://github.com/OpenTTD/OpenTTD/blob/master/.github/workflows/ci-build.yml) | [![CI](https://github.com/OpenTTD/OpenTTD/workflows/CI/badge.svg)](https://github.com/OpenTTD/OpenTTD/actions/)
+|[scummvm](https://github.com/scummvm/scummvm) | [Windows](https://github.com/scummvm/scummvm/blob/master/.github/workflows/ci.yml) | `n/a`
 
 # License
  All the content in this repository is licensed under the [MIT License](LICENSE.txt).
 
-Copyright (c) 2019-2020 Luca Cappa
+Copyright (c) 2019-2020-2021 Luca Cappa
 
 # Donating
 
-Other than submitting a pull request, [donating](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=EGNDRPRXM62G2&source=url) is another way to contribute to this project.
+Other than submitting a pull request, [donating](paypal.me/lucappa) is another way to contribute to this project.
