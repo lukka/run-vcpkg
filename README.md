@@ -2,6 +2,11 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/lukka/run-vcpkg/badge.svg?branch=main)](https://coveralls.io/github/lukka/run-vcpkg?branch=main)
 
+# Before using this action, consider writing a _pure_ workflow!
+
+Before using this action, please consider reading and learning how to write a workflow which is directly using the well known tools you can run on your own machine, without relying on GitHub actions that you cannot run on your development machine.
+You can read more in this issue about it: https://github.com/lukka/run-vcpkg/issues/66
+
 # [The **run-vcpkg** action for caching artifacts and using vcpkg on GitHub](https://github.com/marketplace/actions/run-vcpkg)
 
 The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsoft/vcpkg) along with the previously installed ports. On the other hand when there is a "cache miss":
