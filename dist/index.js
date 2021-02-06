@@ -109,34 +109,23 @@ class VcpkgAction {
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const vcpkgCacheComputedKey = yield vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
-                if (!vcpkgCacheComputedKey) {
-                    core.error("Computation for the cache key failed!");
+            const vcpkgCacheComputedKey = yield vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+            if (!vcpkgCacheComputedKey) {
+                core.error("Computation for the cache key failed!");
+            }
+            else {
+                core.saveState(exports.VCPKG_CACHE_COMPUTED_KEY, vcpkgCacheComputedKey);
+                core.info(`Cache's key = '${vcpkgCacheComputedKey}'.`);
+                yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache(vcpkgCacheComputedKey));
+                const runner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
+                yield runner.run();
+                if (this.isSetupOnly) {
+                    yield this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache(vcpkgCacheComputedKey));
                 }
                 else {
-                    core.saveState(exports.VCPKG_CACHE_COMPUTED_KEY, vcpkgCacheComputedKey);
-                    core.info(`Cache's key = '${vcpkgCacheComputedKey}'.`);
-                    yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache(vcpkgCacheComputedKey));
-                    const runner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
-                    yield runner.run();
-                    if (this.isSetupOnly) {
-                        yield this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache(vcpkgCacheComputedKey));
-                    }
-                    else {
-                        // If 'setupOnly' is true, trigger the saving of the cache during the post-action execution.
-                        core.saveState(exports.VCPKG_DO_CACHE_ON_POST_ACTION_KEY, "true");
-                    }
+                    // If 'setupOnly' is true, trigger the saving of the cache during the post-action execution.
+                    core.saveState(exports.VCPKG_DO_CACHE_ON_POST_ACTION_KEY, "true");
                 }
-            }
-            catch (err) {
-                const error = err;
-                if (error === null || error === void 0 ? void 0 : error.stack) {
-                    core.info(error.stack);
-                }
-                const errorAsString = (err !== null && err !== void 0 ? err : "undefined error").toString();
-                core.setFailed(`run-vcpkg action execution failed: '${errorAsString}`);
-                process.exitCode = -1000;
             }
         });
     }
@@ -5760,7 +5749,7 @@ class VcpkgRunner {
     checkExecutable() {
         return __awaiter(this, void 0, void 0, function* () {
             let needRebuild = false;
-            // If the executable file ./vcpkg/vcpkg is not present, force build. The fact that 'the repository is up to date' is meaningless.
+            // If the executable file ./vcpkg/vcpkg is not present or it is not wokring, force build. The fact that 'the repository is up to date' is meaningless.
             const vcpkgExePath = this.baseUtils.getVcpkgExePath(this.vcpkgDestPath);
             if (!this.baseUtils.fileExists(vcpkgExePath)) {
                 this.tl.info("Building vcpkg is necessary as executable is missing.");
@@ -5771,6 +5760,11 @@ class VcpkgRunner {
                     yield this.tl.execSync('chmod', ["+x", vcpkgExePath]);
                 }
                 this.tl.info(`vcpkg executable exists at: '${vcpkgExePath}'.`);
+                const result = yield this.tl.execSync(vcpkgExePath, ['--version']);
+                if (result.code != 0) {
+                    needRebuild = true;
+                    this.tl.info(`vcpkg executable returned code ${result.code}, forcing a rebuild.`);
+                }
             }
             return needRebuild;
         });
