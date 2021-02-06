@@ -47,34 +47,23 @@ export class VcpkgAction {
   }
 
   public async run(): Promise<void> {
-    try {
-      const vcpkgCacheComputedKey = await vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
-      if (!vcpkgCacheComputedKey) {
-        core.error("Computation for the cache key failed!");
-      } else {
-        core.saveState(VCPKG_CACHE_COMPUTED_KEY, vcpkgCacheComputedKey);
-        core.info(`Cache's key = '${vcpkgCacheComputedKey}'.`);
-        await this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache',
-          () => this.restoreCache(vcpkgCacheComputedKey as string));
-        const runner: runvcpkglib.VcpkgRunner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
-        await runner.run();
+    const vcpkgCacheComputedKey = await vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+    if (!vcpkgCacheComputedKey) {
+      core.error("Computation for the cache key failed!");
+    } else {
+      core.saveState(VCPKG_CACHE_COMPUTED_KEY, vcpkgCacheComputedKey);
+      core.info(`Cache's key = '${vcpkgCacheComputedKey}'.`);
+      await this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache',
+        () => this.restoreCache(vcpkgCacheComputedKey as string));
+      const runner: runvcpkglib.VcpkgRunner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
+      await runner.run();
 
-        if (this.isSetupOnly) {
-          await this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache(vcpkgCacheComputedKey as string));
-        } else {
-          // If 'setupOnly' is true, trigger the saving of the cache during the post-action execution.
-          core.saveState(VCPKG_DO_CACHE_ON_POST_ACTION_KEY, "true");
-        }
+      if (this.isSetupOnly) {
+        await this.baseUtilLib.wrapOp('Cache vcpkg and its artifacts', () => this.saveCache(vcpkgCacheComputedKey as string));
+      } else {
+        // If 'setupOnly' is true, trigger the saving of the cache during the post-action execution.
+        core.saveState(VCPKG_DO_CACHE_ON_POST_ACTION_KEY, "true");
       }
-    }
-    catch (err) {
-      const error: Error = err as Error;
-      if (error?.stack) {
-        core.info(error.stack);
-      }
-      const errorAsString = (err ?? "undefined error").toString();
-      core.setFailed(`run-vcpkg action execution failed: '${errorAsString}`);
-      process.exitCode = -1000;
     }
   }
 
