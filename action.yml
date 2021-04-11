@@ -18,7 +18,7 @@ inputs:
     description: "This value is added to the precomputed key used to restore/save the cached artifacts produced by vcpkg."
   vcpkgGitCommitId:
     required: false
-    description: "Specify the Git commit id (not a branch name nor a tag!) that establishes which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is not needed as impicitly specified by the submodule. [More information](https://github.com/lukka/CppBuildTasks/blob/master/README.md)"
+    description: "Specify the full SHA-1 hash of a Git commit (not a branch name, nor a tag!) that establishes which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is *not* needed as implicitly specified by the submodule."
   vcpkgArguments:
     default: ""
     required: false
