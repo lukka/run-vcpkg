@@ -18,6 +18,10 @@ The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsof
     - Saving to cache can be skipped with `doNotCache: true`.
     - Saving to cache happens at the end of the workflow in case `setupOnly: true`, otherwise it happens at the end of the action execution.
 
+Special features: 
+  
+  - automatic dump of log files created by `CMake` (e.g., `CMakeOutput.log`) and `vcpkg`. The content of those files flow into the workflow output log.
+
 The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
 
 Good companions are the [run-cmake](https://github.com/marketplace/actions/run-cmake) action and the
@@ -29,6 +33,7 @@ Good companions are the [run-cmake](https://github.com/marketplace/actions/run-c
    * [Setup vcpkg and use CMake and a vcpkg.json to install and build](#manifest)
    * [Setup vcpkg and use your own scripts](#setuponly)
    * [Flowchart](#flowchart)
+ * [The <strong>run-vcpkg</strong> action](#run-vcpkg)
  * [Best practices](#best-practices)
     * [Use vcpkg as a submodule of your repository](#use-vcpkg-as-a-submodule-of-your-repository)
     * [Use vcpkg's vcpkg.json file to specify the dependencies](#vcpkgjson)
@@ -107,9 +112,15 @@ When `setupOnly: true`, it only setups `vcpkg` without installing any port. The 
 ![run-vcpkg flowchart](https://raw.githubusercontent.com/lukka/run-cmake-vcpkg-action-libs/main/packages/run-vcpkg-lib/docs/task-vcpkg.png
 )
 
+## <a id='run-vcpkg'>The ***run-vcpkg*** action</a>
+
+Features:
+  - run `vcpkg` to build and install C++ libraries. Look to <a href=#samples>samples</a> and to <a href="#flowchart">flowchart</a> for details.
+  - Automatic dump of log files created by `CMake` (e.g., `CMakeOutput.log`) and `vcpkg`. The content of those files flow into the workflow output log.
+
 ### <a id='reference'>Action reference: all input/output parameters</a>
 
-[action.yml](https://github.com/lukka/run-vcpkg/blob/main/action.yml)
+Description of all input parameters: [action.yml](https://github.com/lukka/run-vcpkg/blob/main/action.yml)
 
 ## Best practices
 
