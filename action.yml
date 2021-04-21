@@ -56,7 +56,7 @@ inputs:
     required: false
     description: "Disable the automatic caching mechanism by setting it to true. Default is false."
   logCollectionRegExps:
-    default: "See also \"(.+CMakeOutput.log)\";See also \"(.+CMakeError.log)\";See logs for more information:\\s*(.+.log)"
+    default: "\\s*See also \"(.+CMakeOutput\\.log)\"\\.\\s*;\\s*See also \"(.+CMakeError\\.log)\"\\.\\s*;\\s*See logs for more information:\\s*(.+out\\.log)\\s*;\\s+(.+err\\.log)\\s*"
     required: false
     description: "Specifies a semicolon separated list of regular expressions that are used to identify log file paths in the workflow output. A regular expression must have a single capturing group, that is a single pair of parenthesis such as 'See also (.+.log)'. When a match occurs, the content of the file is written into the workflow output for disclosing its content to the user. The default regular expressions are for CMake's and vcpkg's log files."
 
