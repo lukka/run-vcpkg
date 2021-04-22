@@ -5331,7 +5331,7 @@ class LogFileCollector {
         this.regExps = [];
         this.bufferString = "";
         for (const s of regExps) {
-            this.regExps.push(new RegExp(s, "m"));
+            this.regExps.push(new RegExp(s, "g"));
         }
     }
     appendBuffer(buffer) {
@@ -5348,8 +5348,10 @@ class LogFileCollector {
         this.appendBuffer(buffer);
         let consumedUntil = -1;
         for (const re of this.regExps) {
+            re.lastIndex = 0;
             try {
                 if (re.test(this.bufferString)) {
+                    re.lastIndex = 0;
                     const matches = re.exec(this.bufferString);
                     if (matches) {
                         consumedUntil = Math.max(consumedUntil, re.lastIndex);
