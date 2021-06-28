@@ -66,7 +66,7 @@ jobs:
 
       # Restore from cache the previously built ports. If a "cache miss" occurs, then vcpkg is bootstrapped. Since a the vcpkg.json is being used later on to install the packages when run-cmake runs, no packages are installed at this time and the input 'setupOnly:true' is mandatory.
       - name: Restore artifacts, or setup vcpkg (do not install any package)
-        uses: lukka/run-vcpkg@v6
+        uses: lukka/run-vcpkg@v7
         with:
           # Just install vcpkg for now, do not install any ports in this step yet.
           setupOnly: true
@@ -98,7 +98,7 @@ When `setupOnly: true`, it only setups `vcpkg` without installing any port. The 
     # Restore from cache the previously built ports. If cache-miss, download and build vcpkg (aka "bootstrap vcpkg").
     - name: Restore from cache and install vcpkg
       # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
-      uses: lukka/run-vcpkg@v6
+      uses: lukka/run-vcpkg@v7
       with:
         setupOnly: true
     # Now that vcpkg is installed, it is being used to run with the desired arguments.
