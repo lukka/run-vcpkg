@@ -58,7 +58,7 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: 'a8ac047e6c40b806ac89ac4d7281d45d7c0aaf29'
+        vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
         useShell: true
 
     - name: basic test for run-vcpkg with setupOnly
@@ -67,7 +67,7 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: 'a8ac047e6c40b806ac89ac4d7281d45d7c0aaf29'
+        vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
         useShell: true
         setupOnly: true
 
@@ -77,5 +77,5 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: '--overlay-ports=../__tests__/assets/1 sqlite3 @../__tests__/assets/tempDirectory/response_file1 --overlay-ports=../__tests__/assets/subdir/2 @../__tests__/assets/response_file2'
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: 'a8ac047e6c40b806ac89ac4d7281d45d7c0aaf29'
+        vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
         useShell: true
