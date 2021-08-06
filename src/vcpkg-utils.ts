@@ -26,23 +26,6 @@ export class Utils {
     }
   }
 
-  /**
-   * Compute an unique string given some text.
-   * @param {string} text The text to computer an hash for.
-   * @returns {string} The unique hash of 'text'.
-   */
-  public static hashCode(text: string): string {
-    let hash = 42;
-    if (text.length != 0) {
-      for (let i = 0; i < text.length; i++) {
-        const char: number = text.charCodeAt(i);
-        hash = ((hash << 5) + hash) ^ char;
-      }
-    }
-
-    return hash.toString();
-  }
-
   public static isExactKeyMatch(key: string, cacheKey?: string): boolean {
     if (cacheKey)
       return cacheKey.localeCompare(key, undefined, { sensitivity: "accent" }) === 0;
@@ -91,43 +74,48 @@ export class Utils {
     return [id, isSubmodule];
   }
 
-  public static async computeCacheKey(appendedCacheKey: string): Promise<string> {
+  public static async computeCacheKey(appendedCacheKey: string): Promise<string[]> {
     let key = "";
-    const inputVcpkgPath = core.getInput(runvcpkglib.vcpkgDirectory);
+    const restoreKeys = [] as string[];
 
     const actionLib = new actionlib.ActionLib();
     const baseUtil = new baseutillib.BaseUtilLib(actionLib);
 
+    key += "runnerOS=" + process.env.ImageOS ? process.env.ImageOS : process.platform;
+    // Add the triplet only if it is provided.
+    const triplet = core.getInput(runvcpkglib.vcpkgTriplet)
+    if (triplet) {
+      key += "-triplet=" + triplet;
+    }
+    restoreKeys.push(key);
+
+    const inputVcpkgPath = core.getInput(runvcpkglib.vcpkgDirectory);
     const [commitId, isSubmodule] = await Utils.getVcpkgCommitId(baseUtil, inputVcpkgPath);
     const userProvidedCommitId = core.getInput(runvcpkglib.vcpkgCommitId);
     if (commitId) {
-      core.info(`vcpkg identified at commitId='${commitId}', adding it to the cache's key.`);
       if (isSubmodule) {
-        key += `submodGitId=${commitId}`;
+        key += `_vcpkgGitCommit=${commitId}`;
+        core.info(`Adding vcpkg submodule commit id '${commitId}' to cache key`);
       } else {
-        key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
+        key += `_vcpkgGitCommit=${userProvidedCommitId}`;
+        core.info(`Adding user provided vcpkg commit id ${userProvidedCommitId} to cache key`);
       }
+      restoreKeys.push(key);
     } else if (userProvidedCommitId) {
-      core.info(`Using user provided vcpkg's Git commit id='${userProvidedCommitId}', adding it to the cache's key.`);
-      key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
+      key += `_vcpkgGitCommit=${userProvidedCommitId}`;
+      core.info(`Adding user provided vcpkg commit id ${userProvidedCommitId} to cache key`);
+      restoreKeys.push(key);
     } else {
-      core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
+      core.info(`No vcpkg commit id was provided, does not contribute to the cache's key.`);
     }
 
-    key += "-args=" + Utils.hashCode(core.getInput(runvcpkglib.vcpkgArguments));
-    key += "-os=" + Utils.hashCode(process.env.ImageOS ? process.env.ImageOS : process.platform);
-
-    if (process.env.ImageVersion) {
-      key += "-imageVer=" + Utils.hashCode(process.env.ImageVersion);
+    if (appendedCacheKey) {
+      key += `_appendedKey=${appendedCacheKey}`;
+      restoreKeys.push(key);
     }
 
-    key += "-appendedKey=" + Utils.hashCode(appendedCacheKey);
-
-    // Add the triplet only if it is provided.
-    const triplet = core.getInput(runvcpkglib.vcpkgTriplet)
-    if (triplet)
-      key += "-triplet=" + Utils.hashCode(triplet);
-    return key;
+    restoreKeys.reverse();
+    return restoreKeys;
   }
 
   public static async saveCache(doNotCache: boolean, vcpkgCacheComputedKey: string, hitCacheKey: string | undefined, cachedPaths: string[]): Promise<void> {

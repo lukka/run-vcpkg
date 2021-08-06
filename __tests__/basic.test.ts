@@ -128,11 +128,9 @@ test('run-vcpkg: cache must not be restored/saved when "doNotCache" is true scen
 });
 
 test('isExactKeyMatch tests', () => {
-    const hash = vcpkgutils.Utils.hashCode("hashCode");
-    const hash2 = vcpkgutils.Utils.hashCode("hashCode2");
-    expect(vcpkgutils.Utils.isExactKeyMatch(hash, hash2)).toBeFalsy();
-    expect(vcpkgutils.Utils.isExactKeyMatch(hash2, hash)).toBeFalsy();
-    expect(vcpkgutils.Utils.isExactKeyMatch(hash, hash)).toBeTruthy();
+    expect(vcpkgutils.Utils.isExactKeyMatch("1", "2")).toBeFalsy();
+    expect(vcpkgutils.Utils.isExactKeyMatch("2", "1")).toBeFalsy();
+    expect(vcpkgutils.Utils.isExactKeyMatch("1", "1")).toBeTruthy();
 });
 
 test('getVcpkgCommitId tests', async () => {

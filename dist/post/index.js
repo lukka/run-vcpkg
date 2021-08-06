@@ -121,14 +121,14 @@ class VcpkgAction {
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
-            const vcpkgCacheComputedKey = yield vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+            const restoreKeys = yield vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+            const vcpkgCacheComputedKey = restoreKeys[0];
             if (!vcpkgCacheComputedKey) {
                 core.error("Computation for the cache key failed!");
             }
             else {
                 core.saveState(exports.VCPKG_CACHE_COMPUTED_KEY, vcpkgCacheComputedKey);
-                core.info(`Cache's key = '${vcpkgCacheComputedKey}'.`);
-                yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache(vcpkgCacheComputedKey));
+                yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache(restoreKeys));
                 const runner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
                 yield runner.run();
                 if (this.isSetupOnly) {
@@ -146,7 +146,7 @@ class VcpkgAction {
             yield vcpkgutil.Utils.saveCache(this.doNotCache, key, this.hitCacheKey, vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir));
         });
     }
-    restoreCache(key) {
+    restoreCache(restoreKeys) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 if (this.doNotCache) {
@@ -154,16 +154,19 @@ class VcpkgAction {
                 }
                 else {
                     const pathsToCache = vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir);
-                    core.info(`Cache's key = '${key}', paths = '${pathsToCache}'`);
+                    const primaryKey = restoreKeys.shift();
+                    core.info(`Cache key: '${primaryKey}'`);
+                    core.info(`Cache restore keys: '${restoreKeys}'`);
+                    core.info(`Cached paths: '${pathsToCache}'`);
                     core.info(`Running restore-cache...`);
                     let cacheHitId;
                     try {
-                        cacheHitId = yield cache.restoreCache(pathsToCache, key);
+                        cacheHitId = yield cache.restoreCache(pathsToCache, primaryKey, restoreKeys);
                     }
                     catch (err) {
                         try {
                             core.warning(`restoreCache() failed once: '${err === null || err === void 0 ? void 0 : err.toString()}' , retrying...`);
-                            cacheHitId = yield cache.restoreCache(pathsToCache, key);
+                            cacheHitId = yield cache.restoreCache(pathsToCache, primaryKey, restoreKeys);
                         }
                         catch (err) {
                             core.warning(`restoreCache() failed again: '${err === null || err === void 0 ? void 0 : err.toString()}'.`);
@@ -232,21 +235,6 @@ class Utils {
             }
         }
     }
-    /**
-     * Compute an unique string given some text.
-     * @param {string} text The text to computer an hash for.
-     * @returns {string} The unique hash of 'text'.
-     */
-    static hashCode(text) {
-        let hash = 42;
-        if (text.length != 0) {
-            for (let i = 0; i < text.length; i++) {
-                const char = text.charCodeAt(i);
-                hash = ((hash << 5) + hash) ^ char;
-            }
-        }
-        return hash.toString();
-    }
     static isExactKeyMatch(key, cacheKey) {
         if (cacheKey)
             return cacheKey.localeCompare(key, undefined, { sensitivity: "accent" }) === 0;
@@ -299,38 +287,44 @@ class Utils {
     static computeCacheKey(appendedCacheKey) {
         return __awaiter(this, void 0, void 0, function* () {
             let key = "";
-            const inputVcpkgPath = core.getInput(runvcpkglib.vcpkgDirectory);
+            const restoreKeys = [];
             const actionLib = new actionlib.ActionLib();
             const baseUtil = new baseutillib.BaseUtilLib(actionLib);
+            key += "runnerOS=" + process.env.ImageOS ? process.env.ImageOS : 0;
+            // Add the triplet only if it is provided.
+            const triplet = core.getInput(runvcpkglib.vcpkgTriplet);
+            if (triplet) {
+                key += "-triplet=" + triplet;
+            }
+            restoreKeys.push(key);
+            const inputVcpkgPath = core.getInput(runvcpkglib.vcpkgDirectory);
             const [commitId, isSubmodule] = yield Utils.getVcpkgCommitId(baseUtil, inputVcpkgPath);
             const userProvidedCommitId = core.getInput(runvcpkglib.vcpkgCommitId);
             if (commitId) {
-                core.info(`vcpkg identified at commitId='${commitId}', adding it to the cache's key.`);
                 if (isSubmodule) {
-                    key += `submodGitId=${commitId}`;
+                    key += `_vcpkgGitCommit=${commitId}`;
+                    core.info(`Adding vcpkg submodule commit id '${commitId}' to cache key`);
                 }
                 else {
-                    key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
+                    key += `_vcpkgGitCommit=${userProvidedCommitId}`;
+                    core.info(`Adding user provided vcpkg commit id ${userProvidedCommitId} to cache key`);
                 }
+                restoreKeys.push(key);
             }
             else if (userProvidedCommitId) {
-                core.info(`Using user provided vcpkg's Git commit id='${userProvidedCommitId}', adding it to the cache's key.`);
-                key += "localGitId=" + Utils.hashCode(userProvidedCommitId);
+                key += `_vcpkgGitCommit=${userProvidedCommitId}`;
+                core.info(`Adding user provided vcpkg commit id ${userProvidedCommitId} to cache key`);
+                restoreKeys.push(key);
             }
             else {
-                core.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
+                core.info(`No vcpkg commit id was provided, does not contribute to the cache's key.`);
             }
-            key += "-args=" + Utils.hashCode(core.getInput(runvcpkglib.vcpkgArguments));
-            key += "-os=" + Utils.hashCode(process.env.ImageOS ? process.env.ImageOS : process.platform);
-            if (process.env.ImageVersion) {
-                key += "-imageVer=" + Utils.hashCode(process.env.ImageVersion);
+            if (appendedCacheKey) {
+                key += `_appendedKey=${appendedCacheKey}`;
+                restoreKeys.push(key);
             }
-            key += "-appendedKey=" + Utils.hashCode(appendedCacheKey);
-            // Add the triplet only if it is provided.
-            const triplet = core.getInput(runvcpkglib.vcpkgTriplet);
-            if (triplet)
-                key += "-triplet=" + Utils.hashCode(triplet);
-            return key;
+            restoreKeys.reverse();
+            return restoreKeys;
         });
     }
     static saveCache(doNotCache, vcpkgCacheComputedKey, hitCacheKey, cachedPaths) {

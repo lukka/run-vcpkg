@@ -47,14 +47,14 @@ export class VcpkgAction {
   }
 
   public async run(): Promise<void> {
-    const vcpkgCacheComputedKey = await vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+    const restoreKeys = await vcpkgutil.Utils.computeCacheKey(this.appendedCacheKey);
+    const vcpkgCacheComputedKey = restoreKeys[0];
     if (!vcpkgCacheComputedKey) {
       core.error("Computation for the cache key failed!");
     } else {
       core.saveState(VCPKG_CACHE_COMPUTED_KEY, vcpkgCacheComputedKey);
-      core.info(`Cache's key = '${vcpkgCacheComputedKey}'.`);
       await this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache',
-        () => this.restoreCache(vcpkgCacheComputedKey as string));
+        () => this.restoreCache(restoreKeys as string[]));
       const runner: runvcpkglib.VcpkgRunner = new runvcpkglib.VcpkgRunner(this.baseUtilLib.baseLib);
       await runner.run();
 
@@ -72,23 +72,26 @@ export class VcpkgAction {
       vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir));
   }
 
-  private async restoreCache(key: string): Promise<void> {
+  private async restoreCache(restoreKeys: string[]): Promise<void> {
     try {
       if (this.doNotCache) {
         core.info(`Caching is disabled (${doNotCacheInput}=true)`);
       } else {
         const pathsToCache: string[] = vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir);
-        core.info(`Cache's key = '${key}', paths = '${pathsToCache}'`);
+        const primaryKey = restoreKeys.shift() as string;
+        core.info(`Cache key: '${primaryKey}'`);
+        core.info(`Cache restore keys: '${restoreKeys}'`);
+        core.info(`Cached paths: '${pathsToCache}'`);
         core.info(`Running restore-cache...`);
 
         let cacheHitId: string | undefined;
         try {
-          cacheHitId = await cache.restoreCache(pathsToCache, key);
+          cacheHitId = await cache.restoreCache(pathsToCache, primaryKey, restoreKeys);
         }
         catch (err) {
           try {
             core.warning(`restoreCache() failed once: '${err?.toString()}' , retrying...`);
-            cacheHitId = await cache.restoreCache(pathsToCache, key);
+            cacheHitId = await cache.restoreCache(pathsToCache, primaryKey, restoreKeys);
           }
           catch (err) {
             core.warning(`restoreCache() failed again: '${err?.toString()}'.`);
