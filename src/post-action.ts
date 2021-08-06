@@ -26,7 +26,7 @@ async function main(): Promise<void> {
           const cacheHit = core.getState(vcpkgaction.VCPKG_CACHE_HIT_KEY);
           const computedCacheKey = core.getState(vcpkgaction.VCPKG_CACHE_COMPUTED_KEY);
           const vcpkgRoot = core.getState(vcpkgaction.VCPKG_ROOT_KEY);
-          const cachedPaths: string[] = vcpkgutil.Utils.getAllCachedPaths(actionLib, vcpkgRoot);
+          const cachedPaths: string[] = vcpkgutil.Utils.getAllCachedPaths(baseUtil, vcpkgRoot);
 
           await vcpkgutil.Utils.saveCache(doNotCache, computedCacheKey, cacheHit, cachedPaths);
         }

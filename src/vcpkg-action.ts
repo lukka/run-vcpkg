@@ -69,7 +69,7 @@ export class VcpkgAction {
 
   private async saveCache(key: string): Promise<void> {
     await vcpkgutil.Utils.saveCache(this.doNotCache, key, this.hitCacheKey,
-      vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir));
+      vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib, this.vcpkgRootDir));
   }
 
   private async restoreCache(restoreKeys: string[]): Promise<void> {
@@ -77,7 +77,7 @@ export class VcpkgAction {
       if (this.doNotCache) {
         core.info(`Caching is disabled (${doNotCacheInput}=true)`);
       } else {
-        const pathsToCache: string[] = vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir);
+        const pathsToCache: string[] = vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib, this.vcpkgRootDir);
         const primaryKey = restoreKeys.shift() as string;
         core.info(`Cache key: '${primaryKey}'`);
         core.info(`Cache restore keys: '${restoreKeys}'`);

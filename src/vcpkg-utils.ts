@@ -164,8 +164,19 @@ export class Utils {
     core.exportVariable(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths)
   }
 
-  public static getAllCachedPaths(baselib: baselib.BaseLib, vcpkgRootDir: string): string[] {
+  public static getAllCachedPaths(baseUtils: baseutillib.BaseUtilLib, vcpkgRootDir: string): string[] {
     let paths = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
+
+    // Use vcpkg's binary cache only; do not double cache the `installed` directory because
+    // that would inflate the cache size unnecessarily.
+    const installed_path = path.resolve(vcpkgRootDir + "/installed");
+    paths.push("!" + installed_path);
+
+    if (baseUtils.isWin32()) {
+      paths.push(process.env.LOCALAPPDATA + "\\vcpkg");
+    } else {
+      paths.push(process.env.HOME + "/.cache/vcpkg");
+    }
 
     let additionalCachedPaths: string | undefined = core.getState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY);
     if (!additionalCachedPaths) {

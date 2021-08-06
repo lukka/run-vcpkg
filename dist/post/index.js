@@ -43,7 +43,7 @@ function main() {
                     const cacheHit = core.getState(vcpkgaction.VCPKG_CACHE_HIT_KEY);
                     const computedCacheKey = core.getState(vcpkgaction.VCPKG_CACHE_COMPUTED_KEY);
                     const vcpkgRoot = core.getState(vcpkgaction.VCPKG_ROOT_KEY);
-                    const cachedPaths = vcpkgutil.Utils.getAllCachedPaths(actionLib, vcpkgRoot);
+                    const cachedPaths = vcpkgutil.Utils.getAllCachedPaths(baseUtil, vcpkgRoot);
                     yield vcpkgutil.Utils.saveCache(doNotCache, computedCacheKey, cacheHit, cachedPaths);
                 }
             }));
@@ -143,7 +143,7 @@ class VcpkgAction {
     }
     saveCache(key) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield vcpkgutil.Utils.saveCache(this.doNotCache, key, this.hitCacheKey, vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir));
+            yield vcpkgutil.Utils.saveCache(this.doNotCache, key, this.hitCacheKey, vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib, this.vcpkgRootDir));
         });
     }
     restoreCache(restoreKeys) {
@@ -153,7 +153,7 @@ class VcpkgAction {
                     core.info(`Caching is disabled (${exports.doNotCacheInput}=true)`);
                 }
                 else {
-                    const pathsToCache = vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir);
+                    const pathsToCache = vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib, this.vcpkgRootDir);
                     const primaryKey = restoreKeys.shift();
                     core.info(`Cache key: '${primaryKey}'`);
                     core.info(`Cache restore keys: '${restoreKeys}'`);
@@ -376,8 +376,18 @@ class Utils {
         core.saveState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths);
         core.exportVariable(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY, paths);
     }
-    static getAllCachedPaths(baselib, vcpkgRootDir) {
+    static getAllCachedPaths(baseUtils, vcpkgRootDir) {
         let paths = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
+        // Use vcpkg's binary cache only; do not double cache the `installed` directory because
+        // that would inflate the cache size unnecessarily.
+        const installed_path = path.resolve(vcpkgRootDir + "/installed");
+        paths.push("!" + installed_path);
+        if (baseUtils.isWin32()) {
+            paths.push(process.env.LOCALAPPDATA + "\\vcpkg");
+        }
+        else {
+            paths.push(process.env.HOME + "/.cache/vcpkg");
+        }
         let additionalCachedPaths = core.getState(Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY);
         if (!additionalCachedPaths) {
             additionalCachedPaths = process.env[Utils.VCPKG_ADDITIONAL_CACHED_PATHS_KEY];
