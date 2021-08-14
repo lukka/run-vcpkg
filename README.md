@@ -88,6 +88,13 @@ jobs:
           # This input tells run-cmake to consume the vcpkg.cmake toolchain file set by run-vcpkg.
           useVcpkgToolchainFile: true
           buildWithCMake: true
+          
+      - name: Upload GitHub Actions artifact of vcpkg build logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: vcpkg-logs-${{ runner.os }}
+          path: ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
 ```
 
 ### <a id='setuponly'>Setup vcpkg only and use your own scripts</a>
