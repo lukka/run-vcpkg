@@ -7,8 +7,6 @@ import * as baseUtilLib from '@lukka/base-util-lib'
 import * as core from '@actions/core';
 import * as vcpkgAction from './vcpkg-action';
 
-export const VCPKGDIRECTORIESKEY = 'vcpkgDirectoryKey';
-
 async function main(): Promise<void> {
   try {
     const actionLib = new actionlib.ActionLib();
@@ -22,7 +20,7 @@ async function main(): Promise<void> {
     if (error?.stack) {
       core.info(error.stack);
     }
-    const errorAsString = (err ?? "undefined error").toString();
+    const errorAsString = (err as Error)?.message ?? "undefined error";
     core.setFailed(`run-vcpkg action execution failed: ${errorAsString}`);
     process.exitCode = -1000;
   }
