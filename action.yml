@@ -3,68 +3,76 @@
 # SPDX short identifier: MIT
 
 name: 'run-vcpkg'
-description: 'Run vcpkg to build C/C++ dependencies and cache them automatically.'
+description: 'Setup (and optionally run) vcpkg to build C/C++ dependencies and cache them automatically.'
 author: 'Luca Cappa https://github.com/lukka'
 inputs:
-  setupOnly:
-    default: false
-    required: false
-    description: "Indicates whether to only setup vcpkg (i.e. installing it and setting the environment variables VCPKG_ROOT, RUNVCPK_VCPKG_ROOT), without installing any port."
-  additionalCachedPaths:
-    required: false
-    description: "Specify a semi-colon separated list of additional paths to be cached."
-  appendedCacheKey:
-    required: false
-    description: "This value is added to the precomputed key used to restore/save the cached artifacts produced by vcpkg."
-  vcpkgGitCommitId:
-    required: false
-    description: "Specify the full SHA-1 hash of a Git commit (not a branch name, nor a tag!) that establishes which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is *not* needed as implicitly specified by the submodule."
-  vcpkgArguments:
-    default: ""
-    required: false
-    descriptions: "Provides the arguments appended to 'vcpkg install'. It is recommended to use a response file to provide either the triplet and the list of packages to be installed. , e.g. `@<github.workspace>/vcpkg_osx.txt`. Note the 'at' character prepended to the path denotes a response file."
+  
+  # The following 'inputs' are commonly defined by the user in the workflow.
   vcpkgDirectory:
     default: ${{ github.workspace }}/vcpkg
     required: false
-    descriptions: "Specify the vcpkg's root directory. If not specified, it defaults to  <github.workspace>/vcpkg. When vcpkg is a Git submodule, specify the full path to it."
-  vcpkgArtifactIgnoreEntries:
-    default: "!.git\n**/*\n!installed\n!/vcpkg\n!vcpkg.exe\n!vcpkgArtifactIgnoreEntries\n"
+    descriptions: "Specify the vcpkg's root directory. If not specified, it defaults to  <github.workspace>/vcpkg/ . When vcpkg is a Git submodule, specify the path to it."
+  runVcpkgInstall:
+    default: false
     required: false
-    description: "Specify entries to append to the .artifactignore file. This file specifies which directory to ignore or to include by the Cache task. For more info: https://docs.microsoft.com/en-us/azure/devops/artifacts/reference/artifactignore?view=azure-devops . The file is created if not already existing."
+    description: "Run the installation of package by running `vcpkg install` on the directory of the discovered 'vcpkg.json' file. Default is false."
+  appendedCacheKey:
+    required: false
+    description: "Specify a value to append to the cache key."
+  vcpkgGitCommitId:
+    required: false
+    description: "Specify the full SHA-1 hash of a Git commit (not a branch name, nor a tag!) that establishes which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is *not* needed as implicitly specified by the submodule."
   vcpkgGitURL:
     default: "https://github.com/microsoft/vcpkg.git"
     required: false
     description: "Specify the URL Git repository to download vcpkg from. Defaults to https://github.com/microsoft/vcpkg.git"
-  vcpkgTriplet:
-    default: ""
-    required: false
-    description: "Specify the vcpkg triplet. Common values are x64-windows, x64-linux and x64-osx. It is recommended to specify the triplet in the response file provided in the arguments instead than here."
-  cleanAfterBuild:
-    default: true
-    required: false
-    description: "Append the argument '--clean-after-build' to vcpkgArgument input, to clean buildtrees, packages and downloads after building each port. Default is true."
   doNotUpdateVcpkg: 
     default: false
     required: false
     description: "Avoid to update vcpkg (launching git) in the specified 'vcpkgDirectory'. This is useful when vcpkg is being checkout independently of the run-vcpkg action. Default is false."
+  doNotCache:
+    default: false
+    required: false
+    description: "Disable the automatic caching mechanism by setting it to true. Default is false."
+  doNotCacheOnWorkflowFailure:
+    default: false
+    required: false
+    description: "Disable the saving of the cache if the workflow failed."
+
+  # The following inputs are rarely set by the user, since the default values suffice the most common scenarios.
+  vcpkgJsonGlob:
+    default: '**/vcpkg.json'
+    required: false
+    description: "Specify the glob expression used to discover the vcpkg.json whose content's hash is added to the cache key."
+  vcpkgJsonIgnores:
+    default: "['**/vcpkg/**']"
+    required: false
+    description: "Specify an array of string containing the pattenrs to be ignored when searching for the vcpkg.json file. The default value ignores the pattern '**/vcpkg/**'"
+  binaryCachePath:
+    required: false
+    description: "Specify a path to store the built packages to be cached with the GitHub cache service. Default is '<vcpkgvcpkgDirectory>/bincache'."
+  runVcpkgFormatString:
+    default: '[`install`, `--recurse`, `--clean-after-build`, `--x-install-root`, `$[env.VCPKG_INSTALLED_DIR]`, `--triplet`, `$[env.VCPKG_DEFAULT_TRIPLET]`]'
+    required: false
+    description: "Specify the command line to run vcpkg with. This is only useful when the input 'runVcpkgInstall' is set to true."
   useShell:
     default: true
     required: false
     description: "Specify which shell to be used when launching commands. 'true' means the default shell is used. 'false' means no shell is used. It also can be an absolute path and arguments of the shell to spawn commands with."
-  doNotCache: 
-    default: false
-    required: false
-    description: "Disable the automatic caching mechanism by setting it to true. Default is false."
   logCollectionRegExps:
-    default: "\\s*\"(.+CMakeOutput\\.log)\"\\.\\s*;\\s*\"(.+CMakeError\\.log)\"\\.\\s*;\\s*(.+out\\.log)\\s*;\\s+(.+err\\.log)\\s*"
+    default: "\\s*\"(.+CMakeOutput\\.log)\"\\.\\s*;\\s*\"(.+CMakeError\\.log)\"\\.\\s*;\\s*(.+out\\.log)\\s*;\\s+(.+err\\.log)\\s*;\\s*(.+vcpkg.+\\.log)\\s*"
     required: false
     description: "Specifies a semicolon separated list of regular expressions that are used to identify log file paths in the workflow output. A regular expression must have a single capturing group, that is a single pair of parenthesis such as 'See also (.+.log)'. When a match occurs, the content of the file is written into the workflow output for disclosing its content to the user. The default regular expressions are for CMake's and vcpkg's log files."
+  jobStatus: 
+    default: ${{ job.status }}
+    required: false
+    description: "Do not set nor use. It is used to get the status of the job and decide whether to save cache on the post action run at the end of the job."
 
 runs:
   using: 'node12'
   main: 'dist/index.js'
   post: 'dist/post/index.js'
-  post-if: 'success()'
+  post-if: 'always()'
 
 branding:
   icon: 'terminal'  

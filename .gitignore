@@ -12,3 +12,5 @@ build
 !dist
 .npmrc
 coverage
+.DS_Store
+__tests__/b/

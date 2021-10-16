@@ -40,6 +40,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   tests:
+    needs: build_and_unit_test
     name: '${{ matrix.os }}: functional tests'
     runs-on: ${{ matrix.os }}
     strategy:
@@ -52,30 +53,40 @@ jobs:
       with:
         submodules: true
 
-    - name: basic test for run-vcpkg
+    - name: basic test for run-vcpkg (not running vcpkg).
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgArguments: sqlite3
-        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
         vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
-        useShell: true
 
-    - name: basic test for run-vcpkg with setupOnly
+    - name: basic test for run-vcpkg with running 'vcpkg install'.
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgArguments: sqlite3
-        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
         vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
-        useShell: true
-        setupOnly: true
+        runVcpkgInstall: true
+        # This forces the creation of a new cache entry each time the workflow is run. 
+        # It is the same across jobs in the same workflows.
+        appendedCacheKey: ${{ env.GITHUB_RUN_ID }}
 
-    - name: overlay extraction test for run-vcpkg
+  tests_with_cache_hit:
+    needs: tests
+    name: '${{ matrix.os }}: functional tests'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+    - name: checkout this action
+      uses: actions/checkout@v2.3.4
+      with:
+        submodules: true
+
+    - name: basic test for run-vcpkg (not running vcpkg).
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgArguments: '--overlay-ports=../__tests__/assets/1 sqlite3 @../__tests__/assets/tempDirectory/response_file1 --overlay-ports=../__tests__/assets/subdir/2 @../__tests__/assets/response_file2'
-        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
         vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
-        useShell: true
+        appendedCacheKey: ${{ env.GITHUB_RUN_ID }}
+

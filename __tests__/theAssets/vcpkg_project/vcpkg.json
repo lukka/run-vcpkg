@@ -1,0 +1,9 @@
+{
+    "name": "test",
+    "version-string": "0.0.1",
+    "dependencies": [
+      "fmt",
+      "boost-config",
+      "sqlite3"
+    ]
+  }

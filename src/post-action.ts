@@ -5,39 +5,34 @@
 import * as core from '@actions/core'
 import * as vcpkgaction from './vcpkg-action'
 import * as actionlib from '@lukka/action-lib'
-import * as baseUtilLib from '@lukka/base-util-lib'
+import * as baseutillib from '@lukka/base-util-lib'
 import * as vcpkgutil from './vcpkg-utils'
+import * as vcpkgpostaction from './vcpkg-post-action'
 
-async function main(): Promise<void> {
-  const doNotCache = (core.getState(vcpkgaction.VCPKG_DO_NOT_CACHE_KEY) ?? false) === "true";
-
-  const actionLib = new actionlib.ActionLib();
-  const baseUtil = new baseUtilLib.BaseUtilLib(actionLib);
-
+export async function main(): Promise<void> {
   try {
-    await baseUtil.wrapOp('Save vcpkg and its artifacts to cache',
-      async () => {
-        // Caching in the post action happens only when in 'setupOnly:true' mode.
-        if (core.getState(vcpkgaction.VCPKG_DO_CACHE_ON_POST_ACTION_KEY) !== "true") {
-          core.info("Skipping saving cache since the input 'setupOnly' is not set to true.");
-          return;
-        } else {
-          // Inputs are re-evaluted before the post action, so we want the original key used for restore
-          const cacheHit = core.getState(vcpkgaction.VCPKG_CACHE_HIT_KEY);
-          const computedCacheKey = core.getState(vcpkgaction.VCPKG_CACHE_COMPUTED_KEY);
-          const vcpkgRoot = core.getState(vcpkgaction.VCPKG_ROOT_KEY);
-          const cachedPaths: string[] = vcpkgutil.Utils.getAllCachedPaths(actionLib, vcpkgRoot);
+    const doNotCache = (core.getState(vcpkgaction.VCPKG_DO_NOT_CACHE_STATE) ?? false) === "true";
+    const actionLib = new actionlib.ActionLib();
+    const baseUtil = new baseutillib.BaseUtilLib(actionLib);
 
-          await vcpkgutil.Utils.saveCache(doNotCache, computedCacheKey, cacheHit, cachedPaths);
-        }
-      });
-    core.info('run-vcpkg post action execution succeeded');
-    process.exitCode = 0;
+    const jobSucceeded: boolean = core.getInput(vcpkgaction.jobStatusInput).toLowerCase() === 'success';
+    const doNotCacheOnWorkflowFailure: boolean = core.getInput(vcpkgaction.doNotCacheOnWorkflowFailureInput).toLowerCase() === 'true'
+    const cacheHit: string = core.getState(vcpkgaction.VCPKG_KEY_CACHE_HIT_STATE);
+    const computedCacheKey: baseutillib.KeySet = JSON.parse(core.getState(vcpkgaction.VCPKG_CACHE_COMPUTEDKEY_STATE)) as baseutillib.KeySet;
+    const vcpkgRoot = core.getState(vcpkgaction.VCPKG_ROOT_STATE);
+    const cachedPaths: string[] = vcpkgutil.Utils.getAllCachedPaths(actionLib, vcpkgRoot);
+
+    const post = new vcpkgpostaction.VcpkgPostAction(baseUtil,
+      jobSucceeded, doNotCache, doNotCacheOnWorkflowFailure,
+      computedCacheKey, cachedPaths, cacheHit);
+    await post.run();
   } catch (err) {
-    const errorAsString = (err ?? "undefined error").toString();
-    core.debug('Error: ' + errorAsString);
-    core.error(errorAsString);
-    core.setFailed('run-vcpkg post action execution failed');
+    const error: Error = err as Error;
+    if (error?.stack) {
+      core.info(error.stack);
+    }
+    const errorAsString = (err as Error)?.message ?? "undefined error";
+    core.setFailed(`run-vcpkg post-action execution failed: ${errorAsString}`);
     process.exitCode = -1000;
   }
 }
