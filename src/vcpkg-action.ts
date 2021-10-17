@@ -3,7 +3,6 @@
 // SPDX short identifier: MIT
 
 import * as path from 'path'
-import * as core from '@actions/core'
 import * as cache from '@actions/cache'
 import * as baseutillib from '@lukka/base-util-lib'
 import * as runvcpkglib from '@lukka/run-vcpkg-lib'
@@ -38,7 +37,7 @@ export const VCPKG_ROOT_STATE = "VCPKG_ROOT_STATE";
 export const VCPKG_ADDITIONAL_CACHED_PATHS_STATE = "VCPKG_ADDITIONAL_CACHED_PATHS_STATE";
 
 export class VcpkgAction {
-  private static readonly VCPKG_DEFAULT_BINARY_CACHE = "VCPKG_DEFAULT_BINARY_CACHE";
+  public static readonly VCPKG_DEFAULT_BINARY_CACHE = "VCPKG_DEFAULT_BINARY_CACHE";
   private static readonly VCPKGJSON_GLOB = "**/vcpkg.json";
   private static readonly VCPKGJSON_IGNORES = "['**/vcpkg/**']";
   private static readonly DEFAULTVCPKGURL = 'https://github.com/microsoft/vcpkg.git';
@@ -90,6 +89,8 @@ export class VcpkgAction {
 
       // Create the vcpkg_root and cache directory if needed.
       const binCachePath: string = this.binaryCachePath ?? await runvcpkglib.getDefaultVcpkgCacheDirectory(this.baseUtilLib.baseLib);
+      // Save the binary cache path for the post action.
+      vcpkgutil.Utils.addCachedPaths(baseLib, binCachePath);
       baseLib.debug(`vcpkgRootDir=${this.vcpkgRootDir}, binCachePath=${binCachePath}`);
       await baseLib.mkdirP(vcpkgRoot);
       await baseLib.mkdirP(binCachePath);

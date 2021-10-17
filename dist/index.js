@@ -139,6 +139,8 @@ class VcpkgAction {
                 }
                 // Create the vcpkg_root and cache directory if needed.
                 const binCachePath = (_a = this.binaryCachePath) !== null && _a !== void 0 ? _a : yield runvcpkglib.getDefaultVcpkgCacheDirectory(this.baseUtilLib.baseLib);
+                // Save the binary cache path for the post action.
+                vcpkgutil.Utils.addCachedPaths(baseLib, binCachePath);
                 baseLib.debug(`vcpkgRootDir=${this.vcpkgRootDir}, binCachePath=${binCachePath}`);
                 yield baseLib.mkdirP(vcpkgRoot);
                 yield baseLib.mkdirP(binCachePath);
@@ -332,10 +334,10 @@ class Utils {
         return __awaiter(this, void 0, void 0, function* () {
             baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
             const cacheKeySegments = [];
-            cacheKeySegments.push(`runnerOS=${process.env.ImageOS ? process.env.ImageOS : process.platform}`);
+            let firstSegment = `runnerOS=${process.env.ImageOS ? process.env.ImageOS : process.platform}`;
             const [commitId, isSubmodule] = yield Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);
             if (commitId) {
-                cacheKeySegments.push(`vcpkgGitCommit=${commitId}`);
+                firstSegment += `-vcpkgGitCommit=${commitId}`;
                 if (isSubmodule) {
                     baseUtilLib.baseLib.info(`Adding vcpkg submodule Git commit id '${commitId}' to cache key`);
                     if (userProvidedCommitId) {
@@ -347,12 +349,13 @@ class Utils {
                 }
             }
             else if (userProvidedCommitId) {
-                cacheKeySegments.push(`vcpkgGitCommit=${userProvidedCommitId}`);
+                firstSegment += `-vcpkgGitCommit=${userProvidedCommitId}`;
                 baseUtilLib.baseLib.info(`Adding user provided vcpkg's Git commit id '${userProvidedCommitId}' to cache key.`);
             }
             else {
                 baseUtilLib.baseLib.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
             }
+            cacheKeySegments.push(firstSegment);
             if (vcpkgJsonHash) {
                 cacheKeySegments.push(`vcpkgJson=${vcpkgJsonHash}`);
                 baseUtilLib.baseLib.info(`Adding hash of vcpkg.json: '${vcpkgJsonHash}'.`);
@@ -414,22 +417,38 @@ class Utils {
         });
     }
     static addCachedPaths(baseLib, paths) {
+        baseLib.debug(`addCachedPaths(${paths})<<`);
         if (paths) {
-            baseLib.debug(`Set ${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}=${paths}`);
-            baseLib.setState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE, paths);
+            baseLib.debug(`Adding cached paths: '${paths}''`);
+            let s = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
+            s = `${s !== null && s !== void 0 ? s : ''};${paths}`;
+            baseLib.setState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE, s);
+            baseLib.debug(`Set ${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}=${s}`);
         }
+        baseLib.debug(`addCachedPaths()>>`);
     }
     static getAllCachedPaths(baseLib, vcpkgRootDir) {
-        let paths = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
-        const additionalCachedPaths = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
-        baseLib.debug(`Get ${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}=${additionalCachedPaths}`);
-        if (additionalCachedPaths) {
-            paths = paths.concat(additionalCachedPaths.split(';'));
+        baseLib.debug(`getAllCachedPaths(${vcpkgRootDir})<<`);
+        let pathsToCache = [];
+        // Hack-ish: ensure that VCPKG_DEFAULT_BINARY_CACHE is always added to the list of cached paths.
+        // When this functino is called by the action, the env var contains the binary cache path.
+        // When this function is called by the post action, the env var is not defined (but the path is in the "state").
+        const binCachePath = process.env[vcpkgaction.VcpkgAction.VCPKG_DEFAULT_BINARY_CACHE];
+        if (binCachePath) {
+            pathsToCache = pathsToCache.concat([binCachePath]);
         }
+        const additionalCachedPaths = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
+        baseLib.debug(`getState(${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}) -> '${additionalCachedPaths}'`);
+        if (additionalCachedPaths) {
+            pathsToCache = pathsToCache.concat(additionalCachedPaths.split(';'));
+        }
+        pathsToCache = pathsToCache.concat(runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir));
         // Remove empty entries.
-        paths = paths.map(s => s.trim()).filter(Boolean);
+        pathsToCache = pathsToCache.map(s => s.trim()).filter(Boolean);
         // Remove duplicates.
-        return [...new Set(paths)];
+        const ps = [...new Set(pathsToCache)];
+        baseLib.debug(`getAllCachedPaths(${vcpkgRootDir})<< -> '${JSON.stringify(ps)}'`);
+        return ps;
     }
 }
 exports.Utils = Utils;

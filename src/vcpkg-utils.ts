@@ -87,11 +87,11 @@ export class Utils {
     baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
     const cacheKeySegments: string[] = [];
 
-    cacheKeySegments.push(`runnerOS=${process.env.ImageOS ? process.env.ImageOS : process.platform}`);
+    let firstSegment = `runnerOS=${process.env.ImageOS ? process.env.ImageOS : process.platform}`;
 
     const [commitId, isSubmodule] = await Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);
     if (commitId) {
-      cacheKeySegments.push(`vcpkgGitCommit=${commitId}`);
+      firstSegment += `-vcpkgGitCommit=${commitId}`;
       if (isSubmodule) {
         baseUtilLib.baseLib.info(`Adding vcpkg submodule Git commit id '${commitId}' to cache key`);
         if (userProvidedCommitId) {
@@ -101,11 +101,13 @@ export class Utils {
         baseUtilLib.baseLib.info(`vcpkg identified at Git commit id '${commitId}', adding it to the cache's key.`);
       }
     } else if (userProvidedCommitId) {
-      cacheKeySegments.push(`vcpkgGitCommit=${userProvidedCommitId}`);
+      firstSegment += `-vcpkgGitCommit=${userProvidedCommitId}`;
       baseUtilLib.baseLib.info(`Adding user provided vcpkg's Git commit id '${userProvidedCommitId}' to cache key.`);
     } else {
       baseUtilLib.baseLib.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
     }
+
+    cacheKeySegments.push(firstSegment);
 
     if (vcpkgJsonHash) {
       cacheKeySegments.push(`vcpkgJson=${vcpkgJsonHash}`);
@@ -162,30 +164,47 @@ export class Utils {
         }
       }
     }
-    
+
     baseLib.debug(`saveCache()>>`)
   }
 
   public static addCachedPaths(baseLib: baselib.BaseLib, paths: string | null): void {
+    baseLib.debug(`addCachedPaths(${paths})<<`)
     if (paths) {
-      baseLib.debug(`Set ${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}=${paths}`);
-      baseLib.setState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE, paths);
+      baseLib.debug(`Adding cached paths: '${paths}''`);
+      let s: string | undefined = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
+      s = `${s ?? ''};${paths}`;
+      baseLib.setState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE, s);
+      baseLib.debug(`Set ${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}=${s}`);
     }
+    baseLib.debug(`addCachedPaths()>>`)
   }
 
   public static getAllCachedPaths(baseLib: baselib.BaseLib, vcpkgRootDir: string): string[] {
-    let paths = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
-
-    const additionalCachedPaths: string | undefined = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
-    baseLib.debug(`Get ${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}=${additionalCachedPaths}`);
-    if (additionalCachedPaths) {
-      paths = paths.concat(additionalCachedPaths.split(';'));
+    baseLib.debug(`getAllCachedPaths(${vcpkgRootDir})<<`);
+    let pathsToCache: string[] = [];
+    // Hack-ish: ensure that VCPKG_DEFAULT_BINARY_CACHE is always added to the list of cached paths.
+    // When this functino is called by the action, the env var contains the binary cache path.
+    // When this function is called by the post action, the env var is not defined (but the path is in the "state").
+    const binCachePath: string | undefined = process.env[vcpkgaction.VcpkgAction.VCPKG_DEFAULT_BINARY_CACHE];
+    if (binCachePath) {
+      pathsToCache = pathsToCache.concat([binCachePath]);
     }
 
+    const additionalCachedPaths: string | undefined = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
+    baseLib.debug(`getState(${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}) -> '${additionalCachedPaths}'`);
+    if (additionalCachedPaths) {
+      pathsToCache = pathsToCache.concat(additionalCachedPaths.split(';'));
+    }
+    pathsToCache = pathsToCache.concat(runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir));
+
     // Remove empty entries.
-    paths = paths.map(s => s.trim()).filter(Boolean);
+    pathsToCache = pathsToCache.map(s => s.trim()).filter(Boolean);
 
     // Remove duplicates.
-    return [...new Set(paths)];
+    const ps = [...new Set(pathsToCache)];
+
+    baseLib.debug(`getAllCachedPaths(${vcpkgRootDir})<< -> '${JSON.stringify(ps)}'`);
+    return ps;
   }
 }
