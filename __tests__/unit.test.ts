@@ -291,11 +291,10 @@ test('getVcpkgCommitId() tests', async () => {
 test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided and no vcpkg.json found)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos_vcpkgGitCommit=1234_appendedKey=appendedCacheKey",
+        "primary": "runnerOS=imageos-vcpkgGitCommit=1234_appendedKey=appendedCacheKey",
         "restore":
             [
-                "runnerOS=imageos_vcpkgGitCommit=1234",
-                "runnerOS=imageos"
+                "runnerOS=imageos-vcpkgGitCommit=1234"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -323,12 +322,11 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided an
 test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos_vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json_appendedKey=appendedCacheKey",
+        "primary": "runnerOS=imageos-vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json_appendedKey=appendedCacheKey",
         "restore":
             [
-                "runnerOS=imageos_vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json",
-                "runnerOS=imageos_vcpkgGitCommit=1234",
-                "runnerOS=imageos"
+                "runnerOS=imageos-vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json",
+                "runnerOS=imageos-vcpkgGitCommit=1234"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -352,12 +350,11 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided)',
 test('computeCacheKey(): vcpkg as a submodule (no commit id user provided)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos_vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json_appendedKey=appendedCacheKey",
+        "primary": "runnerOS=imageos-vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json_appendedKey=appendedCacheKey",
         "restore":
             [
-                "runnerOS=imageos_vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json",
-                "runnerOS=imageos_vcpkgGitCommit=5678",
-                "runnerOS=imageos"
+                "runnerOS=imageos-vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json",
+                "runnerOS=imageos-vcpkgGitCommit=5678"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -381,12 +378,11 @@ test('computeCacheKey(): vcpkg as a submodule (no commit id user provided)', asy
 test('computeCacheKey(): vcpkg as a submodule, with user provided Git commit id, it must trigger a warning', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos_vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json_appendedKey=appendedCacheKey",
+        "primary": "runnerOS=imageos-vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json_appendedKey=appendedCacheKey",
         "restore":
             [
-                "runnerOS=imageos_vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json",
-                "runnerOS=imageos_vcpkgGitCommit=0912",
-                "runnerOS=imageos"
+                "runnerOS=imageos-vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json",
+                "runnerOS=imageos-vcpkgGitCommit=0912"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -408,11 +404,10 @@ test('computeCacheKey(): vcpkg as a submodule, with user provided Git commit id,
 test('computeCacheKey(): vcpkg with user provided commit it must not trigger a warning', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos_vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json_appendedKey=appendedCacheKey",
+        "primary": "runnerOS=imageos-vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json_appendedKey=appendedCacheKey",
         "restore": [
-            "runnerOS=imageos_vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json",
-            "runnerOS=imageos_vcpkgGitCommit=userId",
-            "runnerOS=imageos"]
+            "runnerOS=imageos-vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json",
+            "runnerOS=imageos-vcpkgGitCommit=userId"]
     };
     process.env.ImageOS = "imageos";
     const vcpkgCommitIdMock = jest.spyOn(vcpkgutils.Utils, 'getVcpkgCommitId').
