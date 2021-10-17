@@ -58,7 +58,7 @@ jobs:
       # to install the packages when `run-cmake` runs, no packages are installed at
       # this time.
       - name: Restore artifacts, or setup vcpkg (do not install any package)
-        uses: lukka/run-vcpkg@v10
+        uses: lukka/run-vcpkg@v10 # Always specify the specific _version_ of the action you need, `v10` in this case.
         #with:
           # This is the default location of the directory containing vcpkg sources.
           # Change it to the right location if needed.
