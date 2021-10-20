@@ -21,7 +21,7 @@ export class Utils {
 
   /**
    * Retrieve the commit id of the Git repository at vcpkgDirectory.
-   *
+   * Returns [undefined, undefined] when the provided path is not the root of a Git repository.
    * @static
    * @param {baseutillib.BaseUtilLib} baseUtils
    * @param {string} vcpkgDirectory
@@ -50,7 +50,7 @@ export class Utils {
         id = fs.readFileSync(submodulePath).toString();
         baseUtils.baseLib.debug(`commitId='${id}'`);
         isSubmodule = true;
-      } else {
+      } else if (fs.existsSync(path.join(fullVcpkgPath, ".git"))) {
         id = await runvcpkglib.VcpkgRunner.getCommitId(baseUtils, fullVcpkgPath);
         isSubmodule = false;
       }

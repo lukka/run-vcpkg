@@ -248,13 +248,29 @@ test('isExactKeyMatch() tests', () => {
     expect(vcpkgutils.Utils.isExactKeyMatch("hash", "hash")).toBeTruthy();
 });
 
+test('getVcpkgCommitId() must return undefined when the path is not the root of a Git repository', async () => {
+    // Arrange
+    const vcpkgrunnerGetCommitIdMock = jest.spyOn(runvcpkglib.VcpkgRunner, 'getCommitId').
+        mockImplementationOnce(function (baseUtilLib, path): Promise<string> {
+            return Promise.resolve("1234");
+        });
+
+    // It must return undefined when the path is not the _root_ of a Git repository.
+    const nonGitRootPath = path.resolve(__dirname);
+    process.env.GITHUB_WORKSPACE = nonGitRootPath;
+
+    // Act and Assert
+    expect(await vcpkgutils.Utils.getVcpkgCommitId(baseUtil, nonGitRootPath)).toStrictEqual([undefined, undefined]);
+    expect(vcpkgrunnerGetCommitIdMock).toBeCalledTimes(0);
+});
+
 test('getVcpkgCommitId() tests', async () => {
     const p = path.resolve(path.join(__dirname, ".."));
     // It must return undefined when GITHUB_WORKSPACE is not defined.
     delete process.env.GITHUB_WORKSPACE;
     expect(await vcpkgutils.Utils.getVcpkgCommitId(baseUtil, p)).toStrictEqual([undefined, undefined]);
 
-    // It must return undefined when there is no vcpkg repository.
+    // It must return undefined when the path is not existent
     process.env.GITHUB_WORKSPACE = "/var/tmp/anything";
     process.env.INPUT_VCPKGDIRECTORY = "/vcpkg";
     expect(await vcpkgutils.Utils.getVcpkgCommitId(baseUtil, p)).toStrictEqual([undefined, false]);
@@ -307,7 +323,7 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided an
         });
     // Act and Assert.
     expect(await vcpkgutils.Utils.computeCacheKeys(
-        baseUtil, 
+        baseUtil,
         null,
         ".",
         "",
