@@ -2,9 +2,9 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/lukka/run-vcpkg/badge.svg?branch=main)](https://coveralls.io/github/lukka/run-vcpkg?branch=main)
 
-- [Before using this action, consider writing a C++ CMake/vcpkg/Ninja based _pure_ workflow!](#before-using-this-action-consider-writing-a-c-cmakevcpkgninja-based-pure-workflow)
+- [Quickstart with a C++ project template](#quickstart-with-a-c-project-template)
 - [The **run-vcpkg@v10** action for caching artifacts and using vcpkg with manifest files on GitHub workflows](#the-run-vcpkgv10-action-for-caching-artifacts-and-using-vcpkg-with-manifest-files-on-github-workflows)
-  - [Quickstart](#quickstart)
+  - [Quickstart with instructions](#quickstart-with-instructions)
   - [Action reference: all input/output parameters](#action-reference-all-inputoutput-parameters)
   - [Flowchart](#flowchart)
   - [Best practices](#best-practices)
@@ -15,10 +15,9 @@
 - [Disclaimer](#disclaimer)
 - [Contributing](#contributing)
 
-# Before using this action, consider writing a [C++ CMake/vcpkg/Ninja based _pure_ workflow](https://github.com/lukka/CppBuildTasks-Validation/blob/master/.github/workflows/hosted-pure-workflow.yml)!
+# Quickstart with a C++ project template
 
-A __pure__ workflow is one without using special GitHub action that you cannot run locally on your development machine, but directly using the tools (`CMake`, `Ninja`, `vcpkg`) you already use daily. 
-You can read more in this issue about it: https://github.com/lukka/run-vcpkg/issues/66
+Take a look at this [C++ project template](https://github.com/lukka/CppCMakeVcpkgTemplate) that applies all the following instructions, but also shows how to create a __pure__ workflow without using special GitHub action that you cannot run locally on your development machine, but directly using the tools (`CMake`, `Ninja`, `vcpkg`, `C++` compilers) you already use daily.
 
 # [The **run-vcpkg@v10** action for caching artifacts and using vcpkg with manifest files on GitHub workflows](https://github.com/marketplace/actions/run-vcpkg)
 
@@ -35,7 +34,9 @@ The provided [samples](#samples) use [GitHub hosted runners](https://help.github
 Good companions are the [run-cmake](https://github.com/marketplace/actions/run-cmake) action and the
 [get-cmake](https://github.com/marketplace/actions/get-cmake) actions.
 
-## Quickstart
+<br>
+
+## Quickstart with instructions
 
 It is __highly recommended__ to use:
 - [vcpkg as a submodule](#vcpkgsubmodule).
