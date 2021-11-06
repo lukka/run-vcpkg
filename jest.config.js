@@ -16,7 +16,9 @@ module.exports = {
     },
   },
   collectCoverage: true,
-  coveragePathIgnorePatterns: ["<rootDir>/build/", "<rootDir>/node_modules/", "<rootDir>/__tests__", "__tests__"],
+  coveragePathIgnorePatterns: [
+    "<rootDir>/build/", "<rootDir>/node_modules/", "<rootDir>/__tests__", "__tests__"
+  ],
   collectCoverageFrom: [
     "src/*.ts",
     "!**/node_modules/**",
