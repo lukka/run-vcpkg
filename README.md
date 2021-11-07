@@ -202,12 +202,14 @@ The dependencies specified in the vcpkg.json file are installed when CMake runs 
 
 ## Samples
 
-|Sample scenario|Notes|
-|:-:|:-:|
-|[vcpkg as submodule, CMake with vcpkg toolchain in a CMakePreset.json configuration](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod.yml)| Uses `CMake`, `Ninja` and `vcpkg`|
-|[vcpkg NOT as submodule, CMake with vcpkg toolchain in a CMakePreset.json configuration](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg.yml)|Uses `CMake`, `Ninja` and `vcpkg`|
-|[`run-vcpkg` runs 'vcpkg install'](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg-install.yml)|Uses `CMake`, `Ninja` and `vcpkg`|
-|[vcpkg as submodule, explicit vcpkg triplet, CMake with vcpkg toolchain in a CMakePreset.json configuration](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod-triplet.yml)| Uses `CMake`, `Ninja` and `vcpkg`|
+_Checkmarks_ indicates whether the samples "uses" or specifies the thing in the header or whether it is true.
+
+|workflow link|`vcpkg` as submodule|explicit triplet|`vcpkg` toolchain|`CMake`'s Presets|`Ninja`|`run-vcpkg` runs vcpkg|`CMake` runs `vcpkg`
+|:-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod.yml)|✅|❌|✅|✅|✅|❌|✅|
+|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg.yml)|❌|❌|✅|✅|✅|❌|✅
+|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg-install.yml)|❌|❌|✅|✅|✅|✅|❌|
+|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod-triplet.yml)|✅|✅|✅|✅|✅|❌|✅
 <br>
 
 # License
