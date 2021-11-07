@@ -41,7 +41,7 @@ Good companions are the [run-cmake](https://github.com/marketplace/actions/run-c
 It is __highly recommended__ to use:
 - [vcpkg as a submodule](#vcpkgsubmodule).
 - a [vcpkg.json](#vcpkgjson) manifest file to declaratively specify the dependencies.
-- a CMakePreset.json file.
+- a `CMakePresets.json` file.
 
 ```yaml
 jobs:
