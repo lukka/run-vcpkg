@@ -72,7 +72,7 @@ jobs:
           # for vcpkg.
           # vcpkgGitCommitId: '${{ matrix.vcpkgCommitId }}'
 
-          # This is the glob expression used to locate the vpkg.json and add its
+          # This is the glob expression used to locate the vcpkg.json and add its
           # hash to the cache key. Change it to match a single manifest file you want
           # to use.
           # vcpkgJsonGlob: '**/vcpkg.json'
