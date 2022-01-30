@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/lukka/run-vcpkg/badge.svg?branch=main)](https://coveralls.io/github/lukka/run-vcpkg?branch=main)
 
 - [Quickstart with a C++ project template](#quickstart-with-a-c-project-template)
-- [The **run-vcpkg@v10** action for caching artifacts and using vcpkg with manifest files on GitHub workflows](#the-run-vcpkgv10-action-for-caching-artifacts-and-using-vcpkg-with-manifest-files-on-github-workflows)
+- [The **run-vcpkg@v10.1** action for caching artifacts and using vcpkg with manifest files on GitHub workflows](#the-run-vcpkgv101-action-for-caching-artifacts-and-using-vcpkg-with-manifest-files-on-github-workflows)
   - [Quickstart with instructions](#quickstart-with-instructions)
   - [Action reference: all input/output parameters](#action-reference-all-inputoutput-parameters)
   - [Flowchart](#flowchart)
@@ -19,7 +19,7 @@
 
 Take a look at this [C++ project template](https://github.com/lukka/CppCMakeVcpkgTemplate) that applies all the following instructions, but also shows how to create a __pure__ workflow without using special GitHub action that you cannot run locally on your development machine, but directly using the tools (`CMake`, `Ninja`, `vcpkg`, `C++` compilers) you already use daily.
 
-# [The **run-vcpkg@v10** action for caching artifacts and using vcpkg with manifest files on GitHub workflows](https://github.com/marketplace/actions/run-vcpkg)
+# [The **run-vcpkg@v10.1** action for caching artifacts and using vcpkg with manifest files on GitHub workflows](https://github.com/marketplace/actions/run-vcpkg)
 
 The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsoft/vcpkg) along with the previously installed packages, and then setup vcpkg to be run in a subsequent step. Or it runs it for you.
 
@@ -60,8 +60,8 @@ jobs:
       # this time.
       - name: Restore artifacts, or setup vcpkg (do not install any package)
         uses: lukka/run-vcpkg@v10.1 # Always specify the specific _version_ of the
-                                  # action you need, `v10` in this case to stay up
-                                  # to date with fixes on v10 branch.
+                                    # action you need, `v10.1` in this case to stay up
+                                    # to date with fixes on `v10.1` branch.
         #with:
           # This is the default location of the directory containing vcpkg sources.
           # Change it to the right location if needed.
@@ -214,10 +214,10 @@ _Checkmarks_ indicates whether the samples "uses" or specifies the thing in the 
 
 |workflow link|`vcpkg` as submodule|explicit triplet|`vcpkg` toolchain|`CMake`'s Presets|`Ninja`|`run-vcpkg` runs vcpkg|`CMake` runs `vcpkg`
 |:-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod.yml)|✅|❌|✅|✅|✅|❌|✅|
-|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg.yml)|❌|❌|✅|✅|✅|❌|✅
-|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg-install.yml)|❌|❌|✅|✅|✅|✅|❌|
-|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod-triplet.yml)|✅|✅|✅|✅|✅|❌|✅
+|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10.1/.github/workflows/hosted-ninja-vcpkg_submod.yml)|✅|❌|✅|✅|✅|❌|✅|
+|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10.1/.github/workflows/hosted-ninja-vcpkg.yml)|❌|❌|✅|✅|✅|❌|✅
+|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10.1/.github/workflows/hosted-ninja-vcpkg-install.yml)|❌|❌|✅|✅|✅|✅|❌|
+|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10.1/.github/workflows/hosted-ninja-vcpkg_submod-triplet.yml)|✅|✅|✅|✅|✅|❌|✅
 <br>
 
 # License
