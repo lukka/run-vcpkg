@@ -60,12 +60,18 @@ export class Utils {
     return [id, isSubmodule];
   }
 
-  public static async getVcpkgJsonHash(baseUtil: baseutillib.BaseUtilLib, vcpkgJsonGlob: string, vcpkgJsonIgnores: string[]): Promise<[string | null, string | null]> {
+  public static async getVcpkgJsonHash(baseUtil: baseutillib.BaseUtilLib, vcpkgJsonGlob: string, vcpkgJsonIgnores: string[]): Promise<[string | null, string | null, string | null]> {
     try {
       const [vcpkgJsonPath, vcpkgJsonHash] = await baseUtil.getFileHash(vcpkgJsonGlob, vcpkgJsonIgnores);
       if (vcpkgJsonPath) {
-        baseUtil.baseLib.info(`Found vcpkg.json at '${vcpkgJsonPath}', its hash is '${vcpkgJsonHash}''.`);
-        return [vcpkgJsonPath, vcpkgJsonHash];
+        baseUtil.baseLib.info(`Found ${runvcpkglib.VCPKG_JSON} at '${vcpkgJsonPath}', its hash is '${vcpkgJsonHash}''.`);
+        const vcpkgConfJsonPath: string = path.join(path.dirname(vcpkgJsonPath), runvcpkglib.VCPKG_CONFIGURATION_JSON);
+        let vcpkgConfigurationHash = null;
+        if (baseUtil.fileExists(vcpkgConfJsonPath)) {
+          vcpkgConfigurationHash = await baseUtil.baseLib.hashFiles(vcpkgConfJsonPath);
+          baseUtil.baseLib.info(`Found sibling ${runvcpkglib.VCPKG_CONFIGURATION_JSON} at '${vcpkgConfJsonPath}', its hash is '${vcpkgConfigurationHash}'.`)
+        }
+        return [vcpkgJsonPath, vcpkgJsonHash, vcpkgConfigurationHash];
       }
     }
     catch (err) {
@@ -75,12 +81,13 @@ export class Utils {
     }
 
     baseUtil.baseLib.warning(`Cannot compute hash of vcpkg.json as it was not found (or multiple hits) with glob expression '${vcpkgJsonGlob}'.`);
-    return [null, null];
+    return [null, null, null];
   }
 
   public static async computeCacheKeys(
     baseUtilLib: baseutillib.BaseUtilLib,
     vcpkgJsonHash: string | null,
+    vcpkgConfJsonHash: string | null,
     vcpkgDirectory: string,
     userProvidedCommitId: string | null,
     appendedCacheKey: string | null): Promise<baseutillib.KeySet> {
@@ -110,8 +117,13 @@ export class Utils {
     cacheKeySegments.push(firstSegment);
 
     if (vcpkgJsonHash) {
-      cacheKeySegments.push(`vcpkgJson=${vcpkgJsonHash}`);
-      baseUtilLib.baseLib.info(`Adding hash of vcpkg.json: '${vcpkgJsonHash}'.`);
+      let hash = `vcpkgJson=${vcpkgJsonHash}`;
+      baseUtilLib.baseLib.info(`Adding hash of ${runvcpkglib.VCPKG_JSON}: '${vcpkgJsonHash}'.`);
+      if (vcpkgConfJsonHash) {
+        baseUtilLib.baseLib.info(`Adding hash of ${runvcpkglib.VCPKG_CONFIGURATION_JSON}: '${vcpkgConfJsonHash}'.`);
+        hash += `-vcpkgConfigurationJson=${vcpkgConfJsonHash}`;
+      }
+      cacheKeySegments.push(hash);
     }
 
     if (appendedCacheKey) {

@@ -59,7 +59,7 @@ jobs:
       # to install the packages when `run-cmake` runs, no packages are installed at
       # this time.
       - name: Restore artifacts, or setup vcpkg (do not install any package)
-        uses: lukka/run-vcpkg@v10 # Always specify the specific _version_ of the 
+        uses: lukka/run-vcpkg@v10.1 # Always specify the specific _version_ of the
                                   # action you need, `v10` in this case to stay up
                                   # to date with fixes on v10 branch.
         #with:
@@ -100,9 +100,14 @@ jobs:
           buildPreset: 'ninja-multi-vcpkg'
 
     #env:
-    #  VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }} # [OPTIONAL] Define the vcpkg's triplet 
-    # you want to enforce, otherwise the default one for the hosting system will be 
-    # automatically choosen (x64 is the default on all platforms,  e.g. x64-osx).
+    #  By default the action disables vcpkg's telemetry by defining VCPKG_DISABLE_METRICS. 
+    #  This behavior can be disabled by defining `VCPKG_ENABLE_METRICS` as follows.
+    #  VCPKG_ENABLE_METRICS: 1 
+    #
+    #  [OPTIONAL] Define the vcpkg's triplet you want to enforce, otherwise the default one
+    #  for the hosting system will be automatically choosen (x64 is the default on all platforms,
+    #  e.g. `x64-osx`).
+    #  VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }} 
 ```
 
 ## Action reference: all input/output parameters
@@ -120,21 +125,21 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
 │  - platform and OS       │   - `vcpkgGitCommitId`
 │  - user provided key     │
 └─────────────┬────────────┘
-              │     
-              ▼     
+              │
+              ▼
  ┌─────────────────────────┐
  │ Locate vcpkg.json.      │   Inputs:
  │ If found, add its hash  │   - `vcpkgJsonGlob`
  │ to cache key            │   _ `vcpkgJsonIgnores`
  └────────────┬────────────┘
-              │     
-              ▼     
+              │
+              ▼
  ┌─────────────────────────┐   Inputs:
  │ Restore vcpkg and       │   - `doNotCache`
  │ packages from cache     │   - `vcpkgDirectory`
  │ to cache key            │   - `binaryCachePath`
  └────────────┬────────────┘   Environment variable:
-              │                - `VCPKG_DEFAULT_BINARY_CACHE`: where previous built packages 
+              │                - `VCPKG_DEFAULT_BINARY_CACHE`: where previous built packages
               ▼                  are going to be restored
  ┌─────────────────────────┐
  │ If vcpkg is not a       │   Inputs:
@@ -142,14 +147,14 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  │                         │   - `vcpkgGitURL`
  └────────────┬────────────┘   - `doNotUpdateVcpkg`
               │                - `vcpkgDirectory`
-              ▼     
+              ▼
  ┌─────────────────────────┐
  │ Rebuild vcpkg executable│   Inputs:
  │ if not in sync with     │   - `vcpkgGitCommitId`
  │ sources                 │   - `vcpkgGitURL`
  └────────────┬────────────┘
-              │     
-              ▼     
+              │
+              ▼
   <Is `runVcpkgInstall:true`>┐    Inputs:
           ────┬────        No│   - `runVcpkgInstall`
               │ Yes          │
@@ -157,17 +162,17 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  ┌─────────────────────────┐ │
  │ Launch `vcpkg install`  │ │   Inputs:
  │ where vcpkg.json has    │ │   - `runVcpkgFormatString`
- │ been located            │ │   Environment variables: 
+ │ been located            │ │   Environment variables:
  └────────────┬────────────┘ │   - `VCPKG_DEFAULT_TRIPLET` is used. If not yet
               │              │     set, it is set to the current platform.
               ▼              │
  ┌─────────────────────────┐ │
- │ Set `VCPKG_ROOT` and    │ │   
- │ `VCPKG_DEFAULT_TRIPLET` │ │   
- │ workflow-wide env vars  │ │   
+ │ Set `VCPKG_ROOT` and    │ │
+ │ `VCPKG_DEFAULT_TRIPLET` │ │
+ │ workflow-wide env vars  │ │
  └────────────┬────────────┘ │
               ├───────────── ┘
-              ▼     
+              ▼
  ┌───────────────────────────┐
  │ Schedule this step at     │
  │ end of the workflow:      │
@@ -175,9 +180,10 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  │| If no cache-hit,        ││  Inputs:
  ││ store `VCPKG_ROOT` and  ││  - `binaryCachePath`
  ││ binary packages in cache││  - `doNotCache`
- │└────────────┬────────────┘│  - `doNotCacheOnWorkflowFailure`
- └────────────┬──────────────┘
-              ▼     
+ ││                         ││  Environment variables:
+ │└────────────┬────────────┘│  - RUNVCPKG_NO_CACHE: Any step before the post action
+ └────────────┬──────────────┘    may set this environment variable to disable saving
+              ▼                   the cache.
               ⬬
 ```
 

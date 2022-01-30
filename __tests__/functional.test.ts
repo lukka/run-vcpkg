@@ -9,7 +9,7 @@ import { ActionLib } from '@lukka/action-lib';
 import { BaseUtilLib } from '@lukka/base-util-lib';
 import * as runvcpkglib from "@lukka/run-vcpkg-lib"
 
-jest.setTimeout(400 * 1000);
+jest.setTimeout(800 * 1000);
 
 const tempDirectory = path.join(__dirname, "temp Directory");
 // Note: 'theAssets' must match the directory __tests__/theAssets/
