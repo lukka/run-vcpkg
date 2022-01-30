@@ -7,7 +7,7 @@ module.exports =
 
 "use strict";
 
-// Copyright (c) 2020-2021 Luca Cappa
+// Copyright (c) 2020-2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -66,7 +66,7 @@ main().catch(error => console.error("main() failed!", error));
 
 "use strict";
 
-// Copyright (c) 2020-2021 Luca Cappa
+// Copyright (c) 2020-2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -248,7 +248,7 @@ VcpkgAction.DEFAULTVCPKGURL = 'https://github.com/microsoft/vcpkg.git';
 
 "use strict";
 
-// Copyright (c) 2021 Luca Cappa
+// Copyright (c) 2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -304,7 +304,7 @@ exports.VcpkgPostAction = VcpkgPostAction;
 
 "use strict";
 
-// Copyright (c) 2020-2021 Luca Cappa
+// Copyright (c) 2020-2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
