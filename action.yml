@@ -34,10 +34,6 @@ inputs:
     default: false
     required: false
     description: "Disable the automatic caching mechanism by setting it to true. Default is false."
-  doNotCacheOnWorkflowFailure:
-    default: false
-    required: false
-    description: "Disable the saving of the cache if the workflow failed."
 
   # The following inputs are rarely set by the user, since the default values suffice the most common scenarios.
   vcpkgJsonGlob:
@@ -63,10 +59,6 @@ inputs:
     default: "\\s*\"(.+CMakeOutput\\.log)\"\\.\\s*;\\s*\"(.+CMakeError\\.log)\"\\.\\s*;\\s*(.+out\\.log)\\s*;\\s+(.+err\\.log)\\s*;\\s*(.+vcpkg.+\\.log)\\s*"
     required: false
     description: "Specifies a semicolon separated list of regular expressions that are used to identify log file paths in the workflow output. A regular expression must have a single capturing group, that is a single pair of parenthesis such as 'See also (.+.log)'. When a match occurs, the content of the file is written into the workflow output for disclosing its content to the user. The default regular expressions are for CMake's and vcpkg's log files."
-  jobStatus: 
-    default: ${{ job.status }}
-    required: false
-    description: "Do not set nor use. It is used to get the status of the job and decide whether to save cache on the post action run at the end of the job."
 
 runs:
   using: 'node12'

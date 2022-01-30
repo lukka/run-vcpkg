@@ -12,8 +12,6 @@ import * as vcpkgutil from './vcpkg-utils'
 export const doNotCacheInput = 'DONOTCACHE';
 export const additionalCachedPathsInput = 'ADDITIONALCACHEDPATHS';
 export const binaryCachePathInput = 'BINARYCACHEPATH';
-export const jobStatusInput = 'JOBSTATUS';
-export const doNotCacheOnWorkflowFailureInput = 'DONOTCACHEONWORKFLOWFAILURE';
 export const vcpkgJsonGlobInput = 'VCPKGJSONGLOB';
 export const vcpkgJsonIgnoresInput = "VCPKGJSONIGNORES";
 export const runVcpkgInstallInput = 'RUNVCPKGINSTALL';
@@ -35,6 +33,7 @@ export const VCPKG_DO_NOT_CACHE_STATE = "VCPKG_DO_NOT_CACHE_STATE";
 export const VCPKG_ADDED_CACHEKEY_STATE = "VCPKG_ADDED_CACHEKEY_STATE";
 export const VCPKG_ROOT_STATE = "VCPKG_ROOT_STATE";
 export const VCPKG_ADDITIONAL_CACHED_PATHS_STATE = "VCPKG_ADDITIONAL_CACHED_PATHS_STATE";
+export const VCPKG_SUCCESS_STATE = "VCPKG_SUCCESS_STATE";
 
 export class VcpkgAction {
   public static readonly VCPKG_DEFAULT_BINARY_CACHE = "VCPKG_DEFAULT_BINARY_CACHE";
@@ -110,9 +109,14 @@ export class VcpkgAction {
     let keys: baseutillib.KeySet | null = null;
     let vcpkgJsonFilePath: string | null = null;
     await this.baseUtilLib.wrapOp('Compute vcpkg cache key', async () => {
-      const [vcpkgJsonFile, vcpkgJsonHash] = await vcpkgutil.Utils.getVcpkgJsonHash(this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
+      const [vcpkgJsonFile, vcpkgJsonHash, vcpkgConfigurationJsonHash] = await vcpkgutil.Utils.getVcpkgJsonHash(this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
       keys = await vcpkgutil.Utils.computeCacheKeys(
-        this.baseUtilLib, vcpkgJsonHash, this.vcpkgRootDir as string, this.userProvidedCommitId, this.appendedCacheKey);
+        this.baseUtilLib, 
+        vcpkgJsonHash, 
+        vcpkgConfigurationJsonHash, 
+        this.vcpkgRootDir as string, 
+        this.userProvidedCommitId, 
+        this.appendedCacheKey);
 
       if (keys) {
         baseLib.info(`Computed key: ${JSON.stringify(keys)}`);
@@ -141,6 +145,7 @@ export class VcpkgAction {
       this.runVcpkgFormatString
     );
 
+    baseLib.setState(VCPKG_SUCCESS_STATE, "success");
     this.baseUtilLib.baseLib.debug("run()>>");
   }
 

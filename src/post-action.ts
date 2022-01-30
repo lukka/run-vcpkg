@@ -11,20 +11,17 @@ import * as vcpkgpostaction from './vcpkg-post-action'
 
 export async function main(): Promise<void> {
   try {
-    const doNotCache = (core.getState(vcpkgaction.VCPKG_DO_NOT_CACHE_STATE) ?? false) === "true";
+    const doNotCache = (core.getState(vcpkgaction.VCPKG_DO_NOT_CACHE_STATE) ?? false).toLowerCase() === "true";
     const actionLib = new actionlib.ActionLib();
     const baseUtil = new baseutillib.BaseUtilLib(actionLib);
 
-    const jobSucceeded: boolean = core.getInput(vcpkgaction.jobStatusInput).toLowerCase() === 'success';
-    const doNotCacheOnWorkflowFailure: boolean = core.getInput(vcpkgaction.doNotCacheOnWorkflowFailureInput).toLowerCase() === 'true'
-    const cacheHit: string = core.getState(vcpkgaction.VCPKG_KEY_CACHE_HIT_STATE);
+    const cacheHitKey: string = core.getState(vcpkgaction.VCPKG_KEY_CACHE_HIT_STATE);
     const computedCacheKey: baseutillib.KeySet = JSON.parse(core.getState(vcpkgaction.VCPKG_CACHE_COMPUTEDKEY_STATE)) as baseutillib.KeySet;
     const vcpkgRoot = core.getState(vcpkgaction.VCPKG_ROOT_STATE);
     const cachedPaths: string[] = vcpkgutil.Utils.getAllCachedPaths(actionLib, vcpkgRoot);
 
     const post = new vcpkgpostaction.VcpkgPostAction(baseUtil,
-      jobSucceeded, doNotCache, doNotCacheOnWorkflowFailure,
-      computedCacheKey, cachedPaths, cacheHit);
+      doNotCache, computedCacheKey, cachedPaths, cacheHitKey);
     await post.run();
   } catch (err) {
     const error: Error = err as Error;
