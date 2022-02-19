@@ -165,6 +165,9 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  │ been located            │ │   Environment variables:
  └────────────┬────────────┘ │   - `VCPKG_DEFAULT_TRIPLET` is used. If not yet
               │              │     set, it is set to the current platform.
+              │              │   - `VCPKG_INSTALLED_DIR` is used as value for 
+              │              │     `--x-install-root` when running `vcpkg install`.
+              │              │     Check out the `runVcpkgFormatString` input.
               ▼              │
  ┌─────────────────────────┐ │
  │ Set `VCPKG_ROOT` and    │ │
