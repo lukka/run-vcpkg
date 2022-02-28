@@ -20,7 +20,7 @@ jobs:
     - uses: actions/checkout@v2.4.0
       with:
         submodules: true
-    - uses: actions/setup-node@v2.5.1
+    - uses: actions/setup-node@v3
       with:
         node-version: '12.x'
       # How to consume GitHub packages, from this message (!): https://github.community/t/download-from-github-package-registry-without-authentication/14407/35
