@@ -19,7 +19,7 @@ export const runVcpkgFormatStringInput = "RUNVCPKGFORMATSTRING";
 export const vcpkgDirectoryInput = "VCPKGDIRECTORY";
 export const vcpkgCommitIdInput = "VCPKGGITCOMMITID";
 export const doNotUpdateVcpkgInput = "DONOTUPDATEVCPKG";
-export const vcpkgUrlInput = "VCPKGURLINPUT";
+export const vcpkgUrlInput = "VCPKGGITURL";
 /**
  * The input's name for additional content for the cache key.
  */
