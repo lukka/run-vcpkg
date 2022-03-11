@@ -94,7 +94,7 @@ export class Utils {
     baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
     const cacheKeySegments: string[] = [];
 
-    let firstSegment = `runnerOS=${process.env.ImageOS ? process.env.ImageOS : process.platform}`;
+    let firstSegment = `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
 
     const [commitId, isSubmodule] = await Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);
     if (commitId) {
