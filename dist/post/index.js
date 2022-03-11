@@ -95,7 +95,7 @@ exports.runVcpkgFormatStringInput = "RUNVCPKGFORMATSTRING";
 exports.vcpkgDirectoryInput = "VCPKGDIRECTORY";
 exports.vcpkgCommitIdInput = "VCPKGGITCOMMITID";
 exports.doNotUpdateVcpkgInput = "DONOTUPDATEVCPKG";
-exports.vcpkgUrlInput = "VCPKGURLINPUT";
+exports.vcpkgUrlInput = "VCPKGGITURL";
 /**
  * The input's name for additional content for the cache key.
  */
@@ -403,7 +403,7 @@ class Utils {
         return __awaiter(this, void 0, void 0, function* () {
             baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
             const cacheKeySegments = [];
-            let firstSegment = `runnerOS=${process.env.ImageOS ? process.env.ImageOS : process.platform}`;
+            let firstSegment = `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
             const [commitId, isSubmodule] = yield Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);
             if (commitId) {
                 firstSegment += `-vcpkgGitCommit=${commitId}`;
