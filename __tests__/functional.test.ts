@@ -48,7 +48,7 @@ describe('run-vcpkg functional tests', () => {
     test('vcpkg setup and install must succeed', () => {
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "025e564979cc01d0fbc5c920aa8a36635efb01bb";
+        process.env.INPUT_VCPKGGITCOMMITID = "b86c0c35b88e2bf3557ff49dc831689c2f085090";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -62,7 +62,7 @@ describe('run-vcpkg functional tests', () => {
     test('vcpkg setup and no install must succeed', () => {
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "025e564979cc01d0fbc5c920aa8a36635efb01bb";
+        process.env.INPUT_VCPKGGITCOMMITID = "b86c0c35b88e2bf3557ff49dc831689c2f085090";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = "['invalid command']";
 
@@ -77,7 +77,7 @@ describe('run-vcpkg functional tests', () => {
         delete process.env.INPUT_VCPKGDIRECTORY;
         console.log(process.env.INPUT_VCPKGDIRECTORY);
         delete process.env.INPUT_VCPKGJSONGLOB;
-        process.env.INPUT_VCPKGGITCOMMITID = "025e564979cc01d0fbc5c920aa8a36635efb01bb";
+        process.env.INPUT_VCPKGGITCOMMITID = "b86c0c35b88e2bf3557ff49dc831689c2f085090";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -102,7 +102,7 @@ describe('run-vcpkg functional tests', () => {
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgInstallDirectory(baseLibUtils.baseLib));
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgCacheDirectory(baseLibUtils.baseLib));
         
-        process.env.INPUT_VCPKGGITCOMMITID = "025e564979cc01d0fbc5c920aa8a36635efb01bb";
+        process.env.INPUT_VCPKGGITCOMMITID = "b86c0c35b88e2bf3557ff49dc831689c2f085090";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
