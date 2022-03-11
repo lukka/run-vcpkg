@@ -403,7 +403,9 @@ class Utils {
         return __awaiter(this, void 0, void 0, function* () {
             baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
             const cacheKeySegments = [];
+            // Add to the first segment of the key the values of env vars ImageOS and ImageVersion if available.
             let firstSegment = `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
+            firstSegment += process.env['ImageVersion'] || "";
             const [commitId, isSubmodule] = yield Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);
             if (commitId) {
                 firstSegment += `-vcpkgGitCommit=${commitId}`;
