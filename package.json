@@ -31,7 +31,7 @@
     "gulp-typescript": "^5.0.0",
     "jest": "^26.0.14",
     "jest-circus": "^26.4.2",
-    "minimist": ">=1.2.2",
+    "minimist": ">=1.2.6",
     "ts-jest": "^26.3.0",
     "ts-node": "^10.2.1",
     "typescript": "^4.1.3",
