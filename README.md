@@ -72,7 +72,11 @@ jobs:
 
           # This is the glob expression used to locate the vcpkg.json and add its
           # hash to the cache key. Change it to match a single manifest file you want
-          # to use.
+          # to use. 
+          # Note: do not use `${{ github.context }}` to compose the value as it 
+          # contains backslashes that would be misinterpreted. Instead
+          # compose a value relative to the root of the repository using 
+          # `**/path/from/root/of/repo/to/vcpkg.json` to match the desired `vcpkg.json`.
           # vcpkgJsonGlob: '**/vcpkg.json'
 
           # This is needed to run `vcpkg install` command (after vcpkg is built) in
