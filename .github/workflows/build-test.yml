@@ -72,6 +72,8 @@ jobs:
         # This forces the creation of a new cache entry each time the workflow is run. 
         # It is the same across jobs in the same workflows.
         appendedCacheKey: ${{ env.GITHUB_RUN_ID }}
+      env:
+        VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
   tests_with_cache_hit:
     needs: tests
