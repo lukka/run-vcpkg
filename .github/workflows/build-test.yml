@@ -17,10 +17,10 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v2.4.0
+    - uses: actions/checkout@v3
       with:
         submodules: true
-    - uses: actions/setup-node@v2.5.1
+    - uses: actions/setup-node@v3
       with:
         node-version: '12.x'
       # How to consume GitHub packages, from this message (!): https://github.community/t/download-from-github-package-registry-without-authentication/14407/35
@@ -53,7 +53,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - name: checkout this action
-      uses: actions/checkout@v2.4.0
+      uses: actions/checkout@v3
       with:
         submodules: true
 
@@ -61,17 +61,19 @@ jobs:
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
+        vcpkgGitCommitId: '14e7bb4ae24616ec54ff6b2f6ef4e8659434ea44'
 
     - name: basic test for run-vcpkg with running 'vcpkg install'.
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
+        vcpkgGitCommitId: '14e7bb4ae24616ec54ff6b2f6ef4e8659434ea44'
         runVcpkgInstall: true
         # This forces the creation of a new cache entry each time the workflow is run. 
         # It is the same across jobs in the same workflows.
         appendedCacheKey: ${{ env.GITHUB_RUN_ID }}
+      env:
+        VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
   tests_with_cache_hit:
     needs: tests
@@ -83,7 +85,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - name: checkout this action
-      uses: actions/checkout@v2.4.0
+      uses: actions/checkout@v3
       with:
         submodules: true
 
@@ -91,7 +93,7 @@ jobs:
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'd417ae59d6e9aa20d9f812b5deb966645c54687d'
+        vcpkgGitCommitId: '14e7bb4ae24616ec54ff6b2f6ef4e8659434ea44'
         appendedCacheKey: ${{ env.GITHUB_RUN_ID }}
 
   finalize_coveralls:

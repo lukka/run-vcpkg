@@ -39,7 +39,7 @@ inputs:
   vcpkgJsonGlob:
     default: '**/vcpkg.json'
     required: false
-    description: "Specify the glob expression used to discover the vcpkg.json whose content's hash is added to the cache key."
+    description: "Specify the glob expression used to discover the vcpkg.json whose content's hash is added to the cache key. On Windows runners using `github.workspace` context to form the expression would not work as expected since it contains backslashes. Use instead `**/path/to/vcpkg.json` to match the desired `vcpkg.json` file."
   vcpkgJsonIgnores:
     default: "['**/vcpkg/**']"
     required: false

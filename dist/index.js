@@ -5955,7 +5955,7 @@ function copyFile(srcFile, destFile, force) {
 
 "use strict";
 
-// Copyright (c) 2019-2020-2021 Luca Cappa
+// Copyright (c) 2019-2020-2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -6445,7 +6445,7 @@ __exportStar(__nccwpck_require__(7447), exports);
 
 "use strict";
 
-// Copyright (c) 2019-2020-2021 Luca Cappa
+// Copyright (c) 2019-2020-2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -6856,6 +6856,7 @@ function _debug(msg) {
     if (process.env.DEBUG)
         console.log(`DEBUG: '${msg}'`);
 }
+// Remark: the output of replaceFromEnvVar is always passed thru eval().
 function replaceFromEnvVar(text, values) {
     return text.replace(/\$\[(.*?)\]/gi, (a, b) => {
         var _a;
@@ -6864,6 +6865,9 @@ function replaceFromEnvVar(text, values) {
             if (b.startsWith("env.")) {
                 b = b.slice(4);
                 ret = (_a = process.env[b]) !== null && _a !== void 0 ? _a : `${b}-is-undefined`;
+                // Issue https://github.com/lukka/run-vcpkg/issues/144
+                // Ensure backslashes are preserved: escape them before passing the value into 'eval()'.
+                ret = ret.replace(/\\/g, '\\\\');
             }
             else {
                 ret = `${b}-is-undefined`;
@@ -6933,7 +6937,7 @@ __exportStar(__nccwpck_require__(6188), exports);
 
 "use strict";
 
-// Copyright (c) 2019-2020-2021 Luca Cappa
+// Copyright (c) 2019-2020-2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -6954,7 +6958,7 @@ exports.VCPKG_CONFIGURATION_JSON = "vcpkg-configuration.json";
 
 "use strict";
 
-// Copyright (c) 2019-2020-2021 Luca Cappa
+// Copyright (c) 2019-2020-2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -7025,7 +7029,9 @@ class VcpkgRunner {
             else {
                 vcpkgInstallCmd = baseutillib.replaceFromEnvVar(vcpkgInstallCmd);
             }
+            baseUtil.baseLib.debug(`vcpkgInstallCmd=${vcpkgInstallCmd}`);
             const vcpkgInstallArgs = eval(vcpkgInstallCmd);
+            baseUtil.baseLib.debug(`vcpkgInstallArgs=${vcpkgInstallArgs}`);
             // Git update or clone depending on content of vcpkgDestPath input parameter.
             const pathToLastBuiltCommitId = path.join(vcpkgDestPath, globals.vcpkgLastBuiltCommitId);
             const logFilesCollector = new baseutillib.LogFileCollector(baseUtil.baseLib, logCollectionRegExps, (path) => baseutillib.dumpFile(baseUtil.baseLib, path));
@@ -7340,7 +7346,7 @@ VcpkgRunner.VCPKG_DISABLE_METRICS = "VCPKG_DISABLE_METRICS";
 
 "use strict";
 
-// Copyright (c) 2020-2021 Luca Cappa
+// Copyright (c) 2020-2021-2022 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
