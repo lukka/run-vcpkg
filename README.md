@@ -11,6 +11,7 @@
     - [Use **vcpkg** as a submodule of your repository](#use-vcpkg-as-a-submodule-of-your-repository)
     - [Use vcpkg's vcpkg.json file to specify the dependencies](#use-vcpkgs-vcpkgjson-file-to-specify-the-dependencies)
   - [Samples](#samples)
+  - [Who is using `run-vcpkg`](#who-is-using-run-vcpkg)
 - [License](#license)
 - [Disclaimer](#disclaimer)
 - [Contributing](#contributing)
@@ -210,7 +211,7 @@ Or it can also be used by invoking `vcpkg install` in a directory where `vcpkg.j
 
 When conditions are satisfied, the toolchain execution starts [vcpkg](https://github.com/microsoft/vcpkg) to install the packages declared in the manifest file.
 
- *Putting this manifest-like file under source control is highly recommended as this helps to run vcpkg the same exact way locally and remotely on the build servers.**
+ **Putting this manifest-like file under source control is highly recommended as this helps to run vcpkg the same exact way locally and remotely on the build servers.**
 The dependencies specified in the vcpkg.json file are installed when CMake runs (i.e. at `run-cmake` execution time).
 
 ## Samples
@@ -223,6 +224,13 @@ _Checkmarks_ indicates whether the samples "uses" or specifies the thing in the 
 |[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg.yml)|❌|❌|✅|✅|✅|❌|✅
 |[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg-install.yml)|❌|❌|✅|✅|✅|✅|❌|
 |[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod-triplet.yml)|✅|✅|✅|✅|✅|❌|✅
+
+<br>
+
+## Who is using `run-vcpkg`
+
+[This graph](https://lukka.github.io/graph/graph.html) shows the list of public repositories with more than 25 stars using `run-vcpkg`.
+
 <br>
 
 # License
