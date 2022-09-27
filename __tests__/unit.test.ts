@@ -157,6 +157,7 @@ test('run-vcpkg: cache hit', async () => {
         function (a, b, c): Promise<string> { return Promise.resolve(primaryHitKey); });
     process.env.INPUT_VCPKGDIRECTORY = "/var/tmp/vcpkg";
     process.env.INPUT_APPENDEDCACHEKEY = "appendedCacheKey";
+    process.env.INPUT_PREPENDEDCACHEKEY = "prependedCacheKey";
 
     // Act.
     const vcpkg: vcpkgaction.VcpkgAction = new vcpkgaction.VcpkgAction(baseUtil);
@@ -299,10 +300,10 @@ test('getVcpkgCommitId() tests', async () => {
 test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided and no vcpkg.json found)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos42-vcpkgGitCommit=1234_appendedKey=appendedCacheKey",
+        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234_appendedKey=appendedCacheKey",
         "restore":
             [
-                "runnerOS=imageos42-vcpkgGitCommit=1234"
+                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -321,7 +322,8 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided an
         null,
         ".",
         "",
-        "appendedCacheKey")).toStrictEqual(expected);
+        "appendedCacheKey",
+        "prependedCacheKey")).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(0);
 
     // Cleanup.
@@ -332,11 +334,11 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided an
 test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos42-vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
+        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
         "restore":
             [
-                "runnerOS=imageos42-vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
-                "runnerOS=imageos42-vcpkgGitCommit=1234"
+                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
+                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -353,7 +355,8 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided)',
         "hash-of-vcpkg-configuration.json",
         ".",
         "",
-        "appendedCacheKey")).toStrictEqual(expected);
+        "appendedCacheKey",
+        "prependedCacheKey")).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(0);
 
     // Cleanup.
@@ -363,11 +366,11 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided)',
 test('computeCacheKey(): vcpkg as a submodule (no commit id user provided)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos42-vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
+        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
         "restore":
             [
-                "runnerOS=imageos42-vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
-                "runnerOS=imageos42-vcpkgGitCommit=5678"
+                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
+                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=5678"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -384,7 +387,8 @@ test('computeCacheKey(): vcpkg as a submodule (no commit id user provided)', asy
         "hash-of-vcpkg-configuration.json",
         ".",
         "",
-        "appendedCacheKey")).toStrictEqual(expected);
+        "appendedCacheKey",
+        "prependedCacheKey")).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(0);
 
     // Cleanup.
@@ -394,11 +398,11 @@ test('computeCacheKey(): vcpkg as a submodule (no commit id user provided)', asy
 test('computeCacheKey(): vcpkg as a submodule, with user provided Git commit id, it must trigger a warning', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos42-vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
+        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
         "restore":
             [
-                "runnerOS=imageos42-vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
-                "runnerOS=imageos42-vcpkgGitCommit=0912"
+                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
+                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=0912"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -415,7 +419,8 @@ test('computeCacheKey(): vcpkg as a submodule, with user provided Git commit id,
         "hash-of-vcpkg-configuration.json",
         path.resolve("."),
         "vcpkgcommitid",
-        "appendedCacheKey")).toStrictEqual(expected);
+        "appendedCacheKey",
+        "prependedCacheKey")).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(1);
     vcpkgCommitIdMock.mockClear();
 });
@@ -423,10 +428,10 @@ test('computeCacheKey(): vcpkg as a submodule, with user provided Git commit id,
 test('computeCacheKey(): vcpkg with user provided commit it must not trigger a warning', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "runnerOS=imageos42-vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
+        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
         "restore": [
-            "runnerOS=imageos42-vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
-            "runnerOS=imageos42-vcpkgGitCommit=userId"]
+            "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
+            "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=userId"]
     };
     process.env.ImageOS = "imageos";
     process.env.ImageVersion = "42";
@@ -442,6 +447,7 @@ test('computeCacheKey(): vcpkg with user provided commit it must not trigger a w
         "hash-of-vcpkg-configuration.json",
         "/Users/luca/github/run-vcpkg/__tests__/assets/",
         "userId",
-        "appendedCacheKey")).toStrictEqual(expected);
+        "appendedCacheKey",
+        "prependedCacheKey")).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(0);
 });

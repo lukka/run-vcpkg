@@ -16,6 +16,9 @@ inputs:
     default: false
     required: false
     description: "Run the installation of package by running `vcpkg install` on the directory of the discovered 'vcpkg.json' file. Default is false."
+  prependedCacheKey:
+    required: false
+    description: "Specify a value to prepend to the cache key."
   appendedCacheKey:
     required: false
     description: "Specify a value to append to the cache key."

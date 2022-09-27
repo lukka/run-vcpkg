@@ -86,6 +86,18 @@ jobs:
           # (i.e. let CMake run `vcpkg install`) using the vcpkg.cmake toolchain.
           # runVcpkgInstall: true
 
+     # The following `run` step is useful to prevent storing partial cache in the GH cache
+     # service.
+     # This is useful when vcpkg is not run at `run-vcpkg`'s runtime, but later when CMake 
+     # is running, e.g. at `run-cmake` runtime. 
+     # Driving the environment variable `RUNVCPKG_NO_CACHE`, at the end of the workflow the  
+     # `run-vcpkg` post step is instructed to not save anything when the workflow has been 
+     # cancelled or it has failed.
+     #- run: |
+     #    echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
+     #  if: ${{ failure() || cancelled() }}
+     #  shell: bash
+
       - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
         uses: lukka/run-cmake@v10
         with:
@@ -108,8 +120,8 @@ jobs:
     #  VCPKG_ENABLE_METRICS: 1 
     #
     #  [OPTIONAL] Define the vcpkg's triplet you want to enforce, otherwise the default one
-    #  for the hosting system will be automatically choosen (x64 is the default on all platforms,
-    #  e.g. `x64-osx`).
+    #  for the hosting system will be automatically choosen (x64 is the default on all 
+    #  platforms, e.g. `x64-osx`).
     #  VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }} 
 ```
 
@@ -124,9 +136,9 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
 ```
 ┌──────────────────────────┐
 │  Compute cache key from: │   Inputs:
-│  - vcpkg Git commit      │   - `appendedCacheKey`
+│  - vcpkg Git commit      │   - `prependedCacheKey` and `appendedCacheKey`
 │  - platform and OS       │   - `vcpkgGitCommitId`
-│  - user provided key     │
+│  - user provided keys    │
 └─────────────┬────────────┘
               │
               ▼
