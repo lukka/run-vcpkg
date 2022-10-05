@@ -24,6 +24,7 @@ export const vcpkgUrlInput = "VCPKGGITURL";
  * The input's name for additional content for the cache key.
  */
 export const appendedCacheKeyInput = 'APPENDEDCACHEKEY';
+export const prependedCacheKeyInput = 'PREPENDEDCACHEKEY';
 export const logCollectionRegExpsInput = 'LOGCOLLECTIONREGEXPS';
 
 // Saved data in the action, and consumed by post-action.
@@ -42,6 +43,7 @@ export class VcpkgAction {
   private static readonly DEFAULTVCPKGURL = 'https://github.com/microsoft/vcpkg.git';
   private readonly doNotCache: boolean = false;
   private readonly appendedCacheKey: string | null;
+  private readonly prependedCacheKey: string | null;
   private readonly runVcpkgFormatString: string | null;
   private readonly vcpkgJsonGlob: string;
   private readonly vcpkgJsonIgnores: string[];
@@ -58,6 +60,7 @@ export class VcpkgAction {
   constructor(private readonly baseUtilLib: baseutillib.BaseUtilLib) {
     // Fetch inputs.
     this.appendedCacheKey = baseUtilLib.baseLib.getInput(appendedCacheKeyInput, false) ?? null;
+    this.prependedCacheKey = baseUtilLib.baseLib.getInput(prependedCacheKeyInput, false) ?? null;
     const vcpkgRootDir = baseUtilLib.baseLib.getPathInput(vcpkgDirectoryInput, false, false);
     this.vcpkgRootDir = vcpkgRootDir ? path.normalize(path.resolve(vcpkgRootDir)) : null;
     this.userProvidedCommitId = baseUtilLib.baseLib.getInput(vcpkgCommitIdInput, false) ?? null;
@@ -116,7 +119,8 @@ export class VcpkgAction {
         vcpkgConfigurationJsonHash, 
         this.vcpkgRootDir as string, 
         this.userProvidedCommitId, 
-        this.appendedCacheKey);
+        this.appendedCacheKey,
+        this.prependedCacheKey);
 
       if (keys) {
         baseLib.info(`Computed key: ${JSON.stringify(keys)}`);
@@ -152,7 +156,7 @@ export class VcpkgAction {
   private async restoreCache(keys: baseutillib.KeySet): Promise<void> {
     this.baseUtilLib.baseLib.debug("restoreCache()<<");
     if (this.doNotCache) {
-      this.baseUtilLib.baseLib.info(`Skipping as caching is disabled(${doNotCacheInput}: true)`);
+      this.baseUtilLib.baseLib.info(`Skipping saving cache as caching is disabled (${doNotCacheInput}: ${this.doNotCache}).`);
     } else {
       if (!this.vcpkgRootDir) throw new Error("vcpkg_ROOT must be defined");
       const pathsToCache: string[] = vcpkgutil.Utils.getAllCachedPaths(

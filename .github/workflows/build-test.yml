@@ -44,7 +44,6 @@ jobs:
         NODE_COVERALLS_DEBUG: 1
 
   tests:
-    needs: build_and_unit_test
     name: '${{ matrix.os }}: functional tests'
     runs-on: ${{ matrix.os }}
     strategy:
@@ -71,7 +70,7 @@ jobs:
         runVcpkgInstall: true
         # This forces the creation of a new cache entry each time the workflow is run. 
         # It is the same across jobs in the same workflows.
-        appendedCacheKey: ${{ env.GITHUB_RUN_ID }}
+        prependedCacheKey: ${{ env.GITHUB_RUN_ID }}
       env:
         VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
@@ -88,13 +87,12 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: true
-
     - name: basic test for run-vcpkg (not running vcpkg).
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgGitCommitId: '14e7bb4ae24616ec54ff6b2f6ef4e8659434ea44'
-        appendedCacheKey: ${{ env.GITHUB_RUN_ID }}
+        prependedCacheKey: ${{ env.GITHUB_RUN_ID }}
 
   finalize_coveralls:
     needs: build_and_unit_test

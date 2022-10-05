@@ -90,12 +90,14 @@ export class Utils {
     vcpkgConfJsonHash: string | null,
     vcpkgDirectory: string,
     userProvidedCommitId: string | null,
-    appendedCacheKey: string | null): Promise<baseutillib.KeySet> {
+    appendedCacheKey: string | null,
+    prependedCacheKey: string | null): Promise<baseutillib.KeySet> {
     baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
     const cacheKeySegments: string[] = [];
 
     // Add to the first segment of the key the values of env vars ImageOS and ImageVersion if available.
-    let firstSegment = `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
+    let firstSegment = prependedCacheKey ? `prependedKey=${prependedCacheKey}-` : "";
+    firstSegment += `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
     firstSegment += process.env['ImageVersion'] || "";
 
     const [commitId, isSubmodule] = await Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);

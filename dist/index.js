@@ -72,7 +72,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VcpkgAction = exports.VCPKG_SUCCESS_STATE = exports.VCPKG_ADDITIONAL_CACHED_PATHS_STATE = exports.VCPKG_ROOT_STATE = exports.VCPKG_ADDED_CACHEKEY_STATE = exports.VCPKG_DO_NOT_CACHE_STATE = exports.VCPKG_KEY_CACHE_HIT_STATE = exports.VCPKG_CACHE_COMPUTEDKEY_STATE = exports.logCollectionRegExpsInput = exports.appendedCacheKeyInput = exports.vcpkgUrlInput = exports.doNotUpdateVcpkgInput = exports.vcpkgCommitIdInput = exports.vcpkgDirectoryInput = exports.runVcpkgFormatStringInput = exports.runVcpkgInstallInput = exports.vcpkgJsonIgnoresInput = exports.vcpkgJsonGlobInput = exports.binaryCachePathInput = exports.additionalCachedPathsInput = exports.doNotCacheInput = void 0;
+exports.VcpkgAction = exports.VCPKG_SUCCESS_STATE = exports.VCPKG_ADDITIONAL_CACHED_PATHS_STATE = exports.VCPKG_ROOT_STATE = exports.VCPKG_ADDED_CACHEKEY_STATE = exports.VCPKG_DO_NOT_CACHE_STATE = exports.VCPKG_KEY_CACHE_HIT_STATE = exports.VCPKG_CACHE_COMPUTEDKEY_STATE = exports.logCollectionRegExpsInput = exports.prependedCacheKeyInput = exports.appendedCacheKeyInput = exports.vcpkgUrlInput = exports.doNotUpdateVcpkgInput = exports.vcpkgCommitIdInput = exports.vcpkgDirectoryInput = exports.runVcpkgFormatStringInput = exports.runVcpkgInstallInput = exports.vcpkgJsonIgnoresInput = exports.vcpkgJsonGlobInput = exports.binaryCachePathInput = exports.additionalCachedPathsInput = exports.doNotCacheInput = void 0;
 const path = __nccwpck_require__(5622);
 const cache = __nccwpck_require__(7799);
 const runvcpkglib = __nccwpck_require__(4393);
@@ -93,6 +93,7 @@ exports.vcpkgUrlInput = "VCPKGGITURL";
  * The input's name for additional content for the cache key.
  */
 exports.appendedCacheKeyInput = 'APPENDEDCACHEKEY';
+exports.prependedCacheKeyInput = 'PREPENDEDCACHEKEY';
 exports.logCollectionRegExpsInput = 'LOGCOLLECTIONREGEXPS';
 // Saved data in the action, and consumed by post-action.
 exports.VCPKG_CACHE_COMPUTEDKEY_STATE = "VCPKG_CACHE_COMPUTEDKEY_STATE";
@@ -104,25 +105,26 @@ exports.VCPKG_ADDITIONAL_CACHED_PATHS_STATE = "VCPKG_ADDITIONAL_CACHED_PATHS_STA
 exports.VCPKG_SUCCESS_STATE = "VCPKG_SUCCESS_STATE";
 class VcpkgAction {
     constructor(baseUtilLib) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
         this.baseUtilLib = baseUtilLib;
         this.doNotCache = false;
         // Fetch inputs.
         this.appendedCacheKey = (_a = baseUtilLib.baseLib.getInput(exports.appendedCacheKeyInput, false)) !== null && _a !== void 0 ? _a : null;
+        this.prependedCacheKey = (_b = baseUtilLib.baseLib.getInput(exports.prependedCacheKeyInput, false)) !== null && _b !== void 0 ? _b : null;
         const vcpkgRootDir = baseUtilLib.baseLib.getPathInput(exports.vcpkgDirectoryInput, false, false);
         this.vcpkgRootDir = vcpkgRootDir ? path.normalize(path.resolve(vcpkgRootDir)) : null;
-        this.userProvidedCommitId = (_b = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _b !== void 0 ? _b : null;
-        vcpkgutil.Utils.addCachedPaths(baseUtilLib.baseLib, (_c = baseUtilLib.baseLib.getInput(exports.additionalCachedPathsInput, false)) !== null && _c !== void 0 ? _c : null);
-        this.runVcpkgFormatString = (_d = baseUtilLib.baseLib.getInput(exports.runVcpkgFormatStringInput, false)) !== null && _d !== void 0 ? _d : null;
-        this.vcpkgJsonGlob = (_e = baseUtilLib.baseLib.getInput(exports.vcpkgJsonGlobInput, false)) !== null && _e !== void 0 ? _e : VcpkgAction.VCPKGJSON_GLOB;
-        this.vcpkgJsonIgnores = eval((_f = baseUtilLib.baseLib.getInput(exports.vcpkgJsonIgnoresInput, false)) !== null && _f !== void 0 ? _f : VcpkgAction.VCPKGJSON_IGNORES);
-        this.runVcpkgInstall = (_g = baseUtilLib.baseLib.getBoolInput(exports.runVcpkgInstallInput, false)) !== null && _g !== void 0 ? _g : false;
-        this.doNotCache = (_h = baseUtilLib.baseLib.getBoolInput(exports.doNotCacheInput, false)) !== null && _h !== void 0 ? _h : false;
-        this.doNotUpdateVcpkg = (_j = baseUtilLib.baseLib.getBoolInput(exports.doNotUpdateVcpkgInput, false)) !== null && _j !== void 0 ? _j : false;
-        this.vcpkgUrl = (_k = baseUtilLib.baseLib.getInput(exports.vcpkgUrlInput, false)) !== null && _k !== void 0 ? _k : VcpkgAction.DEFAULTVCPKGURL;
-        this.vcpkgCommitId = (_l = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _l !== void 0 ? _l : null;
-        this.logCollectionRegExps = (_m = baseUtilLib.baseLib.getDelimitedInput(exports.logCollectionRegExpsInput, ';', false)) !== null && _m !== void 0 ? _m : [];
-        this.binaryCachePath = (_o = baseUtilLib.baseLib.getPathInput(exports.binaryCachePathInput, false, true)) !== null && _o !== void 0 ? _o : null;
+        this.userProvidedCommitId = (_c = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _c !== void 0 ? _c : null;
+        vcpkgutil.Utils.addCachedPaths(baseUtilLib.baseLib, (_d = baseUtilLib.baseLib.getInput(exports.additionalCachedPathsInput, false)) !== null && _d !== void 0 ? _d : null);
+        this.runVcpkgFormatString = (_e = baseUtilLib.baseLib.getInput(exports.runVcpkgFormatStringInput, false)) !== null && _e !== void 0 ? _e : null;
+        this.vcpkgJsonGlob = (_f = baseUtilLib.baseLib.getInput(exports.vcpkgJsonGlobInput, false)) !== null && _f !== void 0 ? _f : VcpkgAction.VCPKGJSON_GLOB;
+        this.vcpkgJsonIgnores = eval((_g = baseUtilLib.baseLib.getInput(exports.vcpkgJsonIgnoresInput, false)) !== null && _g !== void 0 ? _g : VcpkgAction.VCPKGJSON_IGNORES);
+        this.runVcpkgInstall = (_h = baseUtilLib.baseLib.getBoolInput(exports.runVcpkgInstallInput, false)) !== null && _h !== void 0 ? _h : false;
+        this.doNotCache = (_j = baseUtilLib.baseLib.getBoolInput(exports.doNotCacheInput, false)) !== null && _j !== void 0 ? _j : false;
+        this.doNotUpdateVcpkg = (_k = baseUtilLib.baseLib.getBoolInput(exports.doNotUpdateVcpkgInput, false)) !== null && _k !== void 0 ? _k : false;
+        this.vcpkgUrl = (_l = baseUtilLib.baseLib.getInput(exports.vcpkgUrlInput, false)) !== null && _l !== void 0 ? _l : VcpkgAction.DEFAULTVCPKGURL;
+        this.vcpkgCommitId = (_m = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _m !== void 0 ? _m : null;
+        this.logCollectionRegExps = (_o = baseUtilLib.baseLib.getDelimitedInput(exports.logCollectionRegExpsInput, ';', false)) !== null && _o !== void 0 ? _o : [];
+        this.binaryCachePath = (_p = baseUtilLib.baseLib.getPathInput(exports.binaryCachePathInput, false, true)) !== null && _p !== void 0 ? _p : null;
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -156,7 +158,7 @@ class VcpkgAction {
             let vcpkgJsonFilePath = null;
             yield this.baseUtilLib.wrapOp('Compute vcpkg cache key', () => __awaiter(this, void 0, void 0, function* () {
                 const [vcpkgJsonFile, vcpkgJsonHash, vcpkgConfigurationJsonHash] = yield vcpkgutil.Utils.getVcpkgJsonHash(this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
-                keys = yield vcpkgutil.Utils.computeCacheKeys(this.baseUtilLib, vcpkgJsonHash, vcpkgConfigurationJsonHash, this.vcpkgRootDir, this.userProvidedCommitId, this.appendedCacheKey);
+                keys = yield vcpkgutil.Utils.computeCacheKeys(this.baseUtilLib, vcpkgJsonHash, vcpkgConfigurationJsonHash, this.vcpkgRootDir, this.userProvidedCommitId, this.appendedCacheKey, this.prependedCacheKey);
                 if (keys) {
                     baseLib.info(`Computed key: ${JSON.stringify(keys)}`);
                     vcpkgJsonFilePath = vcpkgJsonFile;
@@ -180,7 +182,7 @@ class VcpkgAction {
         return __awaiter(this, void 0, void 0, function* () {
             this.baseUtilLib.baseLib.debug("restoreCache()<<");
             if (this.doNotCache) {
-                this.baseUtilLib.baseLib.info(`Skipping as caching is disabled(${exports.doNotCacheInput}: true)`);
+                this.baseUtilLib.baseLib.info(`Skipping saving cache as caching is disabled (${exports.doNotCacheInput}: ${this.doNotCache}).`);
             }
             else {
                 if (!this.vcpkgRootDir)
@@ -336,12 +338,13 @@ class Utils {
             return [null, null, null];
         });
     }
-    static computeCacheKeys(baseUtilLib, vcpkgJsonHash, vcpkgConfJsonHash, vcpkgDirectory, userProvidedCommitId, appendedCacheKey) {
+    static computeCacheKeys(baseUtilLib, vcpkgJsonHash, vcpkgConfJsonHash, vcpkgDirectory, userProvidedCommitId, appendedCacheKey, prependedCacheKey) {
         return __awaiter(this, void 0, void 0, function* () {
             baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
             const cacheKeySegments = [];
             // Add to the first segment of the key the values of env vars ImageOS and ImageVersion if available.
-            let firstSegment = `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
+            let firstSegment = prependedCacheKey ? `prependedKey=${prependedCacheKey}-` : "";
+            firstSegment += `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
             firstSegment += process.env['ImageVersion'] || "";
             const [commitId, isSubmodule] = yield Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);
             if (commitId) {
