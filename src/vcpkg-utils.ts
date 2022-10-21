@@ -19,7 +19,7 @@ export class Utils {
   public static ensureDirExists(path: string): void {
     try {
       fs.mkdirSync(path, { recursive: true });
-    } catch (err) {
+    } catch (err: any) {
       if (err.code !== 'EEXIST') {
         core.warning(`Failed to create directory '${path}', error='${err}'.`);
       }
@@ -150,7 +150,7 @@ export class Utils {
             core.info(`Running save-cache with key '${vcpkgCacheComputedKey}' ...`);
             await cache.saveCache(pathsToCache, vcpkgCacheComputedKey);
           }
-          catch (error) {
+          catch (error: any) {
             if (error.name === cache.ValidationError.name) {
               throw error;
             } else if (error.name === cache.ReserveCacheError.name) {

@@ -18,7 +18,7 @@ jest.mock("@lukka/run-vcpkg-lib");
 function createDir(path: string) {
     try {
         fs.mkdirSync(path, { recursive: true });
-    } catch (err) {
+    } catch (err: any) {
         if (err.code !== 'EEXIST') {
             throw err
         }
