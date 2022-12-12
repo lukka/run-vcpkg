@@ -43294,7 +43294,7 @@ const path = __importStar(__nccwpck_require__(5622));
  */
 function getOrdinaryCachedPaths(vcpkgRootDir) {
     const pathsToCache = [
-        vcpkgRootDir,
+        path.join(vcpkgRootDir, '*'),
         path.normalize(`!${path.join(vcpkgRootDir, 'installed')}`),
         path.normalize(`!${path.join(vcpkgRootDir, 'vcpkg_installed')}`),
         path.normalize(`!${path.join(vcpkgRootDir, 'packages')}`),
