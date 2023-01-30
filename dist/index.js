@@ -219,7 +219,9 @@ class VcpkgAction {
                 vcpkgJsonPath = vcpkgJsonFile === null ? null : path.dirname(path.resolve(vcpkgJsonFile));
                 this.baseUtilLib.baseLib.debug(`vcpkgJsonFile = '${vcpkgJsonFile}', vcpkgJsonPath = '${vcpkgJsonPath}'.`);
                 if (vcpkgJsonPath === null) {
-                    this.baseUtilLib.baseLib.warning(`The current directory for running the command '${this.runVcpkgFormatString}' is unknown.'`);
+                    this.baseUtilLib.baseLib.error(`Failing the workflow since the 'vcpkg.json' file has not been found, and its containing directory 
+ is required and used as the 'working directory' when launching vcpkg with arguments:
+ '${this.runVcpkgFormatString}'. `);
                 }
             }
             this.baseUtilLib.baseLib.debug(`getCurrentDirectoryForRunningVcpkg()>> -> ${vcpkgJsonPath}`);
