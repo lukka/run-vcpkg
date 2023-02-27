@@ -35,7 +35,7 @@ jobs:
       name: build and test
       shell: bash
     - name: Coveralls
-      uses: coverallsapp/github-action@1.1.3
+      uses: coverallsapp/github-action@v1.2.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         parallel: true
@@ -99,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Finalize Coveralls
-      uses: coverallsapp/github-action@1.1.3
+      uses: coverallsapp/github-action@v1.2.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         parallel-finished: true
