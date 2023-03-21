@@ -34,7 +34,7 @@ jobs:
         npm run test
       name: build and test
       shell: bash
-    - run: [ -e coverage/lcov.info ] && cat coverage/lcov.info
+    - run: cat coverage/lcov.info
     - name: Coveralls
       uses: coverallsapp/github-action@v2
       with:
