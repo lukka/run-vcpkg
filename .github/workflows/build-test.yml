@@ -42,6 +42,7 @@ jobs:
         parallel: true
         flag-name: ${{ matrix.os }}-build_and_unit_test
         debug: true
+        base-path: ${{ runner.os == 'macOS' && '' || '__tests__/theAssets/vcpkg_project/' }}
 
   tests:
     name: '${{ matrix.os }}: functional tests'
