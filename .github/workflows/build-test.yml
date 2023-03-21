@@ -34,15 +34,14 @@ jobs:
         npm run test
       name: build and test
       shell: bash
-    - run: cat coverage/lcov.info
     - name: Coveralls
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         parallel: true
         flag-name: ${{ matrix.os }}-build_and_unit_test
+        base-path: ${{ runner.os == 'macOS' && './' || '__tests__/theAssets/vcpkg_project/' }}
         debug: true
-        base-path: ${{ runner.os == 'macOS' && '' || '__tests__/theAssets/vcpkg_project/' }}
 
   tests:
     name: '${{ matrix.os }}: functional tests'
@@ -98,10 +97,12 @@ jobs:
   finalize_coveralls:
     needs: build_and_unit_test
     runs-on: ubuntu-latest
+    if: ${{ always() }}
     steps:
     - name: Finalize Coveralls
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         parallel-finished: true
+        carryforward: "macos-latest-build_and_unit_test,ubuntu-latest-build_and_unit_test,windows-latest-build_and_unit_test"
         debug: true
