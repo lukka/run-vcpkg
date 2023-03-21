@@ -34,14 +34,14 @@ jobs:
         npm run test
       name: build and test
       shell: bash
+    - run: [ -e coverage/lcov.info ] && cat coverage/lcov.info
     - name: Coveralls
-      uses: coverallsapp/github-action@v1.2.4
+      uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         parallel: true
         flag-name: ${{ matrix.os }}-build_and_unit_test
-      env:
-        NODE_COVERALLS_DEBUG: 1
+        debug: true
 
   tests:
     name: '${{ matrix.os }}: functional tests'
@@ -68,7 +68,7 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgGitCommitId: '14e7bb4ae24616ec54ff6b2f6ef4e8659434ea44'
         runVcpkgInstall: true
-        # This forces the creation of a new cache entry each time the workflow is run. 
+        # This forces the creation of a new cache entry each time the workflow is run.
         # It is the same across jobs in the same workflows.
         prependedCacheKey: ${{ env.GITHUB_RUN_ID }}
       env:
@@ -99,9 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Finalize Coveralls
-      uses: coverallsapp/github-action@v1.2.4
+      uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         parallel-finished: true
-      env:
-        NODE_COVERALLS_DEBUG: 1
+        debug: true
