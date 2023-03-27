@@ -2,8 +2,9 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/lukka/run-vcpkg/badge.svg?branch=main)](https://coveralls.io/github/lukka/run-vcpkg?branch=main)
 
+- [**run-vcpkg@v11 requires vcpkg more recent than 2023-03-29 (e.g. commit id 5b1214315250939257ef5d62ecdcbca18cf4fb1c)**](#run-vcpkgv11-requires-vcpkg-more-recent-than-2023-03-29-eg-commit-id-5b1214315250939257ef5d62ecdcbca18cf4fb1c)
 - [Quickstart with a C++ project template](#quickstart-with-a-c-project-template)
-- [The **run-vcpkg@v10** action for caching artifacts and using vcpkg with manifest files on GitHub workflows](#the-run-vcpkgv10-action-for-caching-artifacts-and-using-vcpkg-with-manifest-files-on-github-workflows)
+- [The **run-vcpkg@v11** action](#the-run-vcpkgv11-action)
   - [Quickstart with instructions](#quickstart-with-instructions)
   - [Action reference: all input/output parameters](#action-reference-all-inputoutput-parameters)
   - [Flowchart](#flowchart)
@@ -16,17 +17,19 @@
 - [Disclaimer](#disclaimer)
 - [Contributing](#contributing)
 
+# **run-vcpkg@v11 requires vcpkg more recent than 2023-03-29 (e.g. commit id 5b1214315250939257ef5d62ecdcbca18cf4fb1c)**
+
 # Quickstart with a C++ project template
 
 Take a look at this [C++ project template](https://github.com/lukka/CppCMakeVcpkgTemplate) that applies all the following instructions, but also shows how to create a __pure__ workflow without using special GitHub action that you cannot run locally on your development machine, but directly using the tools (`CMake`, `Ninja`, `vcpkg`, `C++` compilers) you already use daily.
 
-# [The **run-vcpkg@v10** action for caching artifacts and using vcpkg with manifest files on GitHub workflows](https://github.com/marketplace/actions/run-vcpkg)
+# [The **run-vcpkg@v11** action](https://github.com/marketplace/actions/run-vcpkg)
 
-The **run-vcpkg** action restores from cache [vcpkg](https://github.com/microsoft/vcpkg) along with the previously installed packages, and then setup vcpkg to be run in a subsequent step. Or it runs it for you.
+The **run-vcpkg** action setups (and optionally runs) [vcpkg](https://github.com/microsoft/vcpkg) to install the packages specified in the `vcpkg.json` manifest file.
 
 Special features which provide added value over a pure workflow are:
-  - automatic cache management of vcpkg's artifacts by computing a cache key based (among others) on content of `vcpkg.json`.
-  - automatic computation of the set of keys (primary key and secondary keys) used maximize the reuse of existing cached vcpkg's artifacts.
+  - automatic caching of vcpkg itself onto GitHub Action's cache: this storing/restoring the vcpkg executable and its data files to speed subsequent workflow runs. For the vcpkg's packages, caching is delegated to vcpkg itself instead.
+  - automatic caching leveraging `vcpkg` ability to store its [Binary Caching](https://learn.microsoft.com/en-us/vcpkg/users/binarycaching)) onto the [GitHub Action cache](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows) so that packages are built only once and reused in subsequent workflow runs. The user can customize the behavior by setting the environment variable `VCPKG_BINARY_SOURCES` *before* vcpkg runs.
   - automatic dump of log files created by `CMake` (e.g., `CMakeOutput.log`) and `vcpkg`. The content of those files flow into the workflow output log. Customizable by the user.
   - automatic parsing of `CMake`, `vcpkg` and `gcc`, `clang`, `msvc` errors, reporting them contextually in the workflow summary by means of annotations.
 
@@ -55,50 +58,35 @@ jobs:
       # Or pin to a specific CMake version:
       # lukka/get-cmake@v3.21.2
 
-      # Restore from cache the previously built ports. If a "cache miss" occurs,
-      # then vcpkg is bootstrapped. Since a the vcpkg.json is being used later on
-      # to install the packages when `run-cmake` runs, no packages are installed at
-      # this time.
-      - name: Restore artifacts, or setup vcpkg (do not install any package)
-        uses: lukka/run-vcpkg@v10
+      # Run vcpkg leveraging its own binary caching integration with GitHub Action
+      # cache. Since vcpkg.json is being used later on to install the packages
+      # when `run-cmake` runs, no packages are installed at this time.
+      - name: Setup vcpkg (it does not install any package yet)
+        uses: lukka/run-vcpkg@v11
         #with:
           # This is the default location of the directory containing vcpkg sources.
           # Change it to the right location if needed.
           # vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
           # If not using a submodule for vcpkg sources, this specifies which commit
-          # id must be checkout from a Git repo. It must not set if using a submodule
-          # for vcpkg.
+          # id must be checkout from a Git repo. It must not be set if using a 
+          # submodule for vcpkg.
           # vcpkgGitCommitId: '${{ matrix.vcpkgCommitId }}'
 
-          # This is the glob expression used to locate the vcpkg.json and add its
-          # hash to the cache key. Change it to match a single manifest file you want
-          # to use. 
-          # Note: do not use `${{ github.context }}` to compose the value as it 
+          # This is the glob expression used to locate the vcpkg.json. 
+          # Change it to match a single manifest file you want to use.
+          # Note: do not use `${{ github.context }}` to compose the value as it
           # contains backslashes that would be misinterpreted. Instead
-          # compose a value relative to the root of the repository using 
+          # compose a value relative to the root of the repository using
           # `**/path/from/root/of/repo/to/vcpkg.json` to match the desired `vcpkg.json`.
           # vcpkgJsonGlob: '**/vcpkg.json'
 
-          # This is needed to run `vcpkg install` command (after vcpkg is built) in
-          # the directory where vcpkg.json has been located. Default is false,
-          # It is highly suggested to let `run-cmake` to run vcpkg (i.e. `false`)
-          # (i.e. let CMake run `vcpkg install`) using the vcpkg.cmake toolchain.
+          # This is only needed if running `vcpkg install` is needed at this step.
+          # Instead it is highly suggested to let `run-cmake` to run vcpkg later on
+          # using the vcpkg.cmake toolchain. The default is `false`.
           # runVcpkgInstall: true
 
-     # The following `run` step is useful to prevent storing partial cache in the GH cache
-     # service.
-     # This is useful when vcpkg is not run at `run-vcpkg`'s runtime, but later when CMake 
-     # is running, e.g. at `run-cmake` runtime. 
-     # Driving the environment variable `RUNVCPKG_NO_CACHE`, at the end of the workflow the  
-     # `run-vcpkg` post step is instructed to not save anything when the workflow has been 
-     # cancelled or it has failed.
-     #- run: |
-     #    echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
-     #  if: ${{ failure() || cancelled() }}
-     #  shell: bash
-
-      - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
+      - name: Run CMake consuming CMakePreset.json and run vcpkg to build dependencies
         uses: lukka/run-cmake@v10
         with:
           # This is the default path to the CMakeLists.txt along side the
@@ -115,14 +103,14 @@ jobs:
           buildPreset: 'ninja-multi-vcpkg'
 
     #env:
-    #  By default the action disables vcpkg's telemetry by defining VCPKG_DISABLE_METRICS. 
+    #  By default the action disables vcpkg's telemetry by defining VCPKG_DISABLE_METRICS.
     #  This behavior can be disabled by defining `VCPKG_ENABLE_METRICS` as follows.
-    #  VCPKG_ENABLE_METRICS: 1 
+    #  VCPKG_ENABLE_METRICS: 1
     #
     #  [OPTIONAL] Define the vcpkg's triplet you want to enforce, otherwise the default one
-    #  for the hosting system will be automatically choosen (x64 is the default on all 
+    #  for the hosting system will be automatically choosen (x64 is the default on all
     #  platforms, e.g. `x64-osx`).
-    #  VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }} 
+    #  VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
 ```
 
 ## Action reference: all input/output parameters
@@ -136,26 +124,22 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
 ```
 ┌──────────────────────────┐
 │  Compute cache key from: │   Inputs:
-│  - vcpkg Git commit      │   - `prependedCacheKey` and `appendedCacheKey`
-│  - platform and OS       │   - `vcpkgGitCommitId`
-│  - user provided keys    │
+│  - vcpkg Git commit      │   - `vcpkgGitCommitId`
+│  - platform and OS       │
 └─────────────┬────────────┘
               │
               ▼
- ┌─────────────────────────┐
- │ Locate vcpkg.json.      │   Inputs:
- │ If found, add its hash  │   - `vcpkgJsonGlob`
- │ to cache key            │   _ `vcpkgJsonIgnores`
- └────────────┬────────────┘
+ ┌─────────────────────────┐   Inputs:
+ │ Locate vcpkg.json.      │   - `vcpkgJsonGlob`
+ └────────────┬────────────┘   - `vcpkgJsonIgnores`
               │
               ▼
  ┌─────────────────────────┐   Inputs:
- │ Restore vcpkg and       │   - `doNotCache`
- │ packages from cache     │   - `vcpkgDirectory`
- │ to cache key            │   - `binaryCachePath`
- └────────────┬────────────┘   Environment variable:
-              │                - `VCPKG_DEFAULT_BINARY_CACHE`: where previous built packages
-              ▼                  are going to be restored
+ │ Restore vcpkg           │   - `vcpkgDirectory`
+ │ from the GH cache       │
+ └────────────┬────────────┘
+              │
+              ▼
  ┌─────────────────────────┐
  │ If vcpkg is not a       │   Inputs:
  │ submodule, fetch it     │   - `vcpkgGitCommitId`
@@ -180,28 +164,24 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  │ been located            │ │   Environment variables:
  └────────────┬────────────┘ │   - `VCPKG_DEFAULT_TRIPLET` is used. If not yet
               │              │     set, it is set to the current platform.
-              │              │   - `VCPKG_INSTALLED_DIR` is used as value for 
+              │              │   - `VCPKG_INSTALLED_DIR` is used as value for
               │              │     `--x-install-root` when running `vcpkg install`.
               │              │     Check out the `runVcpkgFormatString` input.
-              ▼              │
- ┌─────────────────────────┐ │
- │ Set `VCPKG_ROOT` and    │ │
+              ▼              │   - `VCPKG_BINARY_SOURCES` is used. If not yet 
+ ┌─────────────────────────┐ │      set, it is set to leverage the GitHub Action
+ │ Set `VCPKG_ROOT` and    │ │      cache storage for Binary Caching artifacts.
  │ `VCPKG_DEFAULT_TRIPLET` │ │
  │ workflow-wide env vars  │ │
  └────────────┬────────────┘ │
               ├───────────── ┘
               ▼
- ┌───────────────────────────┐
- │ Schedule this step at     │
- │ end of the workflow:      │
- │┌─────────────────────────┐│
- │| If no cache-hit,        ││  Inputs:
- ││ store `VCPKG_ROOT` and  ││  - `binaryCachePath`
- ││ binary packages in cache││  - `doNotCache`
- ││                         ││  Environment variables:
- │└────────────┬────────────┘│  - RUNVCPKG_NO_CACHE: Any step before the post action
- └────────────┬──────────────┘    may set this environment variable to disable saving
-              ▼                   the cache.
+ ┌─────────────────────────┐
+ │  If no cache-hit,       │  Inputs:
+ │  store vcpkg onto       │  - `doNotCache`: disable the caching of the vcpkg 
+ │  GH cache               │    executable and its data files.
+ └────────────┬────────────┘
+              |
+              ▼
               ⬬
 ```
 
@@ -230,12 +210,12 @@ The dependencies specified in the vcpkg.json file are installed when CMake runs 
 
 _Checkmarks_ indicates whether the samples "uses" or specifies the thing in the header or whether it is true.
 
-|workflow link|`vcpkg` as submodule|explicit triplet|`vcpkg` toolchain|`CMake`'s Presets|`Ninja`|`run-vcpkg` runs vcpkg|`CMake` runs `vcpkg`
-|:-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod.yml)|✅|❌|✅|✅|✅|❌|✅|
-|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg.yml)|❌|❌|✅|✅|✅|❌|✅
-|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg-install.yml)|❌|❌|✅|✅|✅|✅|❌|
-|[link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod-triplet.yml)|✅|✅|✅|✅|✅|❌|✅
+| workflow link                                                                                                              | `vcpkg` as submodule | explicit triplet | `vcpkg` toolchain | `CMake`'s Presets | `Ninja` | `run-vcpkg` runs vcpkg | `CMake` runs `vcpkg` |
+| :------------------------------------------------------------------------------------------------------------------------- | :------------------: | :--------------: | :---------------: | :---------------: | :-----: | :--------------------: | :------------------: |
+| [link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod.yml)         |          ✅           |        ❌         |         ✅         |         ✅         |    ✅    |           ❌            |          ✅           |
+| [link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg.yml)                |          ❌           |        ❌         |         ✅         |         ✅         |    ✅    |           ❌            |          ✅           |
+| [link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg-install.yml)        |          ❌           |        ❌         |         ✅         |         ✅         |    ✅    |           ✅            |          ❌           |
+| [link](https://github.com/lukka/CppBuildTasks-Validation/blob/v10/.github/workflows/hosted-ninja-vcpkg_submod-triplet.yml) |          ✅           |        ✅         |         ✅         |         ✅         |    ✅    |           ❌            |          ✅           |
 
 <br>
 
@@ -249,7 +229,7 @@ _Checkmarks_ indicates whether the samples "uses" or specifies the thing in the 
 
 All the content in this repository is licensed under the [MIT License](LICENSE.txt).
 
-Copyright © 2019-2020-2021-2022 Luca Cappa
+Copyright © 2019-2020-2021-2022-2023 Luca Cappa
 
 # Disclaimer
 

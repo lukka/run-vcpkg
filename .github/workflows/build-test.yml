@@ -60,17 +60,16 @@ jobs:
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: '14e7bb4ae24616ec54ff6b2f6ef4e8659434ea44'
+        vcpkgGitCommitId: 'c9f906558f9bb12ee9811d6edc98ec9255c6cda5'
+        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
 
     - name: basic test for run-vcpkg with running 'vcpkg install'.
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: '14e7bb4ae24616ec54ff6b2f6ef4e8659434ea44'
+        vcpkgGitCommitId: 'c9f906558f9bb12ee9811d6edc98ec9255c6cda5'
         runVcpkgInstall: true
-        # This forces the creation of a new cache entry each time the workflow is run.
-        # It is the same across jobs in the same workflows.
-        prependedCacheKey: ${{ env.GITHUB_RUN_ID }}
+        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
       env:
         VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
@@ -91,8 +90,8 @@ jobs:
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: '14e7bb4ae24616ec54ff6b2f6ef4e8659434ea44'
-        prependedCacheKey: ${{ env.GITHUB_RUN_ID }}
+        vcpkgGitCommitId: 'c9f906558f9bb12ee9811d6edc98ec9255c6cda5'
+        vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
 
   finalize_coveralls:
     needs: build_and_unit_test

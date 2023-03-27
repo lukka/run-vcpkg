@@ -1,3 +1,7 @@
+// Copyright (c) 2020-2021-2022-2023 Luca Cappa
+// Released under the term specified in file LICENSE.txt
+// SPDX short identifier: MIT
+
 import * as process from 'process'
 import * as fs from 'fs'
 import * as os from 'os'
@@ -8,12 +12,8 @@ import * as runvcpkglib from '@lukka/run-vcpkg-lib'
 import * as path from 'path'
 import * as baseutil from '@lukka/base-util-lib'
 import * as vcpkgutils from '../src/vcpkg-utils'
-import * as core from '@actions/core'
-import * as vcpkgpostaction from '../src/vcpkg-post-action'
 
-jest.setTimeout(15 * 1000);
-// Mocks entire action-lib module.
-//??jest.mock("@lukka/action-lib");
+jest.setTimeout(120 * 1000);
 const baseUtil = new baseutil.BaseUtilLib(new actionlib.ActionLib());
 let warningMock: jest.SpyInstance;
 let errorMock: jest.SpyInstance;
@@ -114,15 +114,6 @@ test('run-vcpkg: basic run with exception', async () => {
     // Act and Assert.
     const vcpkg: vcpkgaction.VcpkgAction = new vcpkgaction.VcpkgAction(baseUtil);
     await expect(async () => await vcpkg.run()).rejects.toThrowError();
-
-    // Run post action.
-    const vcpkgPostAction = new vcpkgpostaction.VcpkgPostAction(
-        baseUtil,
-        false,
-        baseutil.createKeySet(["primary"]),
-        ['/dummy/Path/'],
-        "primary");
-    await vcpkgPostAction.run();
 });
 
 test('run-vcpkg: basic run with exception on saving the cache', async () => {
@@ -132,15 +123,6 @@ test('run-vcpkg: basic run with exception on saving the cache', async () => {
     // Act and Assert.
     const vcpkg: vcpkgaction.VcpkgAction = new vcpkgaction.VcpkgAction(baseUtil);
     await vcpkg.run();
-
-    // Run post action.
-    const vcpkgPostAction = new vcpkgpostaction.VcpkgPostAction(
-        baseUtil,
-        false,
-        baseutil.createKeySet(["primary"]),
-        ['/dummy/Path/'],
-        null);
-    await vcpkgPostAction.run();
 });
 
 test('run-vcpkg: cache hit', async () => {
@@ -156,8 +138,6 @@ test('run-vcpkg: cache hit', async () => {
     const restoreCacheSpy = jest.spyOn(cache, "restoreCache").mockImplementation(
         function (a, b, c): Promise<string> { return Promise.resolve(primaryHitKey); });
     process.env.INPUT_VCPKGDIRECTORY = "/var/tmp/vcpkg";
-    process.env.INPUT_APPENDEDCACHEKEY = "appendedCacheKey";
-    process.env.INPUT_PREPENDEDCACHEKEY = "prependedCacheKey";
 
     // Act.
     const vcpkg: vcpkgaction.VcpkgAction = new vcpkgaction.VcpkgAction(baseUtil);
@@ -167,14 +147,7 @@ test('run-vcpkg: cache hit', async () => {
     expect(restoreCacheSpy).toBeCalledTimes(1);
     const key = restoreCacheSpy.mock.calls[0][1];
 
-    // Run post action.
-    const vcpkgPostAction = new vcpkgpostaction.VcpkgPostAction(baseUtil,
-        false,
-        keys,
-        ['/dummy/Path/'],
-        keys.primary);
-    await vcpkgPostAction.run();
-    // Cache was hit, and cache.save() must not be called in the post-action.
+    // Cache was hit, and cache.save() must not be called.
     expect(saveCacheSpy).toBeCalledTimes(0);
 });
 
@@ -193,27 +166,11 @@ test('run-vcpkg: cache miss', async () => {
     // Asserts.
     expect(restoreCacheSpy).toBeCalledTimes(1);
     const key = restoreCacheSpy.mock.calls[0][1];
-    // Cache was missed, and cache.save() is not going to be called in the action, but it
-    // will in the post action.
-    expect(saveCacheSpy).toBeCalledTimes(0);
-    // The "key cache hit" must be empty as there was no cache hit.
-    expect(core.getState(vcpkgaction.VCPKG_KEY_CACHE_HIT_STATE)).toBeFalsy();
-    console.log(core.getState(vcpkgaction.VCPKG_CACHE_COMPUTEDKEY_STATE));
-    expect(vcpkgRunnerRunSpy).toBeCalledTimes(0);
-
-    // Run post action.
-    // Artificially set the state for VCPKG_CACHE_COMPUTEDKEY_STATE (it would only be set if this
-    // code is running by an GitHub runner indeed)
-    process.env.STATE_VCPKG_CACHE_COMPUTEDKEY_STATE = '{"primary":"runnerOS=darwin","restore":[]}';
-    const vcpkgPostAction = new vcpkgpostaction.VcpkgPostAction(baseUtil,
-        false,
-        baseutil.createKeySet([key]),
-        ['/dummy/Path/'],
-        null);
-    await vcpkgPostAction.run();
-    // Cache was missed, and cache.save() is called in the post-action.
+    // Cache was missed, and cache.save() is going to be called in the action.
     expect(saveCacheSpy).toBeCalledTimes(1);
     expect(saveCacheSpy.mock.calls[0][1]).toBe(key);
+    // The "key cache hit" must be empty as there was no cache hit.
+    expect(vcpkgRunnerRunSpy).toBeCalledTimes(0);
 });
 
 test('run-vcpkg: cache must not be restored/saved when "doNotCache" is true', async () => {
@@ -300,10 +257,9 @@ test('getVcpkgCommitId() tests', async () => {
 test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided and no vcpkg.json found)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234_appendedKey=appendedCacheKey",
+        "primary": "runnerOS=imageos42-vcpkgGitCommit=1234",
         "restore":
             [
-                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -318,12 +274,8 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided an
     // Act and Assert.
     expect(await vcpkgutils.Utils.computeCacheKeys(
         baseUtil,
-        null,
-        null,
         ".",
-        "",
-        "appendedCacheKey",
-        "prependedCacheKey")).toStrictEqual(expected);
+        "")).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(0);
 
     // Cleanup.
@@ -334,11 +286,9 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided an
 test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
+        "primary": "runnerOS=imageos42-vcpkgGitCommit=1234",
         "restore":
             [
-                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
-                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=1234"
             ]
     };
     process.env.ImageOS = "imageos";
@@ -350,13 +300,8 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided)',
 
     // Act and Assert.
     expect(await vcpkgutils.Utils.computeCacheKeys(
-        baseUtil,
-        "hash-of-vcpkg.json",
-        "hash-of-vcpkg-configuration.json",
-        ".",
-        "",
-        "appendedCacheKey",
-        "prependedCacheKey")).toStrictEqual(expected);
+        baseUtil, "", null
+    )).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(0);
 
     // Cleanup.
@@ -366,12 +311,8 @@ test('computeCacheKey(): vcpkg not as a submodule (no commit id user provided)',
 test('computeCacheKey(): vcpkg as a submodule (no commit id user provided)', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
-        "restore":
-            [
-                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=5678_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
-                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=5678"
-            ]
+        "primary": "runnerOS=imageos42-vcpkgGitCommit=5678",
+        "restore": []
     };
     process.env.ImageOS = "imageos";
     process.env.ImageVersion = "42";
@@ -382,13 +323,7 @@ test('computeCacheKey(): vcpkg as a submodule (no commit id user provided)', asy
 
     // Act and Assert.
     expect(await vcpkgutils.Utils.computeCacheKeys(
-        baseUtil,
-        "hash-of-vcpkg.json",
-        "hash-of-vcpkg-configuration.json",
-        ".",
-        "",
-        "appendedCacheKey",
-        "prependedCacheKey")).toStrictEqual(expected);
+        baseUtil, "", null)).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(0);
 
     // Cleanup.
@@ -398,12 +333,8 @@ test('computeCacheKey(): vcpkg as a submodule (no commit id user provided)', asy
 test('computeCacheKey(): vcpkg as a submodule, with user provided Git commit id, it must trigger a warning', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
-        "restore":
-            [
-                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=0912_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
-                "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=0912"
-            ]
+        "primary": "runnerOS=imageos42-vcpkgGitCommit=0912",
+        "restore": []
     };
     process.env.ImageOS = "imageos";
     process.env.ImageVersion = "42";
@@ -414,13 +345,7 @@ test('computeCacheKey(): vcpkg as a submodule, with user provided Git commit id,
 
     // Act and Assert.
     expect(await vcpkgutils.Utils.computeCacheKeys(
-        baseUtil,
-        "hash-of-vcpkg.json",
-        "hash-of-vcpkg-configuration.json",
-        path.resolve("."),
-        "vcpkgcommitid",
-        "appendedCacheKey",
-        "prependedCacheKey")).toStrictEqual(expected);
+        baseUtil, "", "userProvidedGitCommitId")).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(1);
     vcpkgCommitIdMock.mockClear();
 });
@@ -428,10 +353,8 @@ test('computeCacheKey(): vcpkg as a submodule, with user provided Git commit id,
 test('computeCacheKey(): vcpkg with user provided commit it must not trigger a warning', async () => {
     // Arrange.
     const expected: baseutil.KeySet = {
-        "primary": "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json_appendedKey=appendedCacheKey",
-        "restore": [
-            "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=userId_vcpkgJson=hash-of-vcpkg.json-vcpkgConfigurationJson=hash-of-vcpkg-configuration.json",
-            "prependedKey=prependedCacheKey-runnerOS=imageos42-vcpkgGitCommit=userId"]
+        "primary": "runnerOS=imageos42-vcpkgGitCommit=userProvidedCommitId",
+        "restore": []
     };
     process.env.ImageOS = "imageos";
     process.env.ImageVersion = "42";
@@ -442,12 +365,6 @@ test('computeCacheKey(): vcpkg with user provided commit it must not trigger a w
 
     // Act and assert.
     expect(await vcpkgutils.Utils.computeCacheKeys(
-        baseUtil,
-        "hash-of-vcpkg.json",
-        "hash-of-vcpkg-configuration.json",
-        "/Users/luca/github/run-vcpkg/__tests__/assets/",
-        "userId",
-        "appendedCacheKey",
-        "prependedCacheKey")).toStrictEqual(expected);
+        baseUtil, "", "userProvidedCommitId")).toStrictEqual(expected);
     expect(warningMock).toBeCalledTimes(0);
 });
