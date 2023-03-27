@@ -7,7 +7,7 @@ module.exports =
 
 "use strict";
 
-// Copyright (c) 2020-2021-2022 Luca Cappa
+// Copyright (c) 2020-2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -66,7 +66,7 @@ main().catch(error => console.error("main() failed!", error));
 
 "use strict";
 
-// Copyright (c) 2020-2021-2022 Luca Cappa
+// Copyright (c) 2020-2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -79,7 +79,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VcpkgAction = exports.VCPKG_SUCCESS_STATE = exports.VCPKG_ADDITIONAL_CACHED_PATHS_STATE = exports.VCPKG_ROOT_STATE = exports.VCPKG_ADDED_CACHEKEY_STATE = exports.VCPKG_DO_NOT_CACHE_STATE = exports.VCPKG_KEY_CACHE_HIT_STATE = exports.VCPKG_CACHE_COMPUTEDKEY_STATE = exports.logCollectionRegExpsInput = exports.prependedCacheKeyInput = exports.appendedCacheKeyInput = exports.vcpkgUrlInput = exports.doNotUpdateVcpkgInput = exports.vcpkgCommitIdInput = exports.vcpkgDirectoryInput = exports.runVcpkgFormatStringInput = exports.runVcpkgInstallInput = exports.vcpkgJsonIgnoresInput = exports.vcpkgJsonGlobInput = exports.binaryCachePathInput = exports.additionalCachedPathsInput = exports.doNotCacheInput = void 0;
+exports.VcpkgAction = exports.logCollectionRegExpsInput = exports.vcpkgUrlInput = exports.doNotUpdateVcpkgInput = exports.vcpkgCommitIdInput = exports.vcpkgDirectoryInput = exports.runVcpkgFormatStringInput = exports.runVcpkgInstallInput = exports.vcpkgJsonIgnoresInput = exports.vcpkgJsonGlobInput = exports.binaryCachePathInput = exports.additionalCachedPathsInput = exports.doNotCacheInput = void 0;
 const path = __nccwpck_require__(5622);
 const cache = __nccwpck_require__(7799);
 const runvcpkglib = __nccwpck_require__(4393);
@@ -96,42 +96,26 @@ exports.vcpkgDirectoryInput = "VCPKGDIRECTORY";
 exports.vcpkgCommitIdInput = "VCPKGGITCOMMITID";
 exports.doNotUpdateVcpkgInput = "DONOTUPDATEVCPKG";
 exports.vcpkgUrlInput = "VCPKGGITURL";
-/**
- * The input's name for additional content for the cache key.
- */
-exports.appendedCacheKeyInput = 'APPENDEDCACHEKEY';
-exports.prependedCacheKeyInput = 'PREPENDEDCACHEKEY';
 exports.logCollectionRegExpsInput = 'LOGCOLLECTIONREGEXPS';
-// Saved data in the action, and consumed by post-action.
-exports.VCPKG_CACHE_COMPUTEDKEY_STATE = "VCPKG_CACHE_COMPUTEDKEY_STATE";
-exports.VCPKG_KEY_CACHE_HIT_STATE = "VCPKG_KEY_CACHE_HIT_STATE";
-exports.VCPKG_DO_NOT_CACHE_STATE = "VCPKG_DO_NOT_CACHE_STATE";
-exports.VCPKG_ADDED_CACHEKEY_STATE = "VCPKG_ADDED_CACHEKEY_STATE";
-exports.VCPKG_ROOT_STATE = "VCPKG_ROOT_STATE";
-exports.VCPKG_ADDITIONAL_CACHED_PATHS_STATE = "VCPKG_ADDITIONAL_CACHED_PATHS_STATE";
-exports.VCPKG_SUCCESS_STATE = "VCPKG_SUCCESS_STATE";
 class VcpkgAction {
     constructor(baseUtilLib) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         this.baseUtilLib = baseUtilLib;
         this.doNotCache = false;
         // Fetch inputs.
-        this.appendedCacheKey = (_a = baseUtilLib.baseLib.getInput(exports.appendedCacheKeyInput, false)) !== null && _a !== void 0 ? _a : null;
-        this.prependedCacheKey = (_b = baseUtilLib.baseLib.getInput(exports.prependedCacheKeyInput, false)) !== null && _b !== void 0 ? _b : null;
         const vcpkgRootDir = baseUtilLib.baseLib.getPathInput(exports.vcpkgDirectoryInput, false, false);
         this.vcpkgRootDir = vcpkgRootDir ? path.normalize(path.resolve(vcpkgRootDir)) : null;
-        this.userProvidedCommitId = (_c = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _c !== void 0 ? _c : null;
-        vcpkgutil.Utils.addCachedPaths(baseUtilLib.baseLib, (_d = baseUtilLib.baseLib.getInput(exports.additionalCachedPathsInput, false)) !== null && _d !== void 0 ? _d : null);
-        this.runVcpkgFormatString = (_e = baseUtilLib.baseLib.getInput(exports.runVcpkgFormatStringInput, false)) !== null && _e !== void 0 ? _e : null;
-        this.vcpkgJsonGlob = (_f = baseUtilLib.baseLib.getInput(exports.vcpkgJsonGlobInput, false)) !== null && _f !== void 0 ? _f : VcpkgAction.VCPKGJSON_GLOB;
-        this.vcpkgJsonIgnores = eval((_g = baseUtilLib.baseLib.getInput(exports.vcpkgJsonIgnoresInput, false)) !== null && _g !== void 0 ? _g : VcpkgAction.VCPKGJSON_IGNORES);
-        this.runVcpkgInstall = (_h = baseUtilLib.baseLib.getBoolInput(exports.runVcpkgInstallInput, false)) !== null && _h !== void 0 ? _h : false;
-        this.doNotCache = (_j = baseUtilLib.baseLib.getBoolInput(exports.doNotCacheInput, false)) !== null && _j !== void 0 ? _j : false;
-        this.doNotUpdateVcpkg = (_k = baseUtilLib.baseLib.getBoolInput(exports.doNotUpdateVcpkgInput, false)) !== null && _k !== void 0 ? _k : false;
-        this.vcpkgUrl = (_l = baseUtilLib.baseLib.getInput(exports.vcpkgUrlInput, false)) !== null && _l !== void 0 ? _l : VcpkgAction.DEFAULTVCPKGURL;
-        this.vcpkgCommitId = (_m = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _m !== void 0 ? _m : null;
-        this.logCollectionRegExps = (_o = baseUtilLib.baseLib.getDelimitedInput(exports.logCollectionRegExpsInput, ';', false)) !== null && _o !== void 0 ? _o : [];
-        this.binaryCachePath = (_p = baseUtilLib.baseLib.getPathInput(exports.binaryCachePathInput, false, true)) !== null && _p !== void 0 ? _p : null;
+        this.userProvidedCommitId = (_a = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _a !== void 0 ? _a : null;
+        this.runVcpkgFormatString = (_b = baseUtilLib.baseLib.getInput(exports.runVcpkgFormatStringInput, false)) !== null && _b !== void 0 ? _b : null;
+        this.vcpkgJsonGlob = (_c = baseUtilLib.baseLib.getInput(exports.vcpkgJsonGlobInput, false)) !== null && _c !== void 0 ? _c : VcpkgAction.VCPKGJSON_GLOB;
+        this.vcpkgJsonIgnores = eval((_d = baseUtilLib.baseLib.getInput(exports.vcpkgJsonIgnoresInput, false)) !== null && _d !== void 0 ? _d : VcpkgAction.VCPKGJSON_IGNORES);
+        this.runVcpkgInstall = (_e = baseUtilLib.baseLib.getBoolInput(exports.runVcpkgInstallInput, false)) !== null && _e !== void 0 ? _e : false;
+        this.doNotCache = (_f = baseUtilLib.baseLib.getBoolInput(exports.doNotCacheInput, false)) !== null && _f !== void 0 ? _f : false;
+        this.doNotUpdateVcpkg = (_g = baseUtilLib.baseLib.getBoolInput(exports.doNotUpdateVcpkgInput, false)) !== null && _g !== void 0 ? _g : false;
+        this.vcpkgUrl = (_h = baseUtilLib.baseLib.getInput(exports.vcpkgUrlInput, false)) !== null && _h !== void 0 ? _h : VcpkgAction.DEFAULTVCPKGURL;
+        this.vcpkgCommitId = (_j = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _j !== void 0 ? _j : null;
+        this.logCollectionRegExps = (_k = baseUtilLib.baseLib.getDelimitedInput(exports.logCollectionRegExpsInput, ';', false)) !== null && _k !== void 0 ? _k : [];
+        this.binaryCachePath = (_l = baseUtilLib.baseLib.getPathInput(exports.binaryCachePathInput, false, true)) !== null && _l !== void 0 ? _l : null;
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -147,49 +131,45 @@ class VcpkgAction {
                 }
                 // Create the vcpkg_root and cache directory if needed.
                 const binCachePath = (_a = this.binaryCachePath) !== null && _a !== void 0 ? _a : yield runvcpkglib.getDefaultVcpkgCacheDirectory(this.baseUtilLib.baseLib);
-                // Save the binary cache path for the post action.
-                vcpkgutil.Utils.addCachedPaths(baseLib, binCachePath);
                 baseLib.debug(`vcpkgRootDir=${this.vcpkgRootDir}, binCachePath=${binCachePath}`);
                 yield baseLib.mkdirP(vcpkgRoot);
                 yield baseLib.mkdirP(binCachePath);
-                // Save state for post action.
+                // Set the place where vcpkg is putting the binary caching artifacts.
                 this.baseUtilLib.baseLib.setVariable(VcpkgAction.VCPKG_DEFAULT_BINARY_CACHE, binCachePath);
-                this.baseUtilLib.baseLib.setState(exports.VCPKG_DO_NOT_CACHE_STATE, this.doNotCache ? "true" : "false");
-                this.baseUtilLib.baseLib.setState(exports.VCPKG_ROOT_STATE, vcpkgRoot);
                 return vcpkgRoot;
             }));
             if (!this.vcpkgRootDir) {
                 throw new Error(`vcpkgRootDir is not defined!`);
             }
-            let keys = null;
-            let vcpkgJsonFilePath = null;
-            yield this.baseUtilLib.wrapOp('Compute vcpkg cache key', () => __awaiter(this, void 0, void 0, function* () {
-                const [vcpkgJsonFile, vcpkgJsonHash, vcpkgConfigurationJsonHash] = yield vcpkgutil.Utils.getVcpkgJsonHash(this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
-                keys = yield vcpkgutil.Utils.computeCacheKeys(this.baseUtilLib, vcpkgJsonHash, vcpkgConfigurationJsonHash, this.vcpkgRootDir, this.userProvidedCommitId, this.appendedCacheKey, this.prependedCacheKey);
-                if (keys) {
+            const [keys, vcpkgJsonFilePath] = yield this.baseUtilLib.wrapOp('Compute vcpkg cache key', () => __awaiter(this, void 0, void 0, function* () {
+                const vcpkgJsonPath = yield vcpkgutil.Utils.getVcpkgJsonPath(this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
+                const keys = yield vcpkgutil.Utils.computeCacheKeys(this.baseUtilLib, this.vcpkgRootDir, // HACK: if it were not set it would have thrown before.
+                this.userProvidedCommitId);
+                if (keys && vcpkgJsonPath) {
                     baseLib.info(`Computed key: ${JSON.stringify(keys)}`);
-                    vcpkgJsonFilePath = vcpkgJsonFile;
                 }
                 else {
-                    this.baseUtilLib.baseLib.warning("Computation for the cache key failed!");
+                    throw new Error("Computation for the cache key or the vcpkg.json location failed!");
                 }
+                return [keys, vcpkgJsonPath];
             }));
-            if (keys) {
-                this.baseUtilLib.baseLib.setState(exports.VCPKG_CACHE_COMPUTEDKEY_STATE, JSON.stringify(keys));
-                yield this.baseUtilLib.wrapOp('Restore vcpkg and its artifacts from cache', () => this.restoreCache(keys));
-            }
+            const isCacheHit = yield this.baseUtilLib.wrapOp('Restore vcpkg installation from cache (not the packages, that is done by vcpkg via binary caching using GitHub Action cache)', () => __awaiter(this, void 0, void 0, function* () { return yield this.restoreCache(keys); }));
             const vcpkgJsonPath = yield this.getCurrentDirectoryForRunningVcpkg(vcpkgJsonFilePath);
             yield runvcpkglib.VcpkgRunner.run(this.baseUtilLib, this.vcpkgRootDir, this.vcpkgUrl, this.vcpkgCommitId, this.runVcpkgInstall, this.doNotUpdateVcpkg, this.logCollectionRegExps, vcpkgJsonPath, this.runVcpkgFormatString);
-            baseLib.setState(exports.VCPKG_SUCCESS_STATE, "success");
+            yield this.baseUtilLib.wrapOp('Save the vcpkg installation into cache (not the packages, that is done by vcpkg via binary caching using GitHub Action)', () => __awaiter(this, void 0, void 0, function* () {
+                return yield this.saveCache(isCacheHit, keys, vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir // HACK: if it were not set it would have thrown before.
+                ), this.doNotCache, true);
+            }));
             this.baseUtilLib.baseLib.debug("run()>>");
         });
     }
     restoreCache(keys) {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
+            let isCacheHit = false;
             this.baseUtilLib.baseLib.debug("restoreCache()<<");
             if (this.doNotCache) {
-                this.baseUtilLib.baseLib.info(`Skipping saving cache as caching is disabled (${exports.doNotCacheInput}: ${this.doNotCache}).`);
+                this.baseUtilLib.baseLib.info(`Skipping restoring cache as caching is disabled (${exports.doNotCacheInput}: ${this.doNotCache}).`);
             }
             else {
                 if (!this.vcpkgRootDir)
@@ -207,24 +187,34 @@ class VcpkgAction {
                 }
                 if (keyCacheHit) {
                     this.baseUtilLib.baseLib.info(`Cache hit, key = '${keyCacheHit}'.`);
-                    this.hitCacheKey = keyCacheHit;
-                    this.baseUtilLib.baseLib.setState(exports.VCPKG_KEY_CACHE_HIT_STATE, keyCacheHit);
+                    isCacheHit = true;
                 }
                 else {
                     this.baseUtilLib.baseLib.info(`Cache miss.`);
+                    isCacheHit = false;
                 }
             }
             this.baseUtilLib.baseLib.debug("restoreCache()>>");
+            return isCacheHit;
+        });
+    }
+    saveCache(isCacheHit, keys, cachedPaths, doNotCache, successStep) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.baseUtilLib.baseLib.info('saveCache()<<');
+            yield this.baseUtilLib.wrapOp('Save vcpkg into the GitHub Action cache (only the tool, not the built packages which are saved by vcpkg`s Binary Caching on GitHub Action`s cache).', () => __awaiter(this, void 0, void 0, function* () {
+                return yield vcpkgutil.Utils.saveCache(this.baseUtilLib.baseLib, this.doNotCache, keys, isCacheHit ? keys.primary : null, /* Only the primary cache could have hit, since there are no restore keys. */ cachedPaths);
+            }));
+            this.baseUtilLib.baseLib.info('saveCache()>>');
         });
     }
     getCurrentDirectoryForRunningVcpkg(vcpkgJsonFile) {
         return __awaiter(this, void 0, void 0, function* () {
             this.baseUtilLib.baseLib.debug(`getCurrentDirectoryForRunningVcpkg() << `);
-            // When running 'vcpkg install' is requested, ensure the target directory is well known, trigger a warning otherwise.
+            // When running 'vcpkg install' is requested, ensure the target directory is well known, fail otherwise.
             let vcpkgJsonPath = null;
             if (this.runVcpkgInstall) {
                 vcpkgJsonPath = vcpkgJsonFile === null ? null : path.dirname(path.resolve(vcpkgJsonFile));
-                this.baseUtilLib.baseLib.debug(`vcpkgJsonFile = '${vcpkgJsonFile}', vcpkgJsonPath = '${vcpkgJsonPath}'.`);
+                this.baseUtilLib.baseLib.debug(`vcpkgJsonFile='${vcpkgJsonFile}', vcpkgJsonPath='${vcpkgJsonPath}'.`);
                 if (vcpkgJsonPath === null) {
                     this.baseUtilLib.baseLib.error(`Failing the workflow since the 'vcpkg.json' file has not been found, and its containing directory 
  is required and used as the 'working directory' when launching vcpkg with arguments:
@@ -252,7 +242,7 @@ VcpkgAction.DEFAULTVCPKGURL = 'https://github.com/microsoft/vcpkg.git';
 
 "use strict";
 
-// Copyright (c) 2021-2022 Luca Cappa
+// Copyright (c) 2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -308,7 +298,7 @@ exports.VcpkgPostAction = VcpkgPostAction;
 
 "use strict";
 
-// Copyright (c) 2020-2021-2022 Luca Cappa
+// Copyright (c) 2020-2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -327,7 +317,8 @@ const fs = __nccwpck_require__(5747);
 const runvcpkglib = __nccwpck_require__(4393);
 const baseutillib = __nccwpck_require__(2365);
 const cache = __nccwpck_require__(7799);
-const vcpkgaction = __nccwpck_require__(2929);
+const fastglob = __nccwpck_require__(3664);
+const vcpkg_action_1 = __nccwpck_require__(2929);
 class Utils {
     static isExactKeyMatch(key, cacheKey) {
         if (cacheKey)
@@ -379,19 +370,21 @@ class Utils {
             return [id, isSubmodule];
         });
     }
-    static getVcpkgJsonHash(baseUtil, vcpkgJsonGlob, vcpkgJsonIgnores) {
+    static getVcpkgJsonPath(baseUtil, vcpkgJsonGlob, vcpkgJsonIgnores) {
         return __awaiter(this, void 0, void 0, function* () {
+            baseUtil.baseLib.debug(`getVcpkgJsonPath(${vcpkgJsonGlob})<<`);
+            let ret = null;
             try {
-                const [vcpkgJsonPath, vcpkgJsonHash] = yield baseUtil.getFileHash(vcpkgJsonGlob, vcpkgJsonIgnores);
-                if (vcpkgJsonPath) {
-                    baseUtil.baseLib.info(`Found ${runvcpkglib.VCPKG_JSON} at '${vcpkgJsonPath}', its hash is '${vcpkgJsonHash}''.`);
-                    const vcpkgConfJsonPath = path.join(path.dirname(vcpkgJsonPath), runvcpkglib.VCPKG_CONFIGURATION_JSON);
-                    let vcpkgConfigurationHash = null;
-                    if (baseUtil.fileExists(vcpkgConfJsonPath)) {
-                        vcpkgConfigurationHash = yield baseUtil.baseLib.hashFiles(vcpkgConfJsonPath);
-                        baseUtil.baseLib.info(`Found sibling ${runvcpkglib.VCPKG_CONFIGURATION_JSON} at '${vcpkgConfJsonPath}', its hash is '${vcpkgConfigurationHash}'.`);
-                    }
-                    return [vcpkgJsonPath, vcpkgJsonHash, vcpkgConfigurationHash];
+                const vcpkgJsonPath = yield fastglob(vcpkgJsonGlob, { ignore: vcpkgJsonIgnores });
+                if ((vcpkgJsonPath === null || vcpkgJsonPath === void 0 ? void 0 : vcpkgJsonPath.length) === 1) {
+                    baseUtil.baseLib.info(`Found ${runvcpkglib.VCPKG_JSON} at '${vcpkgJsonPath[0]}'.`);
+                    ret = vcpkgJsonPath[0];
+                }
+                else if (vcpkgJsonPath.length > 1) {
+                    baseUtil.baseLib.warning(`The file ${runvcpkglib.VCPKG_JSON} was found multiple times with glob expression '${vcpkgJsonGlob}'.`);
+                }
+                else {
+                    baseUtil.baseLib.warning(`The file ${runvcpkglib.VCPKG_JSON} was not found with glob expression '${vcpkgJsonGlob}'.`);
                 }
             }
             catch (err) {
@@ -399,17 +392,16 @@ class Utils {
                     baseUtil.baseLib.warning(err.message);
                 }
             }
-            baseUtil.baseLib.warning(`Cannot compute hash of vcpkg.json as it was not found (or multiple hits) with glob expression '${vcpkgJsonGlob}'.`);
-            return [null, null, null];
+            baseUtil.baseLib.debug(`getVcpkgJsonPath()>>`);
+            return ret;
         });
     }
-    static computeCacheKeys(baseUtilLib, vcpkgJsonHash, vcpkgConfJsonHash, vcpkgDirectory, userProvidedCommitId, appendedCacheKey, prependedCacheKey) {
+    static computeCacheKeys(baseUtilLib, vcpkgDirectory, userProvidedCommitId) {
         return __awaiter(this, void 0, void 0, function* () {
             baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
             const cacheKeySegments = [];
             // Add to the first segment of the key the values of env vars ImageOS and ImageVersion if available.
-            let firstSegment = prependedCacheKey ? `prependedKey=${prependedCacheKey}-` : "";
-            firstSegment += `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
+            let firstSegment = `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
             firstSegment += process.env['ImageVersion'] || "";
             const [commitId, isSubmodule] = yield Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);
             if (commitId) {
@@ -417,7 +409,7 @@ class Utils {
                 if (isSubmodule) {
                     baseUtilLib.baseLib.info(`Adding vcpkg submodule Git commit id '${commitId}' to cache key`);
                     if (userProvidedCommitId) {
-                        baseUtilLib.baseLib.warning(`Provided Git commit id is disregarded: '${userProvidedCommitId}'. Please remove it from the inputs.`);
+                        baseUtilLib.baseLib.warning(`The provided Git commit id is disregarded: '${userProvidedCommitId}'. Please remove it from the inputs.`);
                     }
                 }
                 else {
@@ -432,18 +424,6 @@ class Utils {
                 baseUtilLib.baseLib.info(`No vcpkg's commit id was provided, does not contribute to the cache's key.`);
             }
             cacheKeySegments.push(firstSegment);
-            if (vcpkgJsonHash) {
-                let hash = `vcpkgJson=${vcpkgJsonHash}`;
-                baseUtilLib.baseLib.info(`Adding hash of ${runvcpkglib.VCPKG_JSON}: '${vcpkgJsonHash}'.`);
-                if (vcpkgConfJsonHash) {
-                    baseUtilLib.baseLib.info(`Adding hash of ${runvcpkglib.VCPKG_CONFIGURATION_JSON}: '${vcpkgConfJsonHash}'.`);
-                    hash += `-vcpkgConfigurationJson=${vcpkgConfJsonHash}`;
-                }
-                cacheKeySegments.push(hash);
-            }
-            if (appendedCacheKey) {
-                cacheKeySegments.push(`appendedKey=${appendedCacheKey}`);
-            }
             const keyset = baseutillib.createKeySet(cacheKeySegments);
             baseUtilLib.baseLib.debug(`computeCacheKeys()>>`);
             return keyset;
@@ -454,7 +434,7 @@ class Utils {
             baseLib.debug(`saveCache(doNotCache:${doNotCache},keys:${JSON.stringify(keys)},hitCacheKey:${hitCacheKey},cachedPaths:${cachedPaths})<<`);
             try {
                 if (doNotCache) {
-                    baseLib.info(`Caching is disabled, saving cache is skipped.`);
+                    baseLib.info(`Skipping saving cache as caching is disabled (${vcpkg_action_1.doNotCacheInput}: ${doNotCache}).`);
                 }
                 else {
                     if (hitCacheKey && Utils.isExactKeyMatch(keys.primary, hitCacheKey)) {
@@ -497,33 +477,9 @@ class Utils {
             baseLib.debug(`saveCache()>>`);
         });
     }
-    static addCachedPaths(baseLib, paths) {
-        baseLib.debug(`addCachedPaths(${paths})<<`);
-        if (paths) {
-            baseLib.debug(`Adding cached paths: '${paths}''`);
-            let s = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
-            s = `${s !== null && s !== void 0 ? s : ''};${paths}`;
-            baseLib.setState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE, s);
-            baseLib.debug(`Set ${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}=${s}`);
-        }
-        baseLib.debug(`addCachedPaths()>>`);
-    }
     static getAllCachedPaths(baseLib, vcpkgRootDir) {
         baseLib.debug(`getAllCachedPaths(${vcpkgRootDir})<<`);
-        let pathsToCache = [];
-        // Hack-ish: ensure that VCPKG_DEFAULT_BINARY_CACHE is always added to the list of cached paths.
-        // When this functino is called by the action, the env var contains the binary cache path.
-        // When this function is called by the post action, the env var is not defined (but the path is in the "state").
-        const binCachePath = process.env[vcpkgaction.VcpkgAction.VCPKG_DEFAULT_BINARY_CACHE];
-        if (binCachePath) {
-            pathsToCache = pathsToCache.concat([binCachePath]);
-        }
-        const additionalCachedPaths = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
-        baseLib.debug(`getState(${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}) -> '${additionalCachedPaths}'`);
-        if (additionalCachedPaths) {
-            pathsToCache = pathsToCache.concat(additionalCachedPaths.split(';'));
-        }
-        pathsToCache = pathsToCache.concat(runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir));
+        let pathsToCache = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
         // Remove empty entries.
         pathsToCache = pathsToCache.map(s => s.trim()).filter(Boolean);
         // Remove duplicates.
@@ -42455,7 +42411,7 @@ const os = __importStar(__nccwpck_require__(2087));
 const path = __importStar(__nccwpck_require__(5622));
 const del = __importStar(__nccwpck_require__(3325));
 const perf_hooks_1 = __nccwpck_require__(630);
-const fastglob = __importStar(__nccwpck_require__(3664));
+const fastglob = __importStar(__nccwpck_require__(693));
 class BaseUtilLib {
     constructor(baseLib) {
         this.baseLib = baseLib;
@@ -42881,6 +42837,1193 @@ __exportStar(__nccwpck_require__(9604), exports);
 
 /***/ }),
 
+/***/ 693:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+const taskManager = __nccwpck_require__(1452);
+const async_1 = __nccwpck_require__(5381);
+const stream_1 = __nccwpck_require__(5917);
+const sync_1 = __nccwpck_require__(1291);
+const settings_1 = __nccwpck_require__(5901);
+const utils = __nccwpck_require__(1352);
+async function FastGlob(source, options) {
+    assertPatternsInput(source);
+    const works = getWorks(source, async_1.default, options);
+    const result = await Promise.all(works);
+    return utils.array.flatten(result);
+}
+// https://github.com/typescript-eslint/typescript-eslint/issues/60
+// eslint-disable-next-line no-redeclare
+(function (FastGlob) {
+    function sync(source, options) {
+        assertPatternsInput(source);
+        const works = getWorks(source, sync_1.default, options);
+        return utils.array.flatten(works);
+    }
+    FastGlob.sync = sync;
+    function stream(source, options) {
+        assertPatternsInput(source);
+        const works = getWorks(source, stream_1.default, options);
+        /**
+         * The stream returned by the provider cannot work with an asynchronous iterator.
+         * To support asynchronous iterators, regardless of the number of tasks, we always multiplex streams.
+         * This affects performance (+25%). I don't see best solution right now.
+         */
+        return utils.stream.merge(works);
+    }
+    FastGlob.stream = stream;
+    function generateTasks(source, options) {
+        assertPatternsInput(source);
+        const patterns = [].concat(source);
+        const settings = new settings_1.default(options);
+        return taskManager.generate(patterns, settings);
+    }
+    FastGlob.generateTasks = generateTasks;
+    function isDynamicPattern(source, options) {
+        assertPatternsInput(source);
+        const settings = new settings_1.default(options);
+        return utils.pattern.isDynamicPattern(source, settings);
+    }
+    FastGlob.isDynamicPattern = isDynamicPattern;
+    function escapePath(source) {
+        assertPatternsInput(source);
+        return utils.path.escape(source);
+    }
+    FastGlob.escapePath = escapePath;
+})(FastGlob || (FastGlob = {}));
+function getWorks(source, _Provider, options) {
+    const patterns = [].concat(source);
+    const settings = new settings_1.default(options);
+    const tasks = taskManager.generate(patterns, settings);
+    const provider = new _Provider(settings);
+    return tasks.map(provider.read, provider);
+}
+function assertPatternsInput(input) {
+    const source = [].concat(input);
+    const isValidSource = source.every((item) => utils.string.isString(item) && !utils.string.isEmpty(item));
+    if (!isValidSource) {
+        throw new TypeError('Patterns must be a string (non empty) or an array of strings');
+    }
+}
+module.exports = FastGlob;
+
+
+/***/ }),
+
+/***/ 1452:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.convertPatternGroupToTask = exports.convertPatternGroupsToTasks = exports.groupPatternsByBaseDirectory = exports.getNegativePatternsAsPositive = exports.getPositivePatterns = exports.convertPatternsToTasks = exports.generate = void 0;
+const utils = __nccwpck_require__(1352);
+function generate(patterns, settings) {
+    const positivePatterns = getPositivePatterns(patterns);
+    const negativePatterns = getNegativePatternsAsPositive(patterns, settings.ignore);
+    const staticPatterns = positivePatterns.filter((pattern) => utils.pattern.isStaticPattern(pattern, settings));
+    const dynamicPatterns = positivePatterns.filter((pattern) => utils.pattern.isDynamicPattern(pattern, settings));
+    const staticTasks = convertPatternsToTasks(staticPatterns, negativePatterns, /* dynamic */ false);
+    const dynamicTasks = convertPatternsToTasks(dynamicPatterns, negativePatterns, /* dynamic */ true);
+    return staticTasks.concat(dynamicTasks);
+}
+exports.generate = generate;
+/**
+ * Returns tasks grouped by basic pattern directories.
+ *
+ * Patterns that can be found inside (`./`) and outside (`../`) the current directory are handled separately.
+ * This is necessary because directory traversal starts at the base directory and goes deeper.
+ */
+function convertPatternsToTasks(positive, negative, dynamic) {
+    const tasks = [];
+    const patternsOutsideCurrentDirectory = utils.pattern.getPatternsOutsideCurrentDirectory(positive);
+    const patternsInsideCurrentDirectory = utils.pattern.getPatternsInsideCurrentDirectory(positive);
+    const outsideCurrentDirectoryGroup = groupPatternsByBaseDirectory(patternsOutsideCurrentDirectory);
+    const insideCurrentDirectoryGroup = groupPatternsByBaseDirectory(patternsInsideCurrentDirectory);
+    tasks.push(...convertPatternGroupsToTasks(outsideCurrentDirectoryGroup, negative, dynamic));
+    /*
+     * For the sake of reducing future accesses to the file system, we merge all tasks within the current directory
+     * into a global task, if at least one pattern refers to the root (`.`). In this case, the global task covers the rest.
+     */
+    if ('.' in insideCurrentDirectoryGroup) {
+        tasks.push(convertPatternGroupToTask('.', patternsInsideCurrentDirectory, negative, dynamic));
+    }
+    else {
+        tasks.push(...convertPatternGroupsToTasks(insideCurrentDirectoryGroup, negative, dynamic));
+    }
+    return tasks;
+}
+exports.convertPatternsToTasks = convertPatternsToTasks;
+function getPositivePatterns(patterns) {
+    return utils.pattern.getPositivePatterns(patterns);
+}
+exports.getPositivePatterns = getPositivePatterns;
+function getNegativePatternsAsPositive(patterns, ignore) {
+    const negative = utils.pattern.getNegativePatterns(patterns).concat(ignore);
+    const positive = negative.map(utils.pattern.convertToPositivePattern);
+    return positive;
+}
+exports.getNegativePatternsAsPositive = getNegativePatternsAsPositive;
+function groupPatternsByBaseDirectory(patterns) {
+    const group = {};
+    return patterns.reduce((collection, pattern) => {
+        const base = utils.pattern.getBaseDirectory(pattern);
+        if (base in collection) {
+            collection[base].push(pattern);
+        }
+        else {
+            collection[base] = [pattern];
+        }
+        return collection;
+    }, group);
+}
+exports.groupPatternsByBaseDirectory = groupPatternsByBaseDirectory;
+function convertPatternGroupsToTasks(positive, negative, dynamic) {
+    return Object.keys(positive).map((base) => {
+        return convertPatternGroupToTask(base, positive[base], negative, dynamic);
+    });
+}
+exports.convertPatternGroupsToTasks = convertPatternGroupsToTasks;
+function convertPatternGroupToTask(base, positive, negative, dynamic) {
+    return {
+        dynamic,
+        positive,
+        negative,
+        base,
+        patterns: [].concat(positive, negative.map(utils.pattern.convertToNegativePattern))
+    };
+}
+exports.convertPatternGroupToTask = convertPatternGroupToTask;
+
+
+/***/ }),
+
+/***/ 5381:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const stream_1 = __nccwpck_require__(5496);
+const provider_1 = __nccwpck_require__(2277);
+class ProviderAsync extends provider_1.default {
+    constructor() {
+        super(...arguments);
+        this._reader = new stream_1.default(this._settings);
+    }
+    read(task) {
+        const root = this._getRootDirectory(task);
+        const options = this._getReaderOptions(task);
+        const entries = [];
+        return new Promise((resolve, reject) => {
+            const stream = this.api(root, task, options);
+            stream.once('error', reject);
+            stream.on('data', (entry) => entries.push(options.transform(entry)));
+            stream.once('end', () => resolve(entries));
+        });
+    }
+    api(root, task, options) {
+        if (task.dynamic) {
+            return this._reader.dynamic(root, options);
+        }
+        return this._reader.static(task.patterns, options);
+    }
+}
+exports.default = ProviderAsync;
+
+
+/***/ }),
+
+/***/ 2296:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const utils = __nccwpck_require__(1352);
+const partial_1 = __nccwpck_require__(8398);
+class DeepFilter {
+    constructor(_settings, _micromatchOptions) {
+        this._settings = _settings;
+        this._micromatchOptions = _micromatchOptions;
+    }
+    getFilter(basePath, positive, negative) {
+        const matcher = this._getMatcher(positive);
+        const negativeRe = this._getNegativePatternsRe(negative);
+        return (entry) => this._filter(basePath, entry, matcher, negativeRe);
+    }
+    _getMatcher(patterns) {
+        return new partial_1.default(patterns, this._settings, this._micromatchOptions);
+    }
+    _getNegativePatternsRe(patterns) {
+        const affectDepthOfReadingPatterns = patterns.filter(utils.pattern.isAffectDepthOfReadingPattern);
+        return utils.pattern.convertPatternsToRe(affectDepthOfReadingPatterns, this._micromatchOptions);
+    }
+    _filter(basePath, entry, matcher, negativeRe) {
+        if (this._isSkippedByDeep(basePath, entry.path)) {
+            return false;
+        }
+        if (this._isSkippedSymbolicLink(entry)) {
+            return false;
+        }
+        const filepath = utils.path.removeLeadingDotSegment(entry.path);
+        if (this._isSkippedByPositivePatterns(filepath, matcher)) {
+            return false;
+        }
+        return this._isSkippedByNegativePatterns(filepath, negativeRe);
+    }
+    _isSkippedByDeep(basePath, entryPath) {
+        /**
+         * Avoid unnecessary depth calculations when it doesn't matter.
+         */
+        if (this._settings.deep === Infinity) {
+            return false;
+        }
+        return this._getEntryLevel(basePath, entryPath) >= this._settings.deep;
+    }
+    _getEntryLevel(basePath, entryPath) {
+        const entryPathDepth = entryPath.split('/').length;
+        if (basePath === '') {
+            return entryPathDepth;
+        }
+        const basePathDepth = basePath.split('/').length;
+        return entryPathDepth - basePathDepth;
+    }
+    _isSkippedSymbolicLink(entry) {
+        return !this._settings.followSymbolicLinks && entry.dirent.isSymbolicLink();
+    }
+    _isSkippedByPositivePatterns(entryPath, matcher) {
+        return !this._settings.baseNameMatch && !matcher.match(entryPath);
+    }
+    _isSkippedByNegativePatterns(entryPath, patternsRe) {
+        return !utils.pattern.matchAny(entryPath, patternsRe);
+    }
+}
+exports.default = DeepFilter;
+
+
+/***/ }),
+
+/***/ 4425:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const utils = __nccwpck_require__(1352);
+class EntryFilter {
+    constructor(_settings, _micromatchOptions) {
+        this._settings = _settings;
+        this._micromatchOptions = _micromatchOptions;
+        this.index = new Map();
+    }
+    getFilter(positive, negative) {
+        const positiveRe = utils.pattern.convertPatternsToRe(positive, this._micromatchOptions);
+        const negativeRe = utils.pattern.convertPatternsToRe(negative, this._micromatchOptions);
+        return (entry) => this._filter(entry, positiveRe, negativeRe);
+    }
+    _filter(entry, positiveRe, negativeRe) {
+        if (this._settings.unique && this._isDuplicateEntry(entry)) {
+            return false;
+        }
+        if (this._onlyFileFilter(entry) || this._onlyDirectoryFilter(entry)) {
+            return false;
+        }
+        if (this._isSkippedByAbsoluteNegativePatterns(entry.path, negativeRe)) {
+            return false;
+        }
+        const filepath = this._settings.baseNameMatch ? entry.name : entry.path;
+        const isMatched = this._isMatchToPatterns(filepath, positiveRe) && !this._isMatchToPatterns(entry.path, negativeRe);
+        if (this._settings.unique && isMatched) {
+            this._createIndexRecord(entry);
+        }
+        return isMatched;
+    }
+    _isDuplicateEntry(entry) {
+        return this.index.has(entry.path);
+    }
+    _createIndexRecord(entry) {
+        this.index.set(entry.path, undefined);
+    }
+    _onlyFileFilter(entry) {
+        return this._settings.onlyFiles && !entry.dirent.isFile();
+    }
+    _onlyDirectoryFilter(entry) {
+        return this._settings.onlyDirectories && !entry.dirent.isDirectory();
+    }
+    _isSkippedByAbsoluteNegativePatterns(entryPath, patternsRe) {
+        if (!this._settings.absolute) {
+            return false;
+        }
+        const fullpath = utils.path.makeAbsolute(this._settings.cwd, entryPath);
+        return utils.pattern.matchAny(fullpath, patternsRe);
+    }
+    _isMatchToPatterns(entryPath, patternsRe) {
+        const filepath = utils.path.removeLeadingDotSegment(entryPath);
+        return utils.pattern.matchAny(filepath, patternsRe);
+    }
+}
+exports.default = EntryFilter;
+
+
+/***/ }),
+
+/***/ 3354:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const utils = __nccwpck_require__(1352);
+class ErrorFilter {
+    constructor(_settings) {
+        this._settings = _settings;
+    }
+    getFilter() {
+        return (error) => this._isNonFatalError(error);
+    }
+    _isNonFatalError(error) {
+        return utils.errno.isEnoentCodeError(error) || this._settings.suppressErrors;
+    }
+}
+exports.default = ErrorFilter;
+
+
+/***/ }),
+
+/***/ 7953:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const utils = __nccwpck_require__(1352);
+class Matcher {
+    constructor(_patterns, _settings, _micromatchOptions) {
+        this._patterns = _patterns;
+        this._settings = _settings;
+        this._micromatchOptions = _micromatchOptions;
+        this._storage = [];
+        this._fillStorage();
+    }
+    _fillStorage() {
+        /**
+         * The original pattern may include `{,*,**,a/*}`, which will lead to problems with matching (unresolved level).
+         * So, before expand patterns with brace expansion into separated patterns.
+         */
+        const patterns = utils.pattern.expandPatternsWithBraceExpansion(this._patterns);
+        for (const pattern of patterns) {
+            const segments = this._getPatternSegments(pattern);
+            const sections = this._splitSegmentsIntoSections(segments);
+            this._storage.push({
+                complete: sections.length <= 1,
+                pattern,
+                segments,
+                sections
+            });
+        }
+    }
+    _getPatternSegments(pattern) {
+        const parts = utils.pattern.getPatternParts(pattern, this._micromatchOptions);
+        return parts.map((part) => {
+            const dynamic = utils.pattern.isDynamicPattern(part, this._settings);
+            if (!dynamic) {
+                return {
+                    dynamic: false,
+                    pattern: part
+                };
+            }
+            return {
+                dynamic: true,
+                pattern: part,
+                patternRe: utils.pattern.makeRe(part, this._micromatchOptions)
+            };
+        });
+    }
+    _splitSegmentsIntoSections(segments) {
+        return utils.array.splitWhen(segments, (segment) => segment.dynamic && utils.pattern.hasGlobStar(segment.pattern));
+    }
+}
+exports.default = Matcher;
+
+
+/***/ }),
+
+/***/ 8398:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const matcher_1 = __nccwpck_require__(7953);
+class PartialMatcher extends matcher_1.default {
+    match(filepath) {
+        const parts = filepath.split('/');
+        const levels = parts.length;
+        const patterns = this._storage.filter((info) => !info.complete || info.segments.length > levels);
+        for (const pattern of patterns) {
+            const section = pattern.sections[0];
+            /**
+             * In this case, the pattern has a globstar and we must read all directories unconditionally,
+             * but only if the level has reached the end of the first group.
+             *
+             * fixtures/{a,b}/**
+             *  ^ true/false  ^ always true
+            */
+            if (!pattern.complete && levels > section.length) {
+                return true;
+            }
+            const match = parts.every((part, index) => {
+                const segment = pattern.segments[index];
+                if (segment.dynamic && segment.patternRe.test(part)) {
+                    return true;
+                }
+                if (!segment.dynamic && segment.pattern === part) {
+                    return true;
+                }
+                return false;
+            });
+            if (match) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+exports.default = PartialMatcher;
+
+
+/***/ }),
+
+/***/ 2277:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const path = __nccwpck_require__(5622);
+const deep_1 = __nccwpck_require__(2296);
+const entry_1 = __nccwpck_require__(4425);
+const error_1 = __nccwpck_require__(3354);
+const entry_2 = __nccwpck_require__(8349);
+class Provider {
+    constructor(_settings) {
+        this._settings = _settings;
+        this.errorFilter = new error_1.default(this._settings);
+        this.entryFilter = new entry_1.default(this._settings, this._getMicromatchOptions());
+        this.deepFilter = new deep_1.default(this._settings, this._getMicromatchOptions());
+        this.entryTransformer = new entry_2.default(this._settings);
+    }
+    _getRootDirectory(task) {
+        return path.resolve(this._settings.cwd, task.base);
+    }
+    _getReaderOptions(task) {
+        const basePath = task.base === '.' ? '' : task.base;
+        return {
+            basePath,
+            pathSegmentSeparator: '/',
+            concurrency: this._settings.concurrency,
+            deepFilter: this.deepFilter.getFilter(basePath, task.positive, task.negative),
+            entryFilter: this.entryFilter.getFilter(task.positive, task.negative),
+            errorFilter: this.errorFilter.getFilter(),
+            followSymbolicLinks: this._settings.followSymbolicLinks,
+            fs: this._settings.fs,
+            stats: this._settings.stats,
+            throwErrorOnBrokenSymbolicLink: this._settings.throwErrorOnBrokenSymbolicLink,
+            transform: this.entryTransformer.getTransformer()
+        };
+    }
+    _getMicromatchOptions() {
+        return {
+            dot: this._settings.dot,
+            matchBase: this._settings.baseNameMatch,
+            nobrace: !this._settings.braceExpansion,
+            nocase: !this._settings.caseSensitiveMatch,
+            noext: !this._settings.extglob,
+            noglobstar: !this._settings.globstar,
+            posix: true,
+            strictSlashes: false
+        };
+    }
+}
+exports.default = Provider;
+
+
+/***/ }),
+
+/***/ 5917:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const stream_1 = __nccwpck_require__(2413);
+const stream_2 = __nccwpck_require__(5496);
+const provider_1 = __nccwpck_require__(2277);
+class ProviderStream extends provider_1.default {
+    constructor() {
+        super(...arguments);
+        this._reader = new stream_2.default(this._settings);
+    }
+    read(task) {
+        const root = this._getRootDirectory(task);
+        const options = this._getReaderOptions(task);
+        const source = this.api(root, task, options);
+        const destination = new stream_1.Readable({ objectMode: true, read: () => { } });
+        source
+            .once('error', (error) => destination.emit('error', error))
+            .on('data', (entry) => destination.emit('data', options.transform(entry)))
+            .once('end', () => destination.emit('end'));
+        destination
+            .once('close', () => source.destroy());
+        return destination;
+    }
+    api(root, task, options) {
+        if (task.dynamic) {
+            return this._reader.dynamic(root, options);
+        }
+        return this._reader.static(task.patterns, options);
+    }
+}
+exports.default = ProviderStream;
+
+
+/***/ }),
+
+/***/ 1291:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const sync_1 = __nccwpck_require__(5873);
+const provider_1 = __nccwpck_require__(2277);
+class ProviderSync extends provider_1.default {
+    constructor() {
+        super(...arguments);
+        this._reader = new sync_1.default(this._settings);
+    }
+    read(task) {
+        const root = this._getRootDirectory(task);
+        const options = this._getReaderOptions(task);
+        const entries = this.api(root, task, options);
+        return entries.map(options.transform);
+    }
+    api(root, task, options) {
+        if (task.dynamic) {
+            return this._reader.dynamic(root, options);
+        }
+        return this._reader.static(task.patterns, options);
+    }
+}
+exports.default = ProviderSync;
+
+
+/***/ }),
+
+/***/ 8349:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const utils = __nccwpck_require__(1352);
+class EntryTransformer {
+    constructor(_settings) {
+        this._settings = _settings;
+    }
+    getTransformer() {
+        return (entry) => this._transform(entry);
+    }
+    _transform(entry) {
+        let filepath = entry.path;
+        if (this._settings.absolute) {
+            filepath = utils.path.makeAbsolute(this._settings.cwd, filepath);
+            filepath = utils.path.unixify(filepath);
+        }
+        if (this._settings.markDirectories && entry.dirent.isDirectory()) {
+            filepath += '/';
+        }
+        if (!this._settings.objectMode) {
+            return filepath;
+        }
+        return Object.assign(Object.assign({}, entry), { path: filepath });
+    }
+}
+exports.default = EntryTransformer;
+
+
+/***/ }),
+
+/***/ 5948:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const path = __nccwpck_require__(5622);
+const fsStat = __nccwpck_require__(109);
+const utils = __nccwpck_require__(1352);
+class Reader {
+    constructor(_settings) {
+        this._settings = _settings;
+        this._fsStatSettings = new fsStat.Settings({
+            followSymbolicLink: this._settings.followSymbolicLinks,
+            fs: this._settings.fs,
+            throwErrorOnBrokenSymbolicLink: this._settings.followSymbolicLinks
+        });
+    }
+    _getFullEntryPath(filepath) {
+        return path.resolve(this._settings.cwd, filepath);
+    }
+    _makeEntry(stats, pattern) {
+        const entry = {
+            name: pattern,
+            path: pattern,
+            dirent: utils.fs.createDirentFromStats(pattern, stats)
+        };
+        if (this._settings.stats) {
+            entry.stats = stats;
+        }
+        return entry;
+    }
+    _isFatalError(error) {
+        return !utils.errno.isEnoentCodeError(error) && !this._settings.suppressErrors;
+    }
+}
+exports.default = Reader;
+
+
+/***/ }),
+
+/***/ 5496:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const stream_1 = __nccwpck_require__(2413);
+const fsStat = __nccwpck_require__(109);
+const fsWalk = __nccwpck_require__(6026);
+const reader_1 = __nccwpck_require__(5948);
+class ReaderStream extends reader_1.default {
+    constructor() {
+        super(...arguments);
+        this._walkStream = fsWalk.walkStream;
+        this._stat = fsStat.stat;
+    }
+    dynamic(root, options) {
+        return this._walkStream(root, options);
+    }
+    static(patterns, options) {
+        const filepaths = patterns.map(this._getFullEntryPath, this);
+        const stream = new stream_1.PassThrough({ objectMode: true });
+        stream._write = (index, _enc, done) => {
+            return this._getEntry(filepaths[index], patterns[index], options)
+                .then((entry) => {
+                if (entry !== null && options.entryFilter(entry)) {
+                    stream.push(entry);
+                }
+                if (index === filepaths.length - 1) {
+                    stream.end();
+                }
+                done();
+            })
+                .catch(done);
+        };
+        for (let i = 0; i < filepaths.length; i++) {
+            stream.write(i);
+        }
+        return stream;
+    }
+    _getEntry(filepath, pattern, options) {
+        return this._getStat(filepath)
+            .then((stats) => this._makeEntry(stats, pattern))
+            .catch((error) => {
+            if (options.errorFilter(error)) {
+                return null;
+            }
+            throw error;
+        });
+    }
+    _getStat(filepath) {
+        return new Promise((resolve, reject) => {
+            this._stat(filepath, this._fsStatSettings, (error, stats) => {
+                return error === null ? resolve(stats) : reject(error);
+            });
+        });
+    }
+}
+exports.default = ReaderStream;
+
+
+/***/ }),
+
+/***/ 5873:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const fsStat = __nccwpck_require__(109);
+const fsWalk = __nccwpck_require__(6026);
+const reader_1 = __nccwpck_require__(5948);
+class ReaderSync extends reader_1.default {
+    constructor() {
+        super(...arguments);
+        this._walkSync = fsWalk.walkSync;
+        this._statSync = fsStat.statSync;
+    }
+    dynamic(root, options) {
+        return this._walkSync(root, options);
+    }
+    static(patterns, options) {
+        const entries = [];
+        for (const pattern of patterns) {
+            const filepath = this._getFullEntryPath(pattern);
+            const entry = this._getEntry(filepath, pattern, options);
+            if (entry === null || !options.entryFilter(entry)) {
+                continue;
+            }
+            entries.push(entry);
+        }
+        return entries;
+    }
+    _getEntry(filepath, pattern, options) {
+        try {
+            const stats = this._getStat(filepath);
+            return this._makeEntry(stats, pattern);
+        }
+        catch (error) {
+            if (options.errorFilter(error)) {
+                return null;
+            }
+            throw error;
+        }
+    }
+    _getStat(filepath) {
+        return this._statSync(filepath, this._fsStatSettings);
+    }
+}
+exports.default = ReaderSync;
+
+
+/***/ }),
+
+/***/ 5901:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DEFAULT_FILE_SYSTEM_ADAPTER = void 0;
+const fs = __nccwpck_require__(5747);
+const os = __nccwpck_require__(2087);
+/**
+ * The `os.cpus` method can return zero. We expect the number of cores to be greater than zero.
+ * https://github.com/nodejs/node/blob/7faeddf23a98c53896f8b574a6e66589e8fb1eb8/lib/os.js#L106-L107
+ */
+const CPU_COUNT = Math.max(os.cpus().length, 1);
+exports.DEFAULT_FILE_SYSTEM_ADAPTER = {
+    lstat: fs.lstat,
+    lstatSync: fs.lstatSync,
+    stat: fs.stat,
+    statSync: fs.statSync,
+    readdir: fs.readdir,
+    readdirSync: fs.readdirSync
+};
+class Settings {
+    constructor(_options = {}) {
+        this._options = _options;
+        this.absolute = this._getValue(this._options.absolute, false);
+        this.baseNameMatch = this._getValue(this._options.baseNameMatch, false);
+        this.braceExpansion = this._getValue(this._options.braceExpansion, true);
+        this.caseSensitiveMatch = this._getValue(this._options.caseSensitiveMatch, true);
+        this.concurrency = this._getValue(this._options.concurrency, CPU_COUNT);
+        this.cwd = this._getValue(this._options.cwd, process.cwd());
+        this.deep = this._getValue(this._options.deep, Infinity);
+        this.dot = this._getValue(this._options.dot, false);
+        this.extglob = this._getValue(this._options.extglob, true);
+        this.followSymbolicLinks = this._getValue(this._options.followSymbolicLinks, true);
+        this.fs = this._getFileSystemMethods(this._options.fs);
+        this.globstar = this._getValue(this._options.globstar, true);
+        this.ignore = this._getValue(this._options.ignore, []);
+        this.markDirectories = this._getValue(this._options.markDirectories, false);
+        this.objectMode = this._getValue(this._options.objectMode, false);
+        this.onlyDirectories = this._getValue(this._options.onlyDirectories, false);
+        this.onlyFiles = this._getValue(this._options.onlyFiles, true);
+        this.stats = this._getValue(this._options.stats, false);
+        this.suppressErrors = this._getValue(this._options.suppressErrors, false);
+        this.throwErrorOnBrokenSymbolicLink = this._getValue(this._options.throwErrorOnBrokenSymbolicLink, false);
+        this.unique = this._getValue(this._options.unique, true);
+        if (this.onlyDirectories) {
+            this.onlyFiles = false;
+        }
+        if (this.stats) {
+            this.objectMode = true;
+        }
+    }
+    _getValue(option, value) {
+        return option === undefined ? value : option;
+    }
+    _getFileSystemMethods(methods = {}) {
+        return Object.assign(Object.assign({}, exports.DEFAULT_FILE_SYSTEM_ADAPTER), methods);
+    }
+}
+exports.default = Settings;
+
+
+/***/ }),
+
+/***/ 9886:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.splitWhen = exports.flatten = void 0;
+function flatten(items) {
+    return items.reduce((collection, item) => [].concat(collection, item), []);
+}
+exports.flatten = flatten;
+function splitWhen(items, predicate) {
+    const result = [[]];
+    let groupIndex = 0;
+    for (const item of items) {
+        if (predicate(item)) {
+            groupIndex++;
+            result[groupIndex] = [];
+        }
+        else {
+            result[groupIndex].push(item);
+        }
+    }
+    return result;
+}
+exports.splitWhen = splitWhen;
+
+
+/***/ }),
+
+/***/ 5576:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isEnoentCodeError = void 0;
+function isEnoentCodeError(error) {
+    return error.code === 'ENOENT';
+}
+exports.isEnoentCodeError = isEnoentCodeError;
+
+
+/***/ }),
+
+/***/ 7825:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createDirentFromStats = void 0;
+class DirentFromStats {
+    constructor(name, stats) {
+        this.name = name;
+        this.isBlockDevice = stats.isBlockDevice.bind(stats);
+        this.isCharacterDevice = stats.isCharacterDevice.bind(stats);
+        this.isDirectory = stats.isDirectory.bind(stats);
+        this.isFIFO = stats.isFIFO.bind(stats);
+        this.isFile = stats.isFile.bind(stats);
+        this.isSocket = stats.isSocket.bind(stats);
+        this.isSymbolicLink = stats.isSymbolicLink.bind(stats);
+    }
+}
+function createDirentFromStats(name, stats) {
+    return new DirentFromStats(name, stats);
+}
+exports.createDirentFromStats = createDirentFromStats;
+
+
+/***/ }),
+
+/***/ 1352:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.string = exports.stream = exports.pattern = exports.path = exports.fs = exports.errno = exports.array = void 0;
+const array = __nccwpck_require__(9886);
+exports.array = array;
+const errno = __nccwpck_require__(5576);
+exports.errno = errno;
+const fs = __nccwpck_require__(7825);
+exports.fs = fs;
+const path = __nccwpck_require__(7750);
+exports.path = path;
+const pattern = __nccwpck_require__(1055);
+exports.pattern = pattern;
+const stream = __nccwpck_require__(4861);
+exports.stream = stream;
+const string = __nccwpck_require__(837);
+exports.string = string;
+
+
+/***/ }),
+
+/***/ 7750:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.removeLeadingDotSegment = exports.escape = exports.makeAbsolute = exports.unixify = void 0;
+const path = __nccwpck_require__(5622);
+const LEADING_DOT_SEGMENT_CHARACTERS_COUNT = 2; // ./ or .\\
+const UNESCAPED_GLOB_SYMBOLS_RE = /(\\?)([()*?[\]{|}]|^!|[!+@](?=\())/g;
+/**
+ * Designed to work only with simple paths: `dir\\file`.
+ */
+function unixify(filepath) {
+    return filepath.replace(/\\/g, '/');
+}
+exports.unixify = unixify;
+function makeAbsolute(cwd, filepath) {
+    return path.resolve(cwd, filepath);
+}
+exports.makeAbsolute = makeAbsolute;
+function escape(pattern) {
+    return pattern.replace(UNESCAPED_GLOB_SYMBOLS_RE, '\\$2');
+}
+exports.escape = escape;
+function removeLeadingDotSegment(entry) {
+    // We do not use `startsWith` because this is 10x slower than current implementation for some cases.
+    // eslint-disable-next-line @typescript-eslint/prefer-string-starts-ends-with
+    if (entry.charAt(0) === '.') {
+        const secondCharactery = entry.charAt(1);
+        if (secondCharactery === '/' || secondCharactery === '\\') {
+            return entry.slice(LEADING_DOT_SEGMENT_CHARACTERS_COUNT);
+        }
+    }
+    return entry;
+}
+exports.removeLeadingDotSegment = removeLeadingDotSegment;
+
+
+/***/ }),
+
+/***/ 1055:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.matchAny = exports.convertPatternsToRe = exports.makeRe = exports.getPatternParts = exports.expandBraceExpansion = exports.expandPatternsWithBraceExpansion = exports.isAffectDepthOfReadingPattern = exports.endsWithSlashGlobStar = exports.hasGlobStar = exports.getBaseDirectory = exports.isPatternRelatedToParentDirectory = exports.getPatternsOutsideCurrentDirectory = exports.getPatternsInsideCurrentDirectory = exports.getPositivePatterns = exports.getNegativePatterns = exports.isPositivePattern = exports.isNegativePattern = exports.convertToNegativePattern = exports.convertToPositivePattern = exports.isDynamicPattern = exports.isStaticPattern = void 0;
+const path = __nccwpck_require__(5622);
+const globParent = __nccwpck_require__(4655);
+const micromatch = __nccwpck_require__(6228);
+const GLOBSTAR = '**';
+const ESCAPE_SYMBOL = '\\';
+const COMMON_GLOB_SYMBOLS_RE = /[*?]|^!/;
+const REGEX_CHARACTER_CLASS_SYMBOLS_RE = /\[.*]/;
+const REGEX_GROUP_SYMBOLS_RE = /(?:^|[^!*+?@])\(.*\|.*\)/;
+const GLOB_EXTENSION_SYMBOLS_RE = /[!*+?@]\(.*\)/;
+const BRACE_EXPANSIONS_SYMBOLS_RE = /{.*(?:,|\.\.).*}/;
+function isStaticPattern(pattern, options = {}) {
+    return !isDynamicPattern(pattern, options);
+}
+exports.isStaticPattern = isStaticPattern;
+function isDynamicPattern(pattern, options = {}) {
+    /**
+     * A special case with an empty string is necessary for matching patterns that start with a forward slash.
+     * An empty string cannot be a dynamic pattern.
+     * For example, the pattern `/lib/*` will be spread into parts: '', 'lib', '*'.
+     */
+    if (pattern === '') {
+        return false;
+    }
+    /**
+     * When the `caseSensitiveMatch` option is disabled, all patterns must be marked as dynamic, because we cannot check
+     * filepath directly (without read directory).
+     */
+    if (options.caseSensitiveMatch === false || pattern.includes(ESCAPE_SYMBOL)) {
+        return true;
+    }
+    if (COMMON_GLOB_SYMBOLS_RE.test(pattern) || REGEX_CHARACTER_CLASS_SYMBOLS_RE.test(pattern) || REGEX_GROUP_SYMBOLS_RE.test(pattern)) {
+        return true;
+    }
+    if (options.extglob !== false && GLOB_EXTENSION_SYMBOLS_RE.test(pattern)) {
+        return true;
+    }
+    if (options.braceExpansion !== false && BRACE_EXPANSIONS_SYMBOLS_RE.test(pattern)) {
+        return true;
+    }
+    return false;
+}
+exports.isDynamicPattern = isDynamicPattern;
+function convertToPositivePattern(pattern) {
+    return isNegativePattern(pattern) ? pattern.slice(1) : pattern;
+}
+exports.convertToPositivePattern = convertToPositivePattern;
+function convertToNegativePattern(pattern) {
+    return '!' + pattern;
+}
+exports.convertToNegativePattern = convertToNegativePattern;
+function isNegativePattern(pattern) {
+    return pattern.startsWith('!') && pattern[1] !== '(';
+}
+exports.isNegativePattern = isNegativePattern;
+function isPositivePattern(pattern) {
+    return !isNegativePattern(pattern);
+}
+exports.isPositivePattern = isPositivePattern;
+function getNegativePatterns(patterns) {
+    return patterns.filter(isNegativePattern);
+}
+exports.getNegativePatterns = getNegativePatterns;
+function getPositivePatterns(patterns) {
+    return patterns.filter(isPositivePattern);
+}
+exports.getPositivePatterns = getPositivePatterns;
+/**
+ * Returns patterns that can be applied inside the current directory.
+ *
+ * @example
+ * // ['./*', '*', 'a/*']
+ * getPatternsInsideCurrentDirectory(['./*', '*', 'a/*', '../*', './../*'])
+ */
+function getPatternsInsideCurrentDirectory(patterns) {
+    return patterns.filter((pattern) => !isPatternRelatedToParentDirectory(pattern));
+}
+exports.getPatternsInsideCurrentDirectory = getPatternsInsideCurrentDirectory;
+/**
+ * Returns patterns to be expanded relative to (outside) the current directory.
+ *
+ * @example
+ * // ['../*', './../*']
+ * getPatternsInsideCurrentDirectory(['./*', '*', 'a/*', '../*', './../*'])
+ */
+function getPatternsOutsideCurrentDirectory(patterns) {
+    return patterns.filter(isPatternRelatedToParentDirectory);
+}
+exports.getPatternsOutsideCurrentDirectory = getPatternsOutsideCurrentDirectory;
+function isPatternRelatedToParentDirectory(pattern) {
+    return pattern.startsWith('..') || pattern.startsWith('./..');
+}
+exports.isPatternRelatedToParentDirectory = isPatternRelatedToParentDirectory;
+function getBaseDirectory(pattern) {
+    return globParent(pattern, { flipBackslashes: false });
+}
+exports.getBaseDirectory = getBaseDirectory;
+function hasGlobStar(pattern) {
+    return pattern.includes(GLOBSTAR);
+}
+exports.hasGlobStar = hasGlobStar;
+function endsWithSlashGlobStar(pattern) {
+    return pattern.endsWith('/' + GLOBSTAR);
+}
+exports.endsWithSlashGlobStar = endsWithSlashGlobStar;
+function isAffectDepthOfReadingPattern(pattern) {
+    const basename = path.basename(pattern);
+    return endsWithSlashGlobStar(pattern) || isStaticPattern(basename);
+}
+exports.isAffectDepthOfReadingPattern = isAffectDepthOfReadingPattern;
+function expandPatternsWithBraceExpansion(patterns) {
+    return patterns.reduce((collection, pattern) => {
+        return collection.concat(expandBraceExpansion(pattern));
+    }, []);
+}
+exports.expandPatternsWithBraceExpansion = expandPatternsWithBraceExpansion;
+function expandBraceExpansion(pattern) {
+    return micromatch.braces(pattern, {
+        expand: true,
+        nodupes: true
+    });
+}
+exports.expandBraceExpansion = expandBraceExpansion;
+function getPatternParts(pattern, options) {
+    let { parts } = micromatch.scan(pattern, Object.assign(Object.assign({}, options), { parts: true }));
+    /**
+     * The scan method returns an empty array in some cases.
+     * See micromatch/picomatch#58 for more details.
+     */
+    if (parts.length === 0) {
+        parts = [pattern];
+    }
+    /**
+     * The scan method does not return an empty part for the pattern with a forward slash.
+     * This is another part of micromatch/picomatch#58.
+     */
+    if (parts[0].startsWith('/')) {
+        parts[0] = parts[0].slice(1);
+        parts.unshift('');
+    }
+    return parts;
+}
+exports.getPatternParts = getPatternParts;
+function makeRe(pattern, options) {
+    return micromatch.makeRe(pattern, options);
+}
+exports.makeRe = makeRe;
+function convertPatternsToRe(patterns, options) {
+    return patterns.map((pattern) => makeRe(pattern, options));
+}
+exports.convertPatternsToRe = convertPatternsToRe;
+function matchAny(entry, patternsRe) {
+    return patternsRe.some((patternRe) => patternRe.test(entry));
+}
+exports.matchAny = matchAny;
+
+
+/***/ }),
+
+/***/ 4861:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.merge = void 0;
+const merge2 = __nccwpck_require__(2578);
+function merge(streams) {
+    const mergedStream = merge2(streams);
+    streams.forEach((stream) => {
+        stream.once('error', (error) => mergedStream.emit('error', error));
+    });
+    mergedStream.once('close', () => propagateCloseEventToSources(streams));
+    mergedStream.once('end', () => propagateCloseEventToSources(streams));
+    return mergedStream;
+}
+exports.merge = merge;
+function propagateCloseEventToSources(streams) {
+    streams.forEach((stream) => stream.emit('close'));
+}
+
+
+/***/ }),
+
+/***/ 837:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isEmpty = exports.isString = void 0;
+function isString(input) {
+    return typeof input === 'string';
+}
+exports.isString = isString;
+function isEmpty(input) {
+    return input === '';
+}
+exports.isEmpty = isEmpty;
+
+
+/***/ }),
+
 /***/ 4393:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -42909,18 +44052,19 @@ __exportStar(__nccwpck_require__(6188), exports);
 
 "use strict";
 
-// Copyright (c) 2019-2020-2021-2022 Luca Cappa
+// Copyright (c) 2019-2020-2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VCPKG_CONFIGURATION_JSON = exports.VCPKG_JSON = exports.VCPKGDEFAULTTRIPLET = exports.VCPKGROOT = exports.vcpkgLastBuiltCommitId = exports.RUNVCPKG_VCPKG_DEFAULT_TRIPLET = exports.RUNVCPKG_VCPKG_ROOT = void 0;
+exports.VCPKG_BINARY_SOURCES = exports.VCPKG_INSTALLED_DIR = exports.VCPKG_JSON = exports.VCPKGDEFAULTTRIPLET = exports.VCPKGROOT = exports.vcpkgLastBuiltCommitId = exports.RUNVCPKG_VCPKG_DEFAULT_TRIPLET = exports.RUNVCPKG_VCPKG_ROOT = void 0;
 exports.RUNVCPKG_VCPKG_ROOT = "RUNVCPKG_VCPKG_ROOT";
 exports.RUNVCPKG_VCPKG_DEFAULT_TRIPLET = "RUNVCPKG_VCPKG_DEFAULT_TRIPLET";
 exports.vcpkgLastBuiltCommitId = 'vcpkgLastBuiltCommitId';
 exports.VCPKGROOT = 'VCPKG_ROOT';
 exports.VCPKGDEFAULTTRIPLET = "VCPKG_DEFAULT_TRIPLET";
 exports.VCPKG_JSON = "vcpkg.json";
-exports.VCPKG_CONFIGURATION_JSON = "vcpkg-configuration.json";
+exports.VCPKG_INSTALLED_DIR = "VCPKG_INSTALLED_DIR";
+exports.VCPKG_BINARY_SOURCES = `VCPKG_BINARY_SOURCES`;
 //# sourceMappingURL=vcpkg-globals.js.map
 
 /***/ }),
@@ -42930,7 +44074,7 @@ exports.VCPKG_CONFIGURATION_JSON = "vcpkg-configuration.json";
 
 "use strict";
 
-// Copyright (c) 2019-2020-2021-2022 Luca Cappa
+// Copyright (c) 2019-2020-2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -42993,7 +44137,7 @@ class VcpkgRunner {
                 vcpkgUrl = VcpkgRunner.DEFAULTVCPKGURL;
                 baseUtil.baseLib.info(`The vcpkg's URL Git repository is not provided, using the predefined: '${VcpkgRunner.DEFAULTVCPKGURL}'`);
             }
-            baseutillib.setEnvVarIfUndefined("VCPKG_INSTALLED_DIR", yield vcpkgutils.getDefaultVcpkgInstallDirectory(baseUtil.baseLib));
+            baseutillib.setEnvVarIfUndefined(globals.VCPKG_INSTALLED_DIR, yield vcpkgutils.getDefaultVcpkgInstallDirectory(baseUtil.baseLib));
             baseutillib.setEnvVarIfUndefined(globals.VCPKGDEFAULTTRIPLET, baseUtil.getDefaultTriplet());
             if (!vcpkgInstallCmd) {
                 vcpkgInstallCmd = baseutillib.replaceFromEnvVar(VcpkgRunner.VCPKGINSTALLCMDDEFAULT);
@@ -43041,6 +44185,12 @@ class VcpkgRunner {
             // By default disable vcpkg telemetry, unless VCPKG_ENABLE_METRICS is set.
             if (!process.env[VcpkgRunner.VCPKG_ENABLE_METRICS]) {
                 process.env[VcpkgRunner.VCPKG_DISABLE_METRICS] = "1";
+            }
+            // If running in a GitHub Runner, enable the GH's cache provider for the vcpkg's binary cache.
+            if (process.env['GITHUB_ACTIONS'] === 'true') {
+                // Allow users to define the vcpkg's binary source explicitly in the workflow, in that case don't override it.
+                if (!process.env[globals.VCPKG_BINARY_SOURCES])
+                    this.baseUtils.setVariableVerbose(globals.VCPKG_BINARY_SOURCES, VcpkgRunner.VCPKG_BINARY_SOURCES_GHA);
             }
             // Ensuring `this.vcpkgDestPath` is existent, since is going to be used as current working directory.
             if (!(yield this.baseUtils.baseLib.exist(this.vcpkgDestPath))) {
@@ -43266,7 +44416,7 @@ class VcpkgRunner {
                     this.baseUtils.baseLib.info(`vcpkg executable returned code ${result.code}, forcing a rebuild.`);
                 }
             }
-            this.baseUtils.baseLib.debug(`checkExecutable()>> -> ${needRebuild}`);
+            this.baseUtils.baseLib.debug(`checkExecutable()>> -> DoesItNeedRebuild=${needRebuild}`);
             return needRebuild;
         });
     }
@@ -43309,6 +44459,7 @@ VcpkgRunner.VCPKGINSTALLCMDDEFAULT = '[`install`, `--recurse`, `--clean-after-bu
 VcpkgRunner.DEFAULTVCPKGURL = 'https://github.com/microsoft/vcpkg.git';
 VcpkgRunner.VCPKG_ENABLE_METRICS = "VCPKG_ENABLE_METRICS";
 VcpkgRunner.VCPKG_DISABLE_METRICS = "VCPKG_DISABLE_METRICS";
+VcpkgRunner.VCPKG_BINARY_SOURCES_GHA = '--binarysource="clear;x-gha,readwrite"';
 //# sourceMappingURL=vcpkg-runner.js.map
 
 /***/ }),
@@ -43318,7 +44469,7 @@ VcpkgRunner.VCPKG_DISABLE_METRICS = "VCPKG_DISABLE_METRICS";
 
 "use strict";
 
-// Copyright (c) 2020-2021-2022 Luca Cappa
+// Copyright (c) 2020-2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -43355,7 +44506,7 @@ const path = __importStar(__nccwpck_require__(5622));
 /**
  *
  * @param vcpkgRootDir The VCPKG_ROOT directory.
- * @returns The list of paths to cache, and the ones to not cache (with the prefix exclamation mark).
+ * @returns The list of paths to cache, and the ones to not cache (with the exclamation mark prefix).
  */
 function getOrdinaryCachedPaths(vcpkgRootDir) {
     const pathsToCache = [
@@ -49438,6 +50589,7 @@ module.exports.sync = (input, options) => {
 "use strict";
 
 const taskManager = __nccwpck_require__(2708);
+const patternManager = __nccwpck_require__(8306);
 const async_1 = __nccwpck_require__(5679);
 const stream_1 = __nccwpck_require__(4630);
 const sync_1 = __nccwpck_require__(2405);
@@ -49471,7 +50623,7 @@ async function FastGlob(source, options) {
     FastGlob.stream = stream;
     function generateTasks(source, options) {
         assertPatternsInput(source);
-        const patterns = [].concat(source);
+        const patterns = patternManager.transform([].concat(source));
         const settings = new settings_1.default(options);
         return taskManager.generate(patterns, settings);
     }
@@ -49489,7 +50641,7 @@ async function FastGlob(source, options) {
     FastGlob.escapePath = escapePath;
 })(FastGlob || (FastGlob = {}));
 function getWorks(source, _Provider, options) {
-    const patterns = [].concat(source);
+    const patterns = patternManager.transform([].concat(source));
     const settings = new settings_1.default(options);
     const tasks = taskManager.generate(patterns, settings);
     const provider = new _Provider(settings);
@@ -49503,6 +50655,35 @@ function assertPatternsInput(input) {
     }
 }
 module.exports = FastGlob;
+
+
+/***/ }),
+
+/***/ 8306:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.removeDuplicateSlashes = exports.transform = void 0;
+/**
+ * Matches a sequence of two or more consecutive slashes, excluding the first two slashes at the beginning of the string.
+ * The latter is due to the presence of the device path at the beginning of the UNC path.
+ * @todo rewrite to negative lookbehind with the next major release.
+ */
+const DOUBLE_SLASH_RE = /(?!^)\/{2,}/g;
+function transform(patterns) {
+    return patterns.map((pattern) => removeDuplicateSlashes(pattern));
+}
+exports.transform = transform;
+/**
+ * This package only works with forward slashes as a path separator.
+ * Because of this, we cannot use the standard `path.normalize` method, because on Windows platform it will use of backslashes.
+ */
+function removeDuplicateSlashes(pattern) {
+    return pattern.replace(DOUBLE_SLASH_RE, '/');
+}
+exports.removeDuplicateSlashes = removeDuplicateSlashes;
 
 
 /***/ }),
@@ -49601,23 +50782,18 @@ exports.convertPatternGroupToTask = convertPatternGroupToTask;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const stream_1 = __nccwpck_require__(2083);
+const async_1 = __nccwpck_require__(7747);
 const provider_1 = __nccwpck_require__(257);
 class ProviderAsync extends provider_1.default {
     constructor() {
         super(...arguments);
-        this._reader = new stream_1.default(this._settings);
+        this._reader = new async_1.default(this._settings);
     }
-    read(task) {
+    async read(task) {
         const root = this._getRootDirectory(task);
         const options = this._getReaderOptions(task);
-        const entries = [];
-        return new Promise((resolve, reject) => {
-            const stream = this.api(root, task, options);
-            stream.once('error', reject);
-            stream.on('data', (entry) => entries.push(options.transform(entry)));
-            stream.once('end', () => resolve(entries));
-        });
+        const entries = await this.api(root, task, options);
+        return entries.map((entry) => options.transform(entry));
     }
     api(root, task, options) {
         if (task.dynamic) {
@@ -49730,7 +50906,8 @@ class EntryFilter {
             return false;
         }
         const filepath = this._settings.baseNameMatch ? entry.name : entry.path;
-        const isMatched = this._isMatchToPatterns(filepath, positiveRe) && !this._isMatchToPatterns(entry.path, negativeRe);
+        const isDirectory = entry.dirent.isDirectory();
+        const isMatched = this._isMatchToPatterns(filepath, positiveRe, isDirectory) && !this._isMatchToPatterns(entry.path, negativeRe, isDirectory);
         if (this._settings.unique && isMatched) {
             this._createIndexRecord(entry);
         }
@@ -49755,9 +50932,16 @@ class EntryFilter {
         const fullpath = utils.path.makeAbsolute(this._settings.cwd, entryPath);
         return utils.pattern.matchAny(fullpath, patternsRe);
     }
-    _isMatchToPatterns(entryPath, patternsRe) {
+    _isMatchToPatterns(entryPath, patternsRe, isDirectory) {
         const filepath = utils.path.removeLeadingDotSegment(entryPath);
-        return utils.pattern.matchAny(filepath, patternsRe);
+        // Trying to match files and directories by patterns.
+        const isMatched = utils.pattern.matchAny(filepath, patternsRe);
+        // A pattern with a trailling slash can be used for directory matching.
+        // To apply such pattern, we need to add a tralling slash to the path.
+        if (!isMatched && isDirectory) {
+            return utils.pattern.matchAny(filepath + '/', patternsRe);
+        }
+        return isMatched;
     }
 }
 exports.default = EntryFilter;
@@ -50048,6 +51232,49 @@ class EntryTransformer {
     }
 }
 exports.default = EntryTransformer;
+
+
+/***/ }),
+
+/***/ 7747:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const fsWalk = __nccwpck_require__(6026);
+const reader_1 = __nccwpck_require__(5582);
+const stream_1 = __nccwpck_require__(2083);
+class ReaderAsync extends reader_1.default {
+    constructor() {
+        super(...arguments);
+        this._walkAsync = fsWalk.walk;
+        this._readerStream = new stream_1.default(this._settings);
+    }
+    dynamic(root, options) {
+        return new Promise((resolve, reject) => {
+            this._walkAsync(root, options, (error, entries) => {
+                if (error === null) {
+                    resolve(entries);
+                }
+                else {
+                    reject(error);
+                }
+            });
+        });
+    }
+    async static(patterns, options) {
+        const entries = [];
+        const stream = this._readerStream.static(patterns, options);
+        // After #235, replace it with an asynchronous iterator.
+        return new Promise((resolve, reject) => {
+            stream.once('error', reject);
+            stream.on('data', (entry) => entries.push(entry));
+            stream.once('end', () => resolve(entries));
+        });
+    }
+}
+exports.default = ReaderAsync;
 
 
 /***/ }),
@@ -50423,10 +51650,10 @@ const micromatch = __nccwpck_require__(6228);
 const GLOBSTAR = '**';
 const ESCAPE_SYMBOL = '\\';
 const COMMON_GLOB_SYMBOLS_RE = /[*?]|^!/;
-const REGEX_CHARACTER_CLASS_SYMBOLS_RE = /\[.*]/;
-const REGEX_GROUP_SYMBOLS_RE = /(?:^|[^!*+?@])\(.*\|.*\)/;
-const GLOB_EXTENSION_SYMBOLS_RE = /[!*+?@]\(.*\)/;
-const BRACE_EXPANSIONS_SYMBOLS_RE = /{.*(?:,|\.\.).*}/;
+const REGEX_CHARACTER_CLASS_SYMBOLS_RE = /\[[^[]*]/;
+const REGEX_GROUP_SYMBOLS_RE = /(?:^|[^!*+?@])\([^(]*\|[^|]*\)/;
+const GLOB_EXTENSION_SYMBOLS_RE = /[!*+?@]\([^(]*\)/;
+const BRACE_EXPANSION_SEPARATORS_RE = /,|\.\./;
 function isStaticPattern(pattern, options = {}) {
     return !isDynamicPattern(pattern, options);
 }
@@ -50453,12 +51680,24 @@ function isDynamicPattern(pattern, options = {}) {
     if (options.extglob !== false && GLOB_EXTENSION_SYMBOLS_RE.test(pattern)) {
         return true;
     }
-    if (options.braceExpansion !== false && BRACE_EXPANSIONS_SYMBOLS_RE.test(pattern)) {
+    if (options.braceExpansion !== false && hasBraceExpansion(pattern)) {
         return true;
     }
     return false;
 }
 exports.isDynamicPattern = isDynamicPattern;
+function hasBraceExpansion(pattern) {
+    const openingBraceIndex = pattern.indexOf('{');
+    if (openingBraceIndex === -1) {
+        return false;
+    }
+    const closingBraceIndex = pattern.indexOf('}', openingBraceIndex + 1);
+    if (closingBraceIndex === -1) {
+        return false;
+    }
+    const braceContent = pattern.slice(openingBraceIndex, closingBraceIndex);
+    return BRACE_EXPANSION_SEPARATORS_RE.test(braceContent);
+}
 function convertToPositivePattern(pattern) {
     return isNegativePattern(pattern) ? pattern.slice(1) : pattern;
 }

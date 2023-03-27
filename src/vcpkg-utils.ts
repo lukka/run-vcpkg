@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021-2022 Luca Cappa
+// Copyright (c) 2020-2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 
@@ -8,7 +8,8 @@ import * as runvcpkglib from '@lukka/run-vcpkg-lib'
 import * as baselib from '@lukka/base-lib'
 import * as baseutillib from '@lukka/base-util-lib'
 import * as cache from '@actions/cache'
-import * as vcpkgaction from './vcpkg-action'
+import * as fastglob from "fast-glob"
+import { doNotCacheInput } from './vcpkg-action'
 
 export class Utils {
 
@@ -60,18 +61,19 @@ export class Utils {
     return [id, isSubmodule];
   }
 
-  public static async getVcpkgJsonHash(baseUtil: baseutillib.BaseUtilLib, vcpkgJsonGlob: string, vcpkgJsonIgnores: string[]): Promise<[string | null, string | null, string | null]> {
+  public static async getVcpkgJsonPath(baseUtil: baseutillib.BaseUtilLib, vcpkgJsonGlob: string,
+    vcpkgJsonIgnores: string[]): Promise<string | null> {
+    baseUtil.baseLib.debug(`getVcpkgJsonPath(${vcpkgJsonGlob})<<`);
+    let ret: string | null = null;
     try {
-      const [vcpkgJsonPath, vcpkgJsonHash] = await baseUtil.getFileHash(vcpkgJsonGlob, vcpkgJsonIgnores);
-      if (vcpkgJsonPath) {
-        baseUtil.baseLib.info(`Found ${runvcpkglib.VCPKG_JSON} at '${vcpkgJsonPath}', its hash is '${vcpkgJsonHash}''.`);
-        const vcpkgConfJsonPath: string = path.join(path.dirname(vcpkgJsonPath), runvcpkglib.VCPKG_CONFIGURATION_JSON);
-        let vcpkgConfigurationHash = null;
-        if (baseUtil.fileExists(vcpkgConfJsonPath)) {
-          vcpkgConfigurationHash = await baseUtil.baseLib.hashFiles(vcpkgConfJsonPath);
-          baseUtil.baseLib.info(`Found sibling ${runvcpkglib.VCPKG_CONFIGURATION_JSON} at '${vcpkgConfJsonPath}', its hash is '${vcpkgConfigurationHash}'.`)
-        }
-        return [vcpkgJsonPath, vcpkgJsonHash, vcpkgConfigurationHash];
+      const vcpkgJsonPath = await fastglob(vcpkgJsonGlob, { ignore: vcpkgJsonIgnores });
+      if (vcpkgJsonPath?.length === 1) {
+        baseUtil.baseLib.info(`Found ${runvcpkglib.VCPKG_JSON} at '${vcpkgJsonPath[0]}'.`);
+        ret = vcpkgJsonPath[0];
+      } else if (vcpkgJsonPath.length > 1) {
+        baseUtil.baseLib.warning(`The file ${runvcpkglib.VCPKG_JSON} was found multiple times with glob expression '${vcpkgJsonGlob}'.`);
+      } else {
+        baseUtil.baseLib.warning(`The file ${runvcpkglib.VCPKG_JSON} was not found with glob expression '${vcpkgJsonGlob}'.`);
       }
     }
     catch (err) {
@@ -80,24 +82,19 @@ export class Utils {
       }
     }
 
-    baseUtil.baseLib.warning(`Cannot compute hash of vcpkg.json as it was not found (or multiple hits) with glob expression '${vcpkgJsonGlob}'.`);
-    return [null, null, null];
+    baseUtil.baseLib.debug(`getVcpkgJsonPath()>>`);
+    return ret;
   }
 
   public static async computeCacheKeys(
     baseUtilLib: baseutillib.BaseUtilLib,
-    vcpkgJsonHash: string | null,
-    vcpkgConfJsonHash: string | null,
     vcpkgDirectory: string,
-    userProvidedCommitId: string | null,
-    appendedCacheKey: string | null,
-    prependedCacheKey: string | null): Promise<baseutillib.KeySet> {
+    userProvidedCommitId: string | null): Promise<baseutillib.KeySet> {
     baseUtilLib.baseLib.debug(`computeCacheKeys()<<`);
     const cacheKeySegments: string[] = [];
 
     // Add to the first segment of the key the values of env vars ImageOS and ImageVersion if available.
-    let firstSegment = prependedCacheKey ? `prependedKey=${prependedCacheKey}-` : "";
-    firstSegment += `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
+    let firstSegment = `runnerOS=${process.env['ImageOS'] ? process.env['ImageOS'] : process.platform}`;
     firstSegment += process.env['ImageVersion'] || "";
 
     const [commitId, isSubmodule] = await Utils.getVcpkgCommitId(baseUtilLib, vcpkgDirectory);
@@ -106,7 +103,7 @@ export class Utils {
       if (isSubmodule) {
         baseUtilLib.baseLib.info(`Adding vcpkg submodule Git commit id '${commitId}' to cache key`);
         if (userProvidedCommitId) {
-          baseUtilLib.baseLib.warning(`Provided Git commit id is disregarded: '${userProvidedCommitId}'. Please remove it from the inputs.`);
+          baseUtilLib.baseLib.warning(`The provided Git commit id is disregarded: '${userProvidedCommitId}'. Please remove it from the inputs.`);
         }
       } else {
         baseUtilLib.baseLib.info(`vcpkg identified at Git commit id '${commitId}', adding it to the cache's key.`);
@@ -120,20 +117,6 @@ export class Utils {
 
     cacheKeySegments.push(firstSegment);
 
-    if (vcpkgJsonHash) {
-      let hash = `vcpkgJson=${vcpkgJsonHash}`;
-      baseUtilLib.baseLib.info(`Adding hash of ${runvcpkglib.VCPKG_JSON}: '${vcpkgJsonHash}'.`);
-      if (vcpkgConfJsonHash) {
-        baseUtilLib.baseLib.info(`Adding hash of ${runvcpkglib.VCPKG_CONFIGURATION_JSON}: '${vcpkgConfJsonHash}'.`);
-        hash += `-vcpkgConfigurationJson=${vcpkgConfJsonHash}`;
-      }
-      cacheKeySegments.push(hash);
-    }
-
-    if (appendedCacheKey) {
-      cacheKeySegments.push(`appendedKey=${appendedCacheKey}`);
-    }
-
     const keyset: baseutillib.KeySet = baseutillib.createKeySet(cacheKeySegments);
     baseUtilLib.baseLib.debug(`computeCacheKeys()>>`);
     return keyset;
@@ -144,7 +127,7 @@ export class Utils {
     baseLib.debug(`saveCache(doNotCache:${doNotCache},keys:${JSON.stringify(keys)},hitCacheKey:${hitCacheKey},cachedPaths:${cachedPaths})<<`)
     try {
       if (doNotCache) {
-        baseLib.info(`Caching is disabled, saving cache is skipped.`);
+        baseLib.info(`Skipping saving cache as caching is disabled (${doNotCacheInput}: ${doNotCache}).`);
       } else {
         if (hitCacheKey && Utils.isExactKeyMatch(keys.primary, hitCacheKey)) {
           baseLib.info(`Saving cache is skipped, because cache hit occurred on the cache key '${keys.primary}'.`);
@@ -184,35 +167,9 @@ export class Utils {
     baseLib.debug(`saveCache()>>`)
   }
 
-  public static addCachedPaths(baseLib: baselib.BaseLib, paths: string | null): void {
-    baseLib.debug(`addCachedPaths(${paths})<<`)
-    if (paths) {
-      baseLib.debug(`Adding cached paths: '${paths}''`);
-      let s: string | undefined = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
-      s = `${s ?? ''};${paths}`;
-      baseLib.setState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE, s);
-      baseLib.debug(`Set ${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}=${s}`);
-    }
-    baseLib.debug(`addCachedPaths()>>`)
-  }
-
   public static getAllCachedPaths(baseLib: baselib.BaseLib, vcpkgRootDir: string): string[] {
     baseLib.debug(`getAllCachedPaths(${vcpkgRootDir})<<`);
-    let pathsToCache: string[] = [];
-    // Hack-ish: ensure that VCPKG_DEFAULT_BINARY_CACHE is always added to the list of cached paths.
-    // When this functino is called by the action, the env var contains the binary cache path.
-    // When this function is called by the post action, the env var is not defined (but the path is in the "state").
-    const binCachePath: string | undefined = process.env[vcpkgaction.VcpkgAction.VCPKG_DEFAULT_BINARY_CACHE];
-    if (binCachePath) {
-      pathsToCache = pathsToCache.concat([binCachePath]);
-    }
-
-    const additionalCachedPaths: string | undefined = baseLib.getState(vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE);
-    baseLib.debug(`getState(${vcpkgaction.VCPKG_ADDITIONAL_CACHED_PATHS_STATE}) -> '${additionalCachedPaths}'`);
-    if (additionalCachedPaths) {
-      pathsToCache = pathsToCache.concat(additionalCachedPaths.split(';'));
-    }
-    pathsToCache = pathsToCache.concat(runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir));
+    let pathsToCache: string[] = runvcpkglib.getOrdinaryCachedPaths(vcpkgRootDir);
 
     // Remove empty entries.
     pathsToCache = pathsToCache.map(s => s.trim()).filter(Boolean);

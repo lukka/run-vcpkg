@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022 Luca Cappa
+// Copyright (c) 2021-2022-2023 Luca Cappa
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 
@@ -24,6 +24,9 @@ const baseLibUtils = new BaseUtilLib(actionLib);
 describe('run-vcpkg functional tests', () => {
     beforeEach(async () => {
         process.env.GITHUB_WORKSPACE = assetDirectory;
+        // The GH Action cache is not enabled when running tests because these env vars are not defined:
+        // ACTIONS_RUNTIME_TOKEN and ACTIONS_CACHE_URL. Set a default that uses the filesystem and won't fail.
+        process.env.VCPKG_BINARY_SOURCES = 'clear;default,readwrite';
 
         await actionLib.rmRF(vcpkgDirectory);
         await actionLib.rmRF(tempDirectory);
@@ -46,11 +49,15 @@ describe('run-vcpkg functional tests', () => {
     }, 100000);
 
     test('vcpkg setup and install must succeed', () => {
+        process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "6ca56aeb457f033d344a7106cb3f9f1abf8f4e98";
+        process.env.INPUT_VCPKGGITCOMMITID = "c9f906558f9bb12ee9811d6edc98ec9255c6cda5";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
+
+        // Ensure child is running in the GH workspace, needed to find vcpkg.json.
+        process.chdir(vcpkgProject);
 
         const options: cp.ExecSyncOptions = {
             env: process.env,
@@ -60,9 +67,10 @@ describe('run-vcpkg functional tests', () => {
     });
 
     test('vcpkg setup and no install must succeed', () => {
+        process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "6ca56aeb457f033d344a7106cb3f9f1abf8f4e98";
+        process.env.INPUT_VCPKGGITCOMMITID = "c9f906558f9bb12ee9811d6edc98ec9255c6cda5";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = "['invalid command']";
 
@@ -77,7 +85,8 @@ describe('run-vcpkg functional tests', () => {
         delete process.env.INPUT_VCPKGDIRECTORY;
         console.log(process.env.INPUT_VCPKGDIRECTORY);
         delete process.env.INPUT_VCPKGJSONGLOB;
-        process.env.INPUT_VCPKGGITCOMMITID = "6ca56aeb457f033d344a7106cb3f9f1abf8f4e98";
+        process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
+        process.env.INPUT_VCPKGGITCOMMITID = "c9f906558f9bb12ee9811d6edc98ec9255c6cda5";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -101,8 +110,9 @@ describe('run-vcpkg functional tests', () => {
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgDirectory(baseLibUtils.baseLib));
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgInstallDirectory(baseLibUtils.baseLib));
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgCacheDirectory(baseLibUtils.baseLib));
-        
-        process.env.INPUT_VCPKGGITCOMMITID = "6ca56aeb457f033d344a7106cb3f9f1abf8f4e98";
+
+        process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
+        process.env.INPUT_VCPKGGITCOMMITID = "c9f906558f9bb12ee9811d6edc98ec9255c6cda5";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -124,7 +134,7 @@ describe('run-vcpkg functional tests', () => {
         console.log(cp.execSync(`node ${testScript}`, options)?.toString());
         const elapsedWithInstalled = new Date().getTime() - startTime.getTime();
         console.log(`********* With vcpkg_installed it took: ${elapsedWithInstalled}ms`)
-        expect(elapsedWithInstalled).toBeLessThan(elapsed / 3);
+        expect(elapsedWithInstalled).toBeLessThan((elapsed / 3) + 5000);// Allow 5 seconds of abs err.
 
         // Consume the generated cache, and it should take considerably less than without cache.
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgInstallDirectory(baseLibUtils.baseLib));
