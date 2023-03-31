@@ -21,7 +21,7 @@
 
 # Quickstart with a C++ project template
 
-Take a look at this [C++ project template](https://github.com/lukka/CppCMakeVcpkgTemplate) that applies all the following instructions, but also shows how to create a __pure__ workflow without using special GitHub action that you cannot run locally on your development machine, but directly using the tools (`CMake`, `Ninja`, `vcpkg`, `C++` compilers) you already use daily.
+Take a look at this [C++ project template](https://github.com/lukka/CppCMakeVcpkgTemplate/tree/v11) that applies all the following instructions, but also shows how to create a __pure__ workflow without using special GitHub action that you cannot run locally on your development machine, but directly using the tools (`CMake`, `Ninja`, `vcpkg`, `C++` compilers) you already use daily.
 
 # [The **run-vcpkg@v11** action](https://github.com/marketplace/actions/run-vcpkg)
 

@@ -191,11 +191,11 @@ class VcpkgAction {
     }
     saveCache(isCacheHit, keys, cachedPaths, doNotCache, successStep) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.baseUtilLib.baseLib.info('saveCache()<<');
+            this.baseUtilLib.baseLib.debug('saveCache()<<');
             yield this.baseUtilLib.wrapOp('Save vcpkg into the GitHub Action cache (only the tool, not the built packages which are saved by vcpkg`s Binary Caching on GitHub Action`s cache).', () => __awaiter(this, void 0, void 0, function* () {
                 return yield vcpkgutil.Utils.saveCache(this.baseUtilLib.baseLib, this.doNotCache, keys, isCacheHit ? keys.primary : null, /* Only the primary cache could have hit, since there are no restore keys. */ cachedPaths);
             }));
-            this.baseUtilLib.baseLib.info('saveCache()>>');
+            this.baseUtilLib.baseLib.debug('saveCache()>>');
         });
     }
     getCurrentDirectoryForRunningVcpkg(vcpkgJsonFile) {

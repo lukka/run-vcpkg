@@ -166,14 +166,14 @@ export class VcpkgAction {
 
   private async saveCache(isCacheHit: boolean, keys: baseutillib.KeySet, cachedPaths: string[], doNotCache: boolean,
     successStep: boolean): Promise<void> {
-    this.baseUtilLib.baseLib.info('saveCache()<<');
+    this.baseUtilLib.baseLib.debug('saveCache()<<');
     await this.baseUtilLib.wrapOp('Save vcpkg into the GitHub Action cache (only the tool, not the built packages which are saved by vcpkg`s Binary Caching on GitHub Action`s cache).',
       async () =>
         await vcpkgutil.Utils.saveCache(this.baseUtilLib.baseLib, this.doNotCache, keys,
           isCacheHit ? keys.primary : null, /* Only the primary cache could have hit, since there are no restore keys. */
           cachedPaths)
     );
-    this.baseUtilLib.baseLib.info('saveCache()>>');
+    this.baseUtilLib.baseLib.debug('saveCache()>>');
   }
 
   private async getCurrentDirectoryForRunningVcpkg(vcpkgJsonFile: string | null): Promise<string | null> {
