@@ -58,9 +58,10 @@ jobs:
       # Or pin to a specific CMake version:
       # lukka/get-cmake@v3.21.2
 
-      # Run vcpkg leveraging its own binary caching integration with GitHub Action
-      # cache. Since vcpkg.json is being used later on to install the packages
-      # when `run-cmake` runs, no packages are installed at this time.
+      # Setup vcpkg: ensures vcpkg is downloaded and built.
+      # Since vcpkg.json is being used later on to install the packages
+      # when `run-cmake` runs, no packages are installed at this time 
+      # (and vcpkg does not run).
       - name: Setup vcpkg (it does not install any package yet)
         uses: lukka/run-vcpkg@v11
         #with:
@@ -69,8 +70,8 @@ jobs:
           # vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
           # If not using a submodule for vcpkg sources, this specifies which commit
-          # id must be checkout from a Git repo. It must not be set if using a 
-          # submodule for vcpkg.
+          # id must be checkout from a Git repo. 
+          # Note: it must not be set if using a Git submodule for vcpkg.
           # vcpkgGitCommitId: '${{ matrix.vcpkgCommitId }}'
 
           # This is the glob expression used to locate the vcpkg.json. 
@@ -81,7 +82,7 @@ jobs:
           # `**/path/from/root/of/repo/to/vcpkg.json` to match the desired `vcpkg.json`.
           # vcpkgJsonGlob: '**/vcpkg.json'
 
-          # This is only needed if running `vcpkg install` is needed at this step.
+          # This is only needed if the command `vcpkg install` must run at this step.
           # Instead it is highly suggested to let `run-cmake` to run vcpkg later on
           # using the vcpkg.cmake toolchain. The default is `false`.
           # runVcpkgInstall: true
@@ -123,10 +124,11 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
 
 ```
 ┌──────────────────────────┐
+|  Skipped by default.     |
 │  Compute cache key from: │   Inputs:
 │  - vcpkg Git commit      │   - `vcpkgGitCommitId`
-│  - platform and OS       │
-└─────────────┬────────────┘
+│  - platform and OS       │   - `doNotCache`: set to false
+└─────────────┬────────────┘     to run this block.
               │
               ▼
  ┌─────────────────────────┐   Inputs:
@@ -135,9 +137,10 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
               │
               ▼
  ┌─────────────────────────┐   Inputs:
+ | Skipped by default.     |
  │ Restore vcpkg           │   - `vcpkgDirectory`
- │ from the GH cache       │
- └────────────┬────────────┘
+ │ from the GH cache.      │   - `doNotCache`: set to false
+ └────────────┬────────────┘     to run this block.
               │
               ▼
  ┌─────────────────────────┐
@@ -150,7 +153,7 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  ┌─────────────────────────┐
  │ Rebuild vcpkg executable│   Inputs:
  │ if not in sync with     │   - `vcpkgGitCommitId`
- │ sources                 │   - `vcpkgGitURL`
+ │ sources.                │   - `vcpkgGitURL`
  └────────────┬────────────┘
               │
               ▼
@@ -161,7 +164,7 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  ┌─────────────────────────┐ │
  │ Launch `vcpkg install`  │ │   Inputs:
  │ where vcpkg.json has    │ │   - `runVcpkgFormatString`
- │ been located            │ │   Environment variables:
+ │ been located.           │ │   Environment variables:
  └────────────┬────────────┘ │   - `VCPKG_DEFAULT_TRIPLET` is used. If not yet
               │              │     set, it is set to the current platform.
               │              │   - `VCPKG_INSTALLED_DIR` is used as value for
@@ -171,14 +174,15 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  ┌─────────────────────────┐ │      set, it is set to leverage the GitHub Action
  │ Set `VCPKG_ROOT` and    │ │      cache storage for Binary Caching artifacts.
  │ `VCPKG_DEFAULT_TRIPLET` │ │
- │ workflow-wide env vars  │ │
+ │ workflow-wide env vars. │ │
  └────────────┬────────────┘ │
               ├───────────── ┘
               ▼
  ┌─────────────────────────┐
- │  If no cache-hit,       │  Inputs:
- │  store vcpkg onto       │  - `doNotCache`: disable the caching of the vcpkg 
- │  GH cache               │    executable and its data files.
+ | Skipped by default.     |
+ │ If no cache-hit,        │  Inputs:
+ │ store vcpkg onto        │  - `doNotCache`: set to false to
+ │ GH cache                │    run this block.
  └────────────┬────────────┘
               |
               ▼

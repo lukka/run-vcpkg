@@ -9,7 +9,6 @@ import * as baselib from '@lukka/base-lib'
 import * as baseutillib from '@lukka/base-util-lib'
 import * as cache from '@actions/cache'
 import * as fastglob from "fast-glob"
-import { doNotCacheInput } from './vcpkg-action'
 
 export class Utils {
 

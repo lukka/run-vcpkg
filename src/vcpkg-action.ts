@@ -66,8 +66,9 @@ export class VcpkgAction {
       // Ensure vcpkg root is set.
       if (!vcpkgRoot) {
         vcpkgRoot = await runvcpkglib.getDefaultVcpkgDirectory(this.baseUtilLib.baseLib);
-        baseLib.info(`The vcpkg's root directory is not provided, using the predefined: '${this.vcpkgRootDir}'`);
+        baseLib.info(`The vcpkg's root directory is not provided, using the default value: '${this.vcpkgRootDir}'`);
       }
+      baseLib.info(`The vpckg root directory: '${vcpkgRoot}'`);
 
       // Create the vcpkg_root and cache directory if needed.
       const binCachePath: string = this.binaryCachePath ?? await runvcpkglib.getDefaultVcpkgCacheDirectory(this.baseUtilLib.baseLib);
@@ -77,7 +78,6 @@ export class VcpkgAction {
 
       // Set the place where vcpkg is putting the binary caching artifacts.
       this.baseUtilLib.baseLib.setVariable(VcpkgAction.VCPKG_DEFAULT_BINARY_CACHE, binCachePath);
-
       return vcpkgRoot;
     });
 
@@ -85,10 +85,12 @@ export class VcpkgAction {
       throw new Error(`vcpkgRootDir is not defined!`);
     }
 
-    let vcpkgJsonFilePath: string | null = null;
-    const vcpkgJsonPath = await vcpkgutil.Utils.getVcpkgJsonPath(
-      this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
-    vcpkgJsonFilePath = await this.getCurrentDirectoryForRunningVcpkg(vcpkgJsonPath);
+    const vcpkgJsonFilePath: string | null =
+      await this.baseUtilLib.wrapOp(`Searching for vcpkg.json with glob expression '${this.vcpkgJsonGlob}'`, async () => {
+        const vcpkgJsonPath = await vcpkgutil.Utils.getVcpkgJsonPath(
+          this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
+        return await this.getCurrentDirectoryForRunningVcpkg(vcpkgJsonPath);
+      });
 
     let isCacheHit: boolean | null = null;
     let cacheKey: baseutillib.KeySet | null = null;
@@ -96,13 +98,13 @@ export class VcpkgAction {
       this.baseUtilLib.baseLib.debug(`Skipping restoring vcpkg as caching is disabled. Set input 'doNotCache:false' to enable caching.`);
     } else {
       cacheKey =
-        await this.baseUtilLib.wrapOp('Compute vcpkg cache key', async () => {
+        await this.baseUtilLib.wrapOp('Computing vcpkg cache key', async () => {
           const keys = await vcpkgutil.Utils.computeCacheKeys(
             this.baseUtilLib,
             this.vcpkgRootDir as string, // HACK: if it were not set it would have thrown before.
             this.userProvidedCommitId);
 
-          if (keys && vcpkgJsonPath) {
+          if (keys) {
             baseLib.info(`Computed key: ${JSON.stringify(keys)}`);
           } else {
             throw new Error("Computation for the cache key failed!");
