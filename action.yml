@@ -28,9 +28,9 @@ inputs:
     required: false
     description: "Avoid to update vcpkg (launching git) in the specified 'vcpkgDirectory'. This is useful when vcpkg is being checkout independently of the run-vcpkg action. Default is false."
   doNotCache:
-    default: false
+    default: true
     required: false
-    description: "Disable the run-vcpkg's automatic caching mechanism by setting it to true. Default is false. This does not disable vcpkg's binary cache which is always on."
+    description: "Enable the caching of the vcpkg executable and its data files (e.g. ports) by setting it to false. Default is true. Set this input to false when the vcpkg's executable is not delivered as a prebuilt file upon bootstrapping vcpkg. This does not disable vcpkg's binary cache which is always on and can be controlled by the user with the env var VCPKG_BINARY_SOURCES."
 
   # The following inputs are rarely set by the user, since the default values suffice the most common scenarios.
   vcpkgJsonGlob:

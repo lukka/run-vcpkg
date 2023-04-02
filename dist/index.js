@@ -94,7 +94,9 @@ class VcpkgAction {
     constructor(baseUtilLib) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         this.baseUtilLib = baseUtilLib;
-        this.doNotCache = false;
+        this.doNotCache = true;
+        this.runVcpkgInstall = false;
+        this.doNotUpdateVcpkg = false;
         // Fetch inputs.
         const vcpkgRootDir = baseUtilLib.baseLib.getPathInput(exports.vcpkgDirectoryInput, false, false);
         this.vcpkgRootDir = vcpkgRootDir ? path.normalize(path.resolve(vcpkgRootDir)) : null;
@@ -102,9 +104,9 @@ class VcpkgAction {
         this.runVcpkgFormatString = (_b = baseUtilLib.baseLib.getInput(exports.runVcpkgFormatStringInput, false)) !== null && _b !== void 0 ? _b : null;
         this.vcpkgJsonGlob = (_c = baseUtilLib.baseLib.getInput(exports.vcpkgJsonGlobInput, false)) !== null && _c !== void 0 ? _c : VcpkgAction.VCPKGJSON_GLOB;
         this.vcpkgJsonIgnores = eval((_d = baseUtilLib.baseLib.getInput(exports.vcpkgJsonIgnoresInput, false)) !== null && _d !== void 0 ? _d : VcpkgAction.VCPKGJSON_IGNORES);
-        this.runVcpkgInstall = (_e = baseUtilLib.baseLib.getBoolInput(exports.runVcpkgInstallInput, false)) !== null && _e !== void 0 ? _e : false;
-        this.doNotCache = (_f = baseUtilLib.baseLib.getBoolInput(exports.doNotCacheInput, false)) !== null && _f !== void 0 ? _f : false;
-        this.doNotUpdateVcpkg = (_g = baseUtilLib.baseLib.getBoolInput(exports.doNotUpdateVcpkgInput, false)) !== null && _g !== void 0 ? _g : false;
+        this.runVcpkgInstall = (_e = baseUtilLib.baseLib.getBoolInput(exports.runVcpkgInstallInput, false)) !== null && _e !== void 0 ? _e : this.runVcpkgInstall;
+        this.doNotCache = (_f = baseUtilLib.baseLib.getBoolInput(exports.doNotCacheInput, false)) !== null && _f !== void 0 ? _f : this.doNotCache;
+        this.doNotUpdateVcpkg = (_g = baseUtilLib.baseLib.getBoolInput(exports.doNotUpdateVcpkgInput, false)) !== null && _g !== void 0 ? _g : this.doNotUpdateVcpkg;
         this.vcpkgUrl = (_h = baseUtilLib.baseLib.getInput(exports.vcpkgUrlInput, false)) !== null && _h !== void 0 ? _h : VcpkgAction.DEFAULTVCPKGURL;
         this.vcpkgCommitId = (_j = baseUtilLib.baseLib.getInput(exports.vcpkgCommitIdInput, false)) !== null && _j !== void 0 ? _j : null;
         this.logCollectionRegExps = (_k = baseUtilLib.baseLib.getDelimitedInput(exports.logCollectionRegExpsInput, ';', false)) !== null && _k !== void 0 ? _k : [];
@@ -134,37 +136,49 @@ class VcpkgAction {
             if (!this.vcpkgRootDir) {
                 throw new Error(`vcpkgRootDir is not defined!`);
             }
-            const [keys, vcpkgJsonFilePath] = yield this.baseUtilLib.wrapOp('Compute vcpkg cache key', () => __awaiter(this, void 0, void 0, function* () {
-                const vcpkgJsonPath = yield vcpkgutil.Utils.getVcpkgJsonPath(this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
-                const keys = yield vcpkgutil.Utils.computeCacheKeys(this.baseUtilLib, this.vcpkgRootDir, // HACK: if it were not set it would have thrown before.
-                this.userProvidedCommitId);
-                if (keys && vcpkgJsonPath) {
-                    baseLib.info(`Computed key: ${JSON.stringify(keys)}`);
-                }
-                else {
-                    throw new Error("Computation for the cache key or the vcpkg.json location failed!");
-                }
-                return [keys, vcpkgJsonPath];
-            }));
-            const isCacheHit = yield this.baseUtilLib.wrapOp('Restore vcpkg installation from cache (not the packages, that is done by vcpkg via binary caching using GitHub Action cache)', () => __awaiter(this, void 0, void 0, function* () { return yield this.restoreCache(keys); }));
-            const vcpkgJsonPath = yield this.getCurrentDirectoryForRunningVcpkg(vcpkgJsonFilePath);
-            yield runvcpkglib.VcpkgRunner.run(this.baseUtilLib, this.vcpkgRootDir, this.vcpkgUrl, this.vcpkgCommitId, this.runVcpkgInstall, this.doNotUpdateVcpkg, this.logCollectionRegExps, vcpkgJsonPath, this.runVcpkgFormatString);
-            yield this.saveCache(isCacheHit, keys, vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir // HACK: if it were not set it would have thrown before.
-            ), this.doNotCache, true);
+            let vcpkgJsonFilePath = null;
+            const vcpkgJsonPath = yield vcpkgutil.Utils.getVcpkgJsonPath(this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
+            vcpkgJsonFilePath = yield this.getCurrentDirectoryForRunningVcpkg(vcpkgJsonPath);
+            let isCacheHit = null;
+            let cacheKey = null;
+            if (this.doNotCache) {
+                this.baseUtilLib.baseLib.debug(`Skipping restoring vcpkg as caching is disabled. Set input 'doNotCache:false' to enable caching.`);
+            }
+            else {
+                cacheKey =
+                    yield this.baseUtilLib.wrapOp('Compute vcpkg cache key', () => __awaiter(this, void 0, void 0, function* () {
+                        const keys = yield vcpkgutil.Utils.computeCacheKeys(this.baseUtilLib, this.vcpkgRootDir, // HACK: if it were not set it would have thrown before.
+                        this.userProvidedCommitId);
+                        if (keys && vcpkgJsonPath) {
+                            baseLib.info(`Computed key: ${JSON.stringify(keys)}`);
+                        }
+                        else {
+                            throw new Error("Computation for the cache key failed!");
+                        }
+                        return keys;
+                    }));
+                isCacheHit = yield this.restoreCache(cacheKey);
+            }
+            yield runvcpkglib.VcpkgRunner.run(this.baseUtilLib, this.vcpkgRootDir, this.vcpkgUrl, this.vcpkgCommitId, this.runVcpkgInstall, this.doNotUpdateVcpkg, this.logCollectionRegExps, vcpkgJsonFilePath, this.runVcpkgFormatString);
+            if (this.doNotCache) {
+                this.baseUtilLib.baseLib.debug(`Skipping restoring vcpkg as caching is disabled. Set input 'doNotCache:false' to enable caching.`);
+            }
+            else {
+                yield this.saveCache(isCacheHit, cacheKey, // Hack: if it were not set it would have thrown an exception before.
+                vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir // HACK: if it were not set it would have thrown an exception before.
+                ), true);
+            }
             this.baseUtilLib.baseLib.debug("run()>>");
         });
     }
     restoreCache(keys) {
-        var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             let isCacheHit = false;
             this.baseUtilLib.baseLib.debug("restoreCache()<<");
-            if (this.doNotCache) {
-                this.baseUtilLib.baseLib.info(`Skipping restoring cache as caching is disabled (${exports.doNotCacheInput}: ${this.doNotCache}).`);
-            }
-            else {
+            yield this.baseUtilLib.wrapOp('Restore vcpkg installation from cache (not the packages, that is done by vcpkg via Binary Caching stored onto the GitHub Action cache)', () => __awaiter(this, void 0, void 0, function* () {
+                var _a, _b;
                 if (!this.vcpkgRootDir)
-                    throw new Error("vcpkg_ROOT must be defined");
+                    throw new Error("VCPKG_ROOT must be defined");
                 const pathsToCache = vcpkgutil.Utils.getAllCachedPaths(this.baseUtilLib.baseLib, this.vcpkgRootDir);
                 this.baseUtilLib.baseLib.info(`Cache key: '${keys.primary}'`);
                 this.baseUtilLib.baseLib.info(`Cache restore keys: '${keys.restore}'`);
@@ -184,31 +198,28 @@ class VcpkgAction {
                     this.baseUtilLib.baseLib.info(`Cache miss.`);
                     isCacheHit = false;
                 }
-            }
+            }));
             this.baseUtilLib.baseLib.debug("restoreCache()>>");
             return isCacheHit;
         });
     }
-    saveCache(isCacheHit, keys, cachedPaths, doNotCache, successStep) {
+    saveCache(isCacheHit, keys, cachedPaths, successStep) {
         return __awaiter(this, void 0, void 0, function* () {
             this.baseUtilLib.baseLib.debug('saveCache()<<');
-            yield this.baseUtilLib.wrapOp('Save vcpkg into the GitHub Action cache (only the tool, not the built packages which are saved by vcpkg`s Binary Caching on GitHub Action`s cache).', () => __awaiter(this, void 0, void 0, function* () {
-                return yield vcpkgutil.Utils.saveCache(this.baseUtilLib.baseLib, this.doNotCache, keys, isCacheHit ? keys.primary : null, /* Only the primary cache could have hit, since there are no restore keys. */ cachedPaths);
-            }));
+            yield vcpkgutil.Utils.saveCache(this.baseUtilLib, keys, isCacheHit ? keys.primary : null, /* Only the primary cache could have hit, since there are no restore keys. */ cachedPaths);
             this.baseUtilLib.baseLib.debug('saveCache()>>');
         });
     }
     getCurrentDirectoryForRunningVcpkg(vcpkgJsonFile) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.baseUtilLib.baseLib.debug(`getCurrentDirectoryForRunningVcpkg() << `);
+            this.baseUtilLib.baseLib.debug(`getCurrentDirectoryForRunningVcpkg(${vcpkgJsonFile}) << `);
             // When running 'vcpkg install' is requested, ensure the target directory is well known, fail otherwise.
             let vcpkgJsonPath = null;
             if (this.runVcpkgInstall) {
                 vcpkgJsonPath = vcpkgJsonFile === null ? null : path.dirname(path.resolve(vcpkgJsonFile));
                 this.baseUtilLib.baseLib.debug(`vcpkgJsonFile='${vcpkgJsonFile}', vcpkgJsonPath='${vcpkgJsonPath}'.`);
                 if (vcpkgJsonPath === null) {
-                    this.baseUtilLib.baseLib.error(`Failing the workflow since the 'vcpkg.json' file has not been found, and its containing directory 
- is required and used as the 'working directory' when launching vcpkg with arguments:
+                    this.baseUtilLib.baseLib.error(`Failing the workflow since the 'vcpkg.json' file has not been found: its directory is used as the 'working directory' when launching vcpkg with arguments:
  '${this.runVcpkgFormatString}'. `);
                 }
             }
@@ -253,7 +264,6 @@ const runvcpkglib = __nccwpck_require__(4393);
 const baseutillib = __nccwpck_require__(2365);
 const cache = __nccwpck_require__(7799);
 const fastglob = __nccwpck_require__(3664);
-const vcpkg_action_1 = __nccwpck_require__(2929);
 class Utils {
     static isExactKeyMatch(key, cacheKey) {
         if (cacheKey)
@@ -364,14 +374,12 @@ class Utils {
             return keyset;
         });
     }
-    static saveCache(baseLib, doNotCache, keys, hitCacheKey, cachedPaths) {
+    static saveCache(baseUtilLib, keys, hitCacheKey, cachedPaths) {
         return __awaiter(this, void 0, void 0, function* () {
-            baseLib.debug(`saveCache(doNotCache:${doNotCache},keys:${JSON.stringify(keys)},hitCacheKey:${hitCacheKey},cachedPaths:${cachedPaths})<<`);
+            const baseLib = baseUtilLib.baseLib;
+            baseLib.debug(`saveCache(keys:${JSON.stringify(keys)},hitCacheKey:${hitCacheKey},cachedPaths:${cachedPaths})<<`);
             try {
-                if (doNotCache) {
-                    baseLib.info(`Skipping saving cache as caching is disabled (${vcpkg_action_1.doNotCacheInput}: ${doNotCache}).`);
-                }
-                else {
+                yield baseUtilLib.wrapOp('Save vcpkg into the GitHub Action cache (only the tool, not the built packages which are saved by vcpkg`s Binary Caching on GitHub Action`s cache).', () => __awaiter(this, void 0, void 0, function* () {
                     if (hitCacheKey && Utils.isExactKeyMatch(keys.primary, hitCacheKey)) {
                         baseLib.info(`Saving cache is skipped, because cache hit occurred on the cache key '${keys.primary}'.`);
                     }
@@ -397,7 +405,7 @@ class Utils {
                             }
                         }
                     }
-                }
+                }));
             }
             catch (err) {
                 baseLib.warning("vcpkg-utils.saveCache() failed!");
@@ -42276,6 +42284,9 @@ class ActionLib {
     hashFiles(fileGlob, options) {
         return actionglob.hashFiles(fileGlob, options);
     }
+    addPath(path) {
+        core.addPath(path);
+    }
 }
 exports.ActionLib = ActionLib;
 //# sourceMappingURL=action-lib.js.map
@@ -44154,6 +44165,7 @@ class VcpkgRunner {
             if (needRebuild) {
                 yield this.baseUtils.wrapOp("Build vcpkg executable", () => this.build());
             }
+            this.baseUtils.wrapOpSync(`Add to PATH vcpkg at '${this.vcpkgDestPath}'`, () => this.baseUtils.baseLib.addPath(this.vcpkgDestPath));
             yield this.runVcpkgInstall();
             this.baseUtils.wrapOpSync("Set output environment variables", () => this.setOutputs());
             this.baseUtils.baseLib.debug("runImpl()>>");
