@@ -122,37 +122,38 @@ export class Utils {
     return keyset;
   }
 
-  public static async saveCache(baseLib: baselib.BaseLib, doNotCache: boolean, keys: baseutillib.KeySet,
+  public static async saveCache(baseUtilLib: baseutillib.BaseUtilLib, keys: baseutillib.KeySet,
     hitCacheKey: string | null, cachedPaths: string[]): Promise<void> {
-    baseLib.debug(`saveCache(doNotCache:${doNotCache},keys:${JSON.stringify(keys)},hitCacheKey:${hitCacheKey},cachedPaths:${cachedPaths})<<`)
+    const baseLib = baseUtilLib.baseLib;
+    baseLib.debug(`saveCache(keys:${JSON.stringify(keys)},hitCacheKey:${hitCacheKey},cachedPaths:${cachedPaths})<<`)
     try {
-      if (doNotCache) {
-        baseLib.info(`Skipping saving cache as caching is disabled (${doNotCacheInput}: ${doNotCache}).`);
-      } else {
-        if (hitCacheKey && Utils.isExactKeyMatch(keys.primary, hitCacheKey)) {
-          baseLib.info(`Saving cache is skipped, because cache hit occurred on the cache key '${keys.primary}'.`);
-        } else {
-          baseLib.info(`Saving a new cache entry, because primary key was missed or a fallback restore key was hit.`);
-          const pathsToCache: string[] = cachedPaths;
-          baseLib.info(`Caching paths: '${pathsToCache}'`);
+      await baseUtilLib.wrapOp('Save vcpkg into the GitHub Action cache (only the tool, not the built packages which are saved by vcpkg`s Binary Caching on GitHub Action`s cache).',
+        async () => {
 
-          try {
-            baseLib.info(`Saving cache with primary key '${keys.primary}' ...`);
-            await cache.saveCache(pathsToCache, keys.primary);
-          }
-          catch (error) {
-            if (error instanceof Error) {
-              if (error.name === cache.ValidationError.name) {
-                throw error;
-              } else if (error.name === cache.ReserveCacheError.name) {
-                baseLib.info(error.message);
-              } else {
-                baseLib.warning(error.message);
+          if (hitCacheKey && Utils.isExactKeyMatch(keys.primary, hitCacheKey)) {
+            baseLib.info(`Saving cache is skipped, because cache hit occurred on the cache key '${keys.primary}'.`);
+          } else {
+            baseLib.info(`Saving a new cache entry, because primary key was missed or a fallback restore key was hit.`);
+            const pathsToCache: string[] = cachedPaths;
+            baseLib.info(`Caching paths: '${pathsToCache}'`);
+
+            try {
+              baseLib.info(`Saving cache with primary key '${keys.primary}' ...`);
+              await cache.saveCache(pathsToCache, keys.primary);
+            }
+            catch (error) {
+              if (error instanceof Error) {
+                if (error.name === cache.ValidationError.name) {
+                  throw error;
+                } else if (error.name === cache.ReserveCacheError.name) {
+                  baseLib.info(error.message);
+                } else {
+                  baseLib.warning(error.message);
+                }
               }
             }
           }
-        }
-      }
+        });
     } catch (err) {
       baseLib.warning("vcpkg-utils.saveCache() failed!");
       if (err instanceof Error) {
