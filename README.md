@@ -29,15 +29,15 @@ The **run-vcpkg** action setups (and optionally runs) [vcpkg](https://github.com
 It leverages the vcpkg's Binary Caching backed to GitHub Action cache, delegating cache and key management to vpckg.
 
 Special features which provide added value over a __pure__ workflow are:
-  - automatic caching leveraging `vcpkg`'s ability to store its [Binary Caching](https://learn.microsoft.com/en-us/vcpkg/users/binarycaching)) artifacts onto the [GitHub Action cache](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows) so that packages are built only once and reused in subsequent workflow runs. The user can customize the behavior by setting the environment variable `VCPKG_BINARY_SOURCES` *before* vcpkg runs.
-  - set the environment variables `ACTIONS_CACHE_URL` and `ACTIONS_RUNTIME_TOKEN` to let user easily running vcpkg
+  - automatic caching leveraging `vcpkg`'s ability to store its [Binary Caching](https://learn.microsoft.com/en-us/vcpkg/users/binarycaching) artifacts onto the [GitHub Action cache](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows) so that packages are built only once and reused in subsequent workflow runs. The user can customize the behavior by setting the environment variable `VCPKG_BINARY_SOURCES` *before* vcpkg runs.
+  - set the workflow variables `ACTIONS_CACHE_URL` and `ACTIONS_RUNTIME_TOKEN` to let users easily running vcpkg
   in a `run` step such as `- run: vcpkg install` or `- run: vcpkg integrate install` without forcing the 
   users to set the variables manually.
   - automatic dump of log files created by `CMake` (e.g., `CMakeOutput.log`) and `vcpkg`. The content of those files flow into the workflow output log. Customizable by the user by setting the input `logCollectionRegExps`.
   - automatic parsing of `CMake`, `vcpkg` and `gcc`, `clang`, `msvc` errors, reporting them contextually in the workflow summary by means of annotations.
-  - although disabled by default, `run-vcpkg` can cache vcpkg's executable and data files to speed subsequent workflow runs. Since bootstrapping vcpkg already downloads a prebuilt binary saving the time spent to build vcpkg, 
+  - although disabled by default (see input `doNotCache`), `run-vcpkg` can cache vcpkg's executable and data files to speed up subsequent workflow runs. Since bootstrapping `vcpkg` already downloads a prebuilt binary saving the time to build `vcpkg`, 
   this form of caching is useful only when the prebuilt executable is not served as it happens for the ARM platform.
-  Note this cache does not contain the libraries built by vcpkg.
+  Note this cache does not contain the libraries built by vcpkg, which is instead managed by vcpkg itself.
 
 The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
 
