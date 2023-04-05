@@ -42617,6 +42617,26 @@ class BaseUtilLib {
         this.baseLib.info(`Set the step output variable '${name}' to value '${value}''`);
         this.baseLib.setOutput(name, value);
     }
+    /**
+     * Set a workflow variable if not set already.
+     * @param name The name of the variable.
+     * @param value The value.
+     */
+    setVariableIfUndefined(name, value) {
+        this.baseLib.debug(`setVariableIfUndefined()<<`);
+        if (!process.env[name]) {
+            if (!value) {
+                this.baseLib.warning(`Cannot set '${name}' variable because the provided value is null.`);
+            }
+            else {
+                this.setVariableVerbose(name, value);
+            }
+        }
+        else {
+            this.baseLib.debug(`${name} is already set to: '${value}'`);
+        }
+        this.baseLib.debug(`setVariableIfUndefined()>>`);
+    }
 }
 exports.BaseUtilLib = BaseUtilLib;
 class Matcher {
@@ -44004,7 +44024,7 @@ __exportStar(__nccwpck_require__(6188), exports);
 // Released under the term specified in file LICENSE.txt
 // SPDX short identifier: MIT
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VCPKG_BINARY_SOURCES = exports.VCPKG_INSTALLED_DIR = exports.VCPKG_JSON = exports.VCPKGDEFAULTTRIPLET = exports.VCPKGROOT = exports.vcpkgLastBuiltCommitId = exports.RUNVCPKG_VCPKG_DEFAULT_TRIPLET = exports.RUNVCPKG_VCPKG_ROOT = void 0;
+exports.ACTIONS_RUNTIME_TOKEN = exports.ACTIONS_CACHE_URL = exports.VCPKG_BINARY_SOURCES = exports.VCPKG_INSTALLED_DIR = exports.VCPKG_JSON = exports.VCPKGDEFAULTTRIPLET = exports.VCPKGROOT = exports.vcpkgLastBuiltCommitId = exports.RUNVCPKG_VCPKG_DEFAULT_TRIPLET = exports.RUNVCPKG_VCPKG_ROOT = void 0;
 exports.RUNVCPKG_VCPKG_ROOT = "RUNVCPKG_VCPKG_ROOT";
 exports.RUNVCPKG_VCPKG_DEFAULT_TRIPLET = "RUNVCPKG_VCPKG_DEFAULT_TRIPLET";
 exports.vcpkgLastBuiltCommitId = 'vcpkgLastBuiltCommitId';
@@ -44013,6 +44033,8 @@ exports.VCPKGDEFAULTTRIPLET = "VCPKG_DEFAULT_TRIPLET";
 exports.VCPKG_JSON = "vcpkg.json";
 exports.VCPKG_INSTALLED_DIR = "VCPKG_INSTALLED_DIR";
 exports.VCPKG_BINARY_SOURCES = `VCPKG_BINARY_SOURCES`;
+exports.ACTIONS_CACHE_URL = `ACTIONS_CACHE_URL`;
+exports.ACTIONS_RUNTIME_TOKEN = `ACTIONS_RUNTIME_TOKEN`;
 //# sourceMappingURL=vcpkg-globals.js.map
 
 /***/ }),
@@ -44137,9 +44159,12 @@ class VcpkgRunner {
             // If running in a GitHub Runner, enable the GH's cache provider for the vcpkg's binary cache.
             if (process.env['GITHUB_ACTIONS'] === 'true') {
                 yield this.baseUtils.wrapOp(`Setup to run on GitHub Action runners`, () => __awaiter(this, void 0, void 0, function* () {
-                    // Allow users to define the vcpkg's binary source explicitly in the workflow, in that case don't override it.
-                    if (!process.env[globals.VCPKG_BINARY_SOURCES])
-                        this.baseUtils.setVariableVerbose(globals.VCPKG_BINARY_SOURCES, VcpkgRunner.VCPKG_BINARY_SOURCES_GHA);
+                    // Allow users to define the vcpkg's binary source explicitly in the workflow, in that case do not override it.
+                    this.baseUtils.setVariableIfUndefined(globals.VCPKG_BINARY_SOURCES, VcpkgRunner.VCPKG_BINARY_SOURCES_GHA);
+                    if (process.env.ACTIONS_CACHE_URL)
+                        this.baseUtils.setVariableVerbose(globals.ACTIONS_CACHE_URL, process.env.ACTIONS_CACHE_URL);
+                    if (process.env.ACTIONS_RUNTIME_TOKEN)
+                        this.baseUtils.setVariableVerbose(globals.ACTIONS_RUNTIME_TOKEN, process.env.ACTIONS_RUNTIME_TOKEN);
                 }));
             }
             // Ensuring `this.vcpkgDestPath` is existent, since is going to be used as current working directory.

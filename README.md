@@ -26,12 +26,18 @@ Take a look at this [C++ project template](https://github.com/lukka/CppCMakeVcpk
 # [The **run-vcpkg@v11** action](https://github.com/marketplace/actions/run-vcpkg)
 
 The **run-vcpkg** action setups (and optionally runs) [vcpkg](https://github.com/microsoft/vcpkg) to install the packages specified in the `vcpkg.json` manifest file.
+It leverages the vcpkg's Binary Caching backed to GitHub Action cache, delegating cache and key management to vpckg.
 
-Special features which provide added value over a pure workflow are:
-  - automatic caching of vcpkg itself onto GitHub Action's cache: this storing/restoring the vcpkg executable and its data files to speed subsequent workflow runs. For the vcpkg's packages, caching is delegated to vcpkg itself instead.
-  - automatic caching leveraging `vcpkg` ability to store its [Binary Caching](https://learn.microsoft.com/en-us/vcpkg/users/binarycaching)) onto the [GitHub Action cache](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows) so that packages are built only once and reused in subsequent workflow runs. The user can customize the behavior by setting the environment variable `VCPKG_BINARY_SOURCES` *before* vcpkg runs.
-  - automatic dump of log files created by `CMake` (e.g., `CMakeOutput.log`) and `vcpkg`. The content of those files flow into the workflow output log. Customizable by the user.
+Special features which provide added value over a __pure__ workflow are:
+  - automatic caching leveraging `vcpkg`'s ability to store its [Binary Caching](https://learn.microsoft.com/en-us/vcpkg/users/binarycaching)) artifacts onto the [GitHub Action cache](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows) so that packages are built only once and reused in subsequent workflow runs. The user can customize the behavior by setting the environment variable `VCPKG_BINARY_SOURCES` *before* vcpkg runs.
+  - set the environment variables `ACTIONS_CACHE_URL` and `ACTIONS_RUNTIME_TOKEN` to let user easily running vcpkg
+  in a `run` step such as `- run: vcpkg install` or `- run: vcpkg integrate install` without forcing the 
+  users to set the variables manually.
+  - automatic dump of log files created by `CMake` (e.g., `CMakeOutput.log`) and `vcpkg`. The content of those files flow into the workflow output log. Customizable by the user by setting the input `logCollectionRegExps`.
   - automatic parsing of `CMake`, `vcpkg` and `gcc`, `clang`, `msvc` errors, reporting them contextually in the workflow summary by means of annotations.
+  - although disabled by default, `run-vcpkg` can cache vcpkg's executable and data files to speed subsequent workflow runs. Since bootstrapping vcpkg already downloads a prebuilt binary saving the time spent to build vcpkg, 
+  this form of caching is useful only when the prebuilt executable is not served as it happens for the ARM platform.
+  Note this cache does not contain the libraries built by vcpkg.
 
 The provided [samples](#samples) use [GitHub hosted runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners).
 
@@ -124,38 +130,41 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
 
 ```
 ┌──────────────────────────┐
+|  If running in GH Runner,|   Environment variables:
+|  set the env vars:       |   - If any env var is
+|  - VCPKG_BINARY_SOURCES  |     already defined
+|  - ACTIONS_CACHE_URL     |     it will not be overridden.
+|  - ACTIONS_RUNTIME_TOKEN |
+└─────────────┬────────────┘
+              ▼
+┌──────────────────────────┐
 |  Skipped by default.     |
 │  Compute cache key from: │   Inputs:
 │  - vcpkg Git commit      │   - `vcpkgGitCommitId`
 │  - platform and OS       │   - `doNotCache`: set to false
 └─────────────┬────────────┘     to run this block.
-              │
               ▼
  ┌─────────────────────────┐   Inputs:
  │ Locate vcpkg.json.      │   - `vcpkgJsonGlob`
  └────────────┬────────────┘   - `vcpkgJsonIgnores`
-              │
               ▼
  ┌─────────────────────────┐   Inputs:
- | Skipped by default.     |
- │ Restore vcpkg           │   - `vcpkgDirectory`
- │ from the GH cache.      │   - `doNotCache`: set to false
- └────────────┬────────────┘     to run this block.
-              │
+ | Skipped by default.     |   - `vcpkgDirectory`
+ │ Restore vcpkg           │   - `doNotCache`: set to false
+ │ from the GH cache.      │     to run this block.
+ └────────────┬────────────┘
               ▼
- ┌─────────────────────────┐
- │ If vcpkg is not a       │   Inputs:
+ ┌─────────────────────────┐   Inputs:
+ │ If vcpkg is not a       │   - `vcpkgDirectory`
  │ submodule, fetch it     │   - `vcpkgGitCommitId`
  │                         │   - `vcpkgGitURL`
  └────────────┬────────────┘   - `doNotUpdateVcpkg`
-              │                - `vcpkgDirectory`
               ▼
  ┌─────────────────────────┐
  │ Rebuild vcpkg executable│   Inputs:
  │ if not in sync with     │   - `vcpkgGitCommitId`
  │ sources.                │   - `vcpkgGitURL`
  └────────────┬────────────┘
-              │
               ▼
   <Is `runVcpkgInstall:true`>┐    Inputs:
           ────┬────        No│   - `runVcpkgInstall`
@@ -182,7 +191,7 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  | Skipped by default.     |
  │ If no cache-hit,        │  Inputs:
  │ store vcpkg onto        │  - `doNotCache`: set to false to
- │ GH cache                │    run this block.
+ │ GH cache.               │    run this block.
  └────────────┬────────────┘
               |
               ▼
