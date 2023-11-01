@@ -85,12 +85,14 @@ export class VcpkgAction {
       throw new Error(`vcpkgRootDir is not defined!`);
     }
 
-    const vcpkgJsonFilePath: string | null =
-      await this.baseUtilLib.wrapOp(`Searching for vcpkg.json with glob expression '${this.vcpkgJsonGlob}'`, async () => {
+    let vcpkgJsonFilePath: string | null = null;
+    if (this.runVcpkgInstall) {
+      vcpkgJsonFilePath = await this.baseUtilLib.wrapOp(`Searching for vcpkg.json with glob expression '${this.vcpkgJsonGlob}'`, async () => {
         const vcpkgJsonPath = await vcpkgutil.Utils.getVcpkgJsonPath(
           this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
         return await this.getCurrentDirectoryForRunningVcpkg(vcpkgJsonPath);
       });
+    }
 
     let isCacheHit: boolean | null = null;
     let cacheKey: baseutillib.KeySet | null = null;
@@ -189,13 +191,11 @@ export class VcpkgAction {
     this.baseUtilLib.baseLib.debug(`getCurrentDirectoryForRunningVcpkg(${vcpkgJsonFile}) << `);
     // When running 'vcpkg install' is requested, ensure the target directory is well known, fail otherwise.
     let vcpkgJsonPath: string | null = null;
-    if (this.runVcpkgInstall) {
-      vcpkgJsonPath = vcpkgJsonFile === null ? null : path.dirname(path.resolve(vcpkgJsonFile));
-      this.baseUtilLib.baseLib.debug(`vcpkgJsonFile='${vcpkgJsonFile}', vcpkgJsonPath='${vcpkgJsonPath}'.`);
-      if (vcpkgJsonPath === null) {
-        this.baseUtilLib.baseLib.error(`Failing the workflow since the 'vcpkg.json' file has not been found: its directory is used as the 'working directory' when launching vcpkg with arguments:
+    vcpkgJsonPath = vcpkgJsonFile === null ? null : path.dirname(path.resolve(vcpkgJsonFile));
+    this.baseUtilLib.baseLib.debug(`vcpkgJsonFile='${vcpkgJsonFile}', vcpkgJsonPath='${vcpkgJsonPath}'.`);
+    if (vcpkgJsonPath === null) {
+      this.baseUtilLib.baseLib.error(`Failing the workflow since the 'vcpkg.json' file has not been found: its directory is used as the 'working directory' when launching vcpkg with arguments:
  '${this.runVcpkgFormatString}'. `);
-      }
     }
 
     this.baseUtilLib.baseLib.debug(`getCurrentDirectoryForRunningVcpkg()>> -> ${vcpkgJsonPath}`);
