@@ -51,6 +51,6 @@ To build, pack and test:
 
  To run test directly:
  
- > jest
+ > npx jest
 
 Validation tests on various scenarios are run using the workflows of the [Samples](./README.md#samples).
