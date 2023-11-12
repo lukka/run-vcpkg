@@ -176,10 +176,6 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
 └─────────────┬────────────┘     to run this block.
               ▼
  ┌─────────────────────────┐   Inputs:
- │ Locate vcpkg.json.      │   - `vcpkgJsonGlob`
- └────────────┬────────────┘   - `vcpkgJsonIgnores`
-              ▼
- ┌─────────────────────────┐   Inputs:
  | Skipped by default.     |   - `vcpkgDirectory`
  │ Restore vcpkg           │   - `doNotCache`: set to false
  │ from the GH cache.      │     to run this block.
@@ -200,6 +196,10 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
   <Is `runVcpkgInstall:true`>┐    Inputs:
           ────┬────        No│   - `runVcpkgInstall`
               │ Yes          │
+              ▼              │
+ ┌─────────────────────────┐ │  Inputs:
+ │ Locate vcpkg.json.      │ │  - `vcpkgJsonGlob`
+ └────────────┬────────────┘ │  - `vcpkgJsonIgnores`
               ▼              │
  ┌─────────────────────────┐ │
  │ Launch `vcpkg install`  │ │   Inputs:

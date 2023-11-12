@@ -44223,12 +44223,21 @@ class ActionLib {
     exist(path) {
         return ioutil.exists(path);
     }
+    static getDefaultBinDirName() {
+        let localBinDirName = ActionLib.binDir;
+        if (process.env.RUNVCPKG_BINDIR !== undefined) {
+            if (process.env.RUNVCPKG_BINDIR.length > 0) {
+                localBinDirName = process.env.RUNVCPKG_BINDIR;
+            }
+        }
+        return localBinDirName;
+    }
     getBinDir() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!process.env.GITHUB_WORKSPACE) {
                 throw new Error("GITHUB_WORKSPACE is not set.");
             }
-            const binPath = utils.BaseUtilLib.normalizePath(path.join(process.env.GITHUB_WORKSPACE, "../b/"));
+            const binPath = utils.BaseUtilLib.normalizePath(path.join(process.env.GITHUB_WORKSPACE, ActionLib.getDefaultBinDirName()));
             yield this.mkdirP(binPath);
             return binPath;
         });
@@ -44241,17 +44250,6 @@ class ActionLib {
             const srcPath = utils.BaseUtilLib.normalizePath(process.env.GITHUB_WORKSPACE);
             yield this.mkdirP(srcPath);
             return srcPath;
-        });
-    }
-    getArtifactsDir() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!process.env.GITHUB_WORKSPACE) {
-                throw new Error("GITHUB_WORKSPACE env var is not set.");
-            }
-            //?? HACK. How to get the value of '{{ runner.temp }}' in JS's action?
-            const artifactsPath = utils.BaseUtilLib.normalizePath(path.join(process.env.GITHUB_WORKSPACE, "../../_temp"));
-            yield this.mkdirP(artifactsPath);
-            return artifactsPath;
         });
     }
     beginOperation(message) {
@@ -44274,6 +44272,8 @@ class ActionLib {
     }
 }
 exports.ActionLib = ActionLib;
+ActionLib.binDir = "969f6665-88a2-4c98-938e-ca9259871fec";
+ActionLib.RUNVCPKG_BINDIR = "RUNVCPKG_BINDIR";
 //# sourceMappingURL=action-lib.js.map
 
 /***/ }),
