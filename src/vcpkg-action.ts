@@ -21,6 +21,7 @@ export const vcpkgCommitIdInput = "VCPKGGITCOMMITID";
 export const doNotUpdateVcpkgInput = "DONOTUPDATEVCPKG";
 export const vcpkgUrlInput = "VCPKGGITURL";
 export const logCollectionRegExpsInput = 'LOGCOLLECTIONREGEXPS';
+export const vcpkgConfigurationJsonGlob = 'VCPKGCONFIGURATIONJSONGLOB';
 
 export class VcpkgAction {
   public static readonly VCPKG_DEFAULT_BINARY_CACHE = "VCPKG_DEFAULT_BINARY_CACHE";
@@ -38,6 +39,7 @@ export class VcpkgAction {
   private readonly vcpkgCommitId: string | null;
   private readonly logCollectionRegExps: string[];
   private readonly binaryCachePath: string | null;
+  private readonly vcpkgConfigurationJsonGlob: string | null;
   private vcpkgRootDir: string | null;
 
   constructor(private readonly baseUtilLib: baseutillib.BaseUtilLib) {
@@ -48,6 +50,7 @@ export class VcpkgAction {
     this.runVcpkgFormatString = baseUtilLib.baseLib.getInput(runVcpkgFormatStringInput, false) ?? null;
     this.vcpkgJsonGlob = baseUtilLib.baseLib.getInput(vcpkgJsonGlobInput, false) ?? VcpkgAction.VCPKGJSON_GLOB;
     this.vcpkgJsonIgnores = eval(baseUtilLib.baseLib.getInput(vcpkgJsonIgnoresInput, false) ?? VcpkgAction.VCPKGJSON_IGNORES) as string[];
+    this.vcpkgConfigurationJsonGlob = baseUtilLib.baseLib.getInput(vcpkgConfigurationJsonGlob, false) ?? null;
     this.runVcpkgInstall = baseUtilLib.baseLib.getBoolInput(runVcpkgInstallInput, false) ?? this.runVcpkgInstall;
     this.doNotCache = baseUtilLib.baseLib.getBoolInput(doNotCacheInput, false) ?? this.doNotCache;
     this.doNotUpdateVcpkg = baseUtilLib.baseLib.getBoolInput(doNotUpdateVcpkgInput, false) ?? this.doNotUpdateVcpkg;
@@ -85,15 +88,6 @@ export class VcpkgAction {
       throw new Error(`vcpkgRootDir is not defined!`);
     }
 
-    let vcpkgJsonFilePath: string | null = null;
-    if (this.runVcpkgInstall) {
-      vcpkgJsonFilePath = await this.baseUtilLib.wrapOp(`Searching for vcpkg.json with glob expression '${this.vcpkgJsonGlob}'`, async () => {
-        const vcpkgJsonPath = await vcpkgutil.Utils.getVcpkgJsonPath(
-          this.baseUtilLib, this.vcpkgJsonGlob, this.vcpkgJsonIgnores);
-        return await this.getCurrentDirectoryForRunningVcpkg(vcpkgJsonPath);
-      });
-    }
-
     let isCacheHit: boolean | null = null;
     let cacheKey: baseutillib.KeySet | null = null;
     if (this.doNotCache) {
@@ -125,7 +119,9 @@ export class VcpkgAction {
       this.runVcpkgInstall,
       this.doNotUpdateVcpkg,
       this.logCollectionRegExps,
-      vcpkgJsonFilePath,
+      this.vcpkgJsonGlob,
+      this.vcpkgJsonIgnores,
+      this.vcpkgConfigurationJsonGlob,
       this.runVcpkgFormatString
     );
 
@@ -185,20 +181,5 @@ export class VcpkgAction {
       isCacheHit ? keys.primary : null, /* Only the primary cache could have hit, since there are no restore keys. */
       cachedPaths);
     this.baseUtilLib.baseLib.debug('saveCache()>>');
-  }
-
-  private async getCurrentDirectoryForRunningVcpkg(vcpkgJsonFile: string | null): Promise<string | null> {
-    this.baseUtilLib.baseLib.debug(`getCurrentDirectoryForRunningVcpkg(${vcpkgJsonFile}) << `);
-    // When running 'vcpkg install' is requested, ensure the target directory is well known, fail otherwise.
-    let vcpkgJsonPath: string | null = null;
-    vcpkgJsonPath = vcpkgJsonFile === null ? null : path.dirname(path.resolve(vcpkgJsonFile));
-    this.baseUtilLib.baseLib.debug(`vcpkgJsonFile='${vcpkgJsonFile}', vcpkgJsonPath='${vcpkgJsonPath}'.`);
-    if (vcpkgJsonPath === null) {
-      this.baseUtilLib.baseLib.error(`Failing the workflow since the 'vcpkg.json' file has not been found: its directory is used as the 'working directory' when launching vcpkg with arguments:
- '${this.runVcpkgFormatString}'. `);
-    }
-
-    this.baseUtilLib.baseLib.debug(`getCurrentDirectoryForRunningVcpkg()>> -> ${vcpkgJsonPath}`);
-    return vcpkgJsonPath;
   }
 }

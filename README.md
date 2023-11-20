@@ -79,9 +79,14 @@ jobs:
           # Change it to the right location if needed.
           # vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-          # If not using a submodule for vcpkg sources, this specifies which commit
-          # id must be checkout from a Git repo.
-          # Note: it must not be set if using a Git submodule for vcpkg.
+          # If not using a Git submodule for vcpkg sources, this input
+          # specifies which commit id to checkout from a Git repo.
+          # Notes: 
+          # - it must _not_ be set if using a Git submodule for vcpkg.
+          # - if not provided, the `vcpkgConfigurationJsonGlob` or `vcpkgJsonGlob`
+          #   are being used to locate either a vcpkg-configuration.json or vcpkg.json
+          #   in order to use the builtin-baseline or the default-registry's
+          #   builtin baseline.
           # vcpkgGitCommitId: '${{ matrix.vcpkgCommitId }}'
 
           # This is only needed if the command `vcpkg install` must run at this step.
@@ -181,12 +186,16 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
  │ from the GH cache.      │     to run this block.
  └────────────┬────────────┘
               ▼
- ┌─────────────────────────┐   Inputs:
- │ If vcpkg is not a       │   - `vcpkgDirectory`
- │ submodule, fetch it     │   - `vcpkgGitCommitId`
- │                         │   - `vcpkgGitURL`
- └────────────┬────────────┘   - `doNotUpdateVcpkg`
-              ▼
+ ┌────────────────────────────┐   Inputs:
+ │ If vcpkg is not a          │   - `vcpkgDirectory`
+ │ submodule, fetch it.       │   - `vcpkgGitCommitId` 
+ │ Use either the provided    │   - `vcpkgGitURL`
+ │ commit id or the default   │   - `doNotUpdateVcpkg`
+ │ registry baseline in       │   - `vcpkgConfigurationJsonGlob`
+ │ vcpkg-configuration.json   │   - `vcpkgJsonGlob`
+ │ or vcpkg.json.             │   Environment variables:
+ └────────────┬───────────────┘   - VCPKG_CONFIGURATION_JSON_IGNORE_PATTERNS:
+              ▼                     semicolon separated ignore patterns.
  ┌─────────────────────────┐
  │ Rebuild vcpkg executable│   Inputs:
  │ if not in sync with     │   - `vcpkgGitCommitId`

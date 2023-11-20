@@ -52,12 +52,12 @@ describe('run-vcpkg functional tests', () => {
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "c9f906558f9bb12ee9811d6edc98ec9255c6cda5";
+        process.env.INPUT_VCPKGGITCOMMITID = "8eb57355a4ffb410a2e94c07b4dca2dffbee8e50";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
         // Ensure child is running in the GH workspace, needed to find vcpkg.json.
-        process.chdir(vcpkgProject);
+        process.chdir(assetDirectory);
 
         const options: cp.ExecSyncOptions = {
             env: process.env,
@@ -70,7 +70,7 @@ describe('run-vcpkg functional tests', () => {
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "c9f906558f9bb12ee9811d6edc98ec9255c6cda5";
+        process.env.INPUT_VCPKGGITCOMMITID = "8eb57355a4ffb410a2e94c07b4dca2dffbee8e50";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = "['invalid command']";
 
@@ -86,7 +86,7 @@ describe('run-vcpkg functional tests', () => {
         console.log(process.env.INPUT_VCPKGDIRECTORY);
         delete process.env.INPUT_VCPKGJSONGLOB;
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
-        process.env.INPUT_VCPKGGITCOMMITID = "c9f906558f9bb12ee9811d6edc98ec9255c6cda5";
+        process.env.INPUT_VCPKGGITCOMMITID = "8eb57355a4ffb410a2e94c07b4dca2dffbee8e50";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -96,7 +96,6 @@ describe('run-vcpkg functional tests', () => {
         };
         console.log(cp.execSync(`node ${testScript}`, options)?.toString());
     });
-
 
     test('vcpkg setup and install must pull packages stored in the cache and succeed', async () => {
         // Use the default vcpkg directory
@@ -112,11 +111,9 @@ describe('run-vcpkg functional tests', () => {
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgCacheDirectory(baseLibUtils.baseLib));
 
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
-        process.env.INPUT_VCPKGGITCOMMITID = "c9f906558f9bb12ee9811d6edc98ec9255c6cda5";
+        process.env.INPUT_VCPKGGITCOMMITID = "8eb57355a4ffb410a2e94c07b4dca2dffbee8e50";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
-
-        process.chdir(vcpkgProject);
 
         // Populate the cache in the default location (i.e. /b/vcpkg_cache).
         // Populate the vcpkg_installed in the default location (i.e. /b/vcpkg_installed).
@@ -144,4 +141,24 @@ describe('run-vcpkg functional tests', () => {
         console.log(`********* With cached built packages (binary cache) it took: ${elapsedWithCache}ms`)
         expect(elapsedWithCache).toBeLessThan(elapsed / 2);
     });
+
+    test('vcpkg setup and no install must succeed when the commit id is not provided as input but it is read from vcpkg-configurationn.json', () => {
+        process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
+        process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
+        process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
+        delete process.env.INPUT_VCPKGGITCOMMITID;
+        process.env.INPUT_RUNVCPKGINSTALL = "false";
+
+        function fwSlash(p: string): string {
+            return p.replace(/\\/g, '/');
+        }
+        process.env.INPUT_VCPKGCONFIGURATIONJSONGLOB = fwSlash(path.join("**", path.basename(vcpkgProject), runvcpkglib.VCPKG_CONFIGURATION_JSON));
+
+        const options: cp.ExecSyncOptions = {
+            env: process.env,
+            stdio: "inherit"
+        };
+        console.log(cp.execSync(`node ${testScript}`, options)?.toString());
+    });
+
 });

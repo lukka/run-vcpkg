@@ -4,6 +4,7 @@
     - [Setup for consuming GitHub Registry public packages](#setup-for-consuming-github-registry-public-packages)
   - [Build and lint](#build-and-lint)
   - [Packaging](#packaging)
+  - [Build and Package](#build-and-package)
   - [Testing](#testing)
 
 The software is provided as is, there is no warranty of any kind. All users are encouraged to improve the [source code](https://github.com/lukka/run-vcpkg) with fixes and new features contributed by means of Pull Requests.
@@ -14,7 +15,7 @@ The software is provided as is, there is no warranty of any kind. All users are 
 Run 
 
 ```bash
-npm install
+> npm install
 ```
 
 to populate the dependencies in `./node_modules` directory.
@@ -32,25 +33,43 @@ __Note__: **Never commit this `.npmrc` file!**
 ## Build and lint
 Build with `tsc` running:
 
- > npm run build
+```bash
+> npm run build
+```
 
 Launch `lint` by:
 
- > npm run lint
+```bash
+> npm run lint
+```
 
 ## Packaging
-To build, lint validate and package the extension for release purpose, run:
+To package the extension for release purpose, run:
 
-  > npm run pack
+```bash
+> npm run pack
+```
+
+## Build and Package
+
+To run linter, build and package all:
+
+```bash
+> npm run repack
+```
 
 ## Testing
 
-To build, pack and test:
- 
- > npm run test
+To run the test suite:
 
- To run test directly:
- 
- > npx jest
+```bash
+> npm run test
+```
+
+ To run a  specific test by name:
+
+```bash
+> npx jest -t `<regular-expression>`
+```
 
 Validation tests on various scenarios are run using the workflows of the [Samples](./README.md#samples).
