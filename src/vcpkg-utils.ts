@@ -8,7 +8,6 @@ import * as runvcpkglib from '@lukka/run-vcpkg-lib'
 import * as baselib from '@lukka/base-lib'
 import * as baseutillib from '@lukka/base-util-lib'
 import * as cache from '@actions/cache'
-import * as fastglob from "fast-glob"
 
 export class Utils {
 
@@ -58,31 +57,6 @@ export class Utils {
     }
     baseUtils.baseLib.debug(`getVcpkgCommitId()>> -> [id=${id}, isSubmodule=${isSubmodule}]`);
     return [id, isSubmodule];
-  }
-
-  public static async getVcpkgJsonPath(baseUtil: baseutillib.BaseUtilLib, vcpkgJsonGlob: string,
-    vcpkgJsonIgnores: string[]): Promise<string | null> {
-    baseUtil.baseLib.debug(`getVcpkgJsonPath(${vcpkgJsonGlob})<<`);
-    let ret: string | null = null;
-    try {
-      const vcpkgJsonPath = await fastglob(vcpkgJsonGlob, { ignore: vcpkgJsonIgnores });
-      if (vcpkgJsonPath?.length === 1) {
-        baseUtil.baseLib.info(`Found ${runvcpkglib.VCPKG_JSON} at '${vcpkgJsonPath[0]}'.`);
-        ret = vcpkgJsonPath[0];
-      } else if (vcpkgJsonPath.length > 1) {
-        baseUtil.baseLib.warning(`The file ${runvcpkglib.VCPKG_JSON} was found multiple times with glob expression '${vcpkgJsonGlob}'.`);
-      } else {
-        baseUtil.baseLib.warning(`The file ${runvcpkglib.VCPKG_JSON} was not found with glob expression '${vcpkgJsonGlob}'.`);
-      }
-    }
-    catch (err) {
-      if (err instanceof Error) {
-        baseUtil.baseLib.warning(err.message);
-      }
-    }
-
-    baseUtil.baseLib.debug(`getVcpkgJsonPath()>>`);
-    return ret;
   }
 
   public static async computeCacheKeys(
@@ -155,13 +129,7 @@ export class Utils {
         });
     } catch (err) {
       baseLib.warning("vcpkg-utils.saveCache() failed!");
-      if (err instanceof Error) {
-        baseLib.warning(err.name);
-        baseLib.warning(err.message);
-        if (err?.stack) {
-          baseLib.warning(err.stack);
-        }
-      }
+      baseutillib.dumpError(baseLib, err);
     }
 
     baseLib.debug(`saveCache()>>`)

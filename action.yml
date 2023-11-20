@@ -18,7 +18,7 @@ inputs:
     description: "Run the installation of packages by running `vcpkg install` on the directory of the discovered 'vcpkg.json' file. Default is false."
   vcpkgGitCommitId:
     required: false
-    description: "Specify the full SHA-1 hash of a Git commit (not a branch name, nor a tag!) that establishes which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is *not* needed as implicitly specified by the submodule."
+    description: "Specify the full SHA-1 hash of a Git commit (not a branch name, nor a tag!) that establishes which version of vcpkg needs to be used. When using vcpkg as a Git submodule, this input is *not* needed as implicitly specified by the submodule. When not specified and a submodule is not used for vcpkg, the commit id is being searched in vcpkg.json or vcpkg-configure.json, see vcpkgConfigurationJsonGlob input."
   vcpkgGitURL:
     default: "https://github.com/microsoft/vcpkg.git"
     required: false
@@ -41,6 +41,10 @@ inputs:
     default: "['**/vcpkg/**']"
     required: false
     description: "Specify an array of string containing the pattenrs to be ignored when searching for the vcpkg.json file. The default value ignores the pattern '**/vcpkg/**'"
+  vcpkgConfigurationJsonGlob:
+    default: '**/vcpkg-configuration.json'
+    required: false
+    description: "When the vcpkgGitCommitId input is not provided by the user, this glob expression is used to locate the vcpkg-configuration.json file which contains the commit id of the builtin baseline. On Windows GitHub runners do not use `github.workspace` context expression to form the value of this input, since it contains backslashes and it will eventually fail. Use instead `**/path/to/vcpkg-configuration.json` to match the desired `vcpkg-configuration.json` file."
   binaryCachePath:
     required: false
     description: "Specify a path to store the built packages to be cached with the GitHub cache service. Default is '<runnerWorkspace>/b/vcpkg_cache'."

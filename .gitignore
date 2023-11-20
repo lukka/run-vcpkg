@@ -14,4 +14,4 @@ build
 coverage
 .DS_Store
 __tests__/theAssets/
-__tests__/b
+-__tests__/b
