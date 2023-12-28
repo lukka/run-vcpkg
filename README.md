@@ -72,7 +72,7 @@ jobs:
       # (and vcpkg does not run).
       - name: Setup anew (or from cache) vcpkg (and does not build any package)
         uses: lukka/run-vcpkg@v11 # Always specify the specific _version_ of the
-                                  # action you need, `v10` in this case to stay up
+                                  # action you need, `v11` in this case to stay up
                                   # to date with fixes on the v11 branch.
         #with:
           # This is the default location of the directory containing vcpkg sources.
