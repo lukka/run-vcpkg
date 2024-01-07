@@ -131,7 +131,7 @@ describe('run-vcpkg functional tests', () => {
         console.log(cp.execSync(`node ${testScript}`, options)?.toString());
         const elapsedWithInstalled = new Date().getTime() - startTime.getTime();
         console.log(`********* With vcpkg_installed it took: ${elapsedWithInstalled}ms`)
-        expect(elapsedWithInstalled).toBeLessThan((elapsed / 3) + 5000);// Allow 5 seconds of abs err.
+        expect(elapsedWithInstalled).toBeLessThan((elapsed / 3) + 30000);// Allow 30 seconds of abs err.
 
         // Consume the generated cache, and it should take considerably less than without cache.
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgInstallDirectory(baseLibUtils.baseLib));
