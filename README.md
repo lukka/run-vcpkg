@@ -146,6 +146,10 @@ jobs:
     #  platforms, e.g. `x64-osx`).
     #  VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
     #
+    #  [OPTIONAL] If VCPKG_DEFAULT_TRIPLET is defined then it may also be desirable to set the host
+    #  triplet to avoid unintended cross compiling behavior.
+    #  VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.triplet }}
+    #
     #  [OPTIONAL] By default the action disables vcpkg's telemetry by defining VCPKG_DISABLE_METRICS.
     #  This behavior can be disabled by defining `VCPKG_ENABLE_METRICS` as follows.
     #  VCPKG_ENABLE_METRICS: 1
