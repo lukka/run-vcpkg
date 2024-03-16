@@ -252,10 +252,10 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
 
 ### Use vcpkg's vcpkg.json file to specify the dependencies
 
-The [vcpkg.json](https://github.com/microsoft/vcpkg/blob/master/docs/specifications/manifests.md) is a manifest file that declaratively specifies the dependencies to be installed.
+The [vcpkg.json](https://learn.microsoft.com/en-us/vcpkg/reference/vcpkg-json) is a manifest file that declaratively specifies the dependencies to be installed.
 The file is being used automatically by running CMake (e.g. by using [run-cmake](https://github.com/lukka/run-cmake)) when:
  - starting CMake with the `vcpkg.cmake` toolchain file.
- - the root CMake source directory contains a [vcpkg.json](https://github.com/microsoft/vcpkg/blob/master/docs/specifications/manifests.md) file.
+ - the root CMake source directory contains a [vcpkg.json](https://learn.microsoft.com/en-us/vcpkg/reference/vcpkg-json) file.
 
 Or it can also be used by invoking `vcpkg install` in a directory where `vcpkg.json` is located (e.g., input `runVcpkgInstall : true`).
 
