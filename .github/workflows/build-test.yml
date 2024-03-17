@@ -33,6 +33,7 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true # Disable just on v7 branch since it is sometime failing.
 
   tests:
     name: '${{ matrix.os }}: functional tests'
@@ -53,7 +54,7 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: '6ca56aeb457f033d344a7106cb3f9f1abf8f4e98'
+        vcpkgGitCommitId: 'c8696863d371ab7f46e213d8f5ca923c4aef2a00'
         useShell: true
 
     - name: basic test for run-vcpkg with setupOnly
@@ -62,7 +63,7 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: sqlite3
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: '6ca56aeb457f033d344a7106cb3f9f1abf8f4e98'
+        vcpkgGitCommitId: 'c8696863d371ab7f46e213d8f5ca923c4aef2a00'
         useShell: true
         setupOnly: true
 
@@ -72,5 +73,5 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         vcpkgArguments: '--overlay-ports=../__tests__/assets/1 sqlite3 @../__tests__/assets/tempDirectory/response_file1 --overlay-ports=../__tests__/assets/subdir/2 @../__tests__/assets/response_file2'
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
-        vcpkgGitCommitId: '6ca56aeb457f033d344a7106cb3f9f1abf8f4e98'
+        vcpkgGitCommitId: 'c8696863d371ab7f46e213d8f5ca923c4aef2a00'
         useShell: true
