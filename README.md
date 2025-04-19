@@ -11,6 +11,7 @@
   - [Best practices](#best-practices)
     - [Use **vcpkg** as a submodule of your repository](#use-vcpkg-as-a-submodule-of-your-repository)
     - [Use vcpkg's vcpkg.json file to specify the dependencies](#use-vcpkgs-vcpkgjson-file-to-specify-the-dependencies)
+    - [Usage of github.workspace in multi platform workflows](#usage-of-githubworkspace-in-multi-platform-workflows)
   - [Samples](#samples)
   - [Who is using `run-vcpkg`](#who-is-using-run-vcpkg)
 - [License](#license)
@@ -32,9 +33,6 @@ It leverages the vcpkg's [Binary Caching](https://learn.microsoft.com/en-us/vcpk
 
 Special features which provide added value over a __pure__ workflow are:
   - automatic caching leveraging `vcpkg`'s ability to store its [Binary Caching](https://learn.microsoft.com/en-us/vcpkg/users/binarycaching) artifacts onto the [GitHub Action cache](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows) so that packages are built only once and reused in subsequent workflow runs. The user can customize the behavior by setting the environment variable `VCPKG_BINARY_SOURCES` *before* vcpkg runs.
-  - set the workflow variables `ACTIONS_CACHE_URL` and `ACTIONS_RUNTIME_TOKEN` to let users easily running vcpkg
-  in a `run` step such as `- run: vcpkg install` or `- run: vcpkg integrate install` without forcing the
-  users to set the variables manually.
   - automatic dump of log files created by `CMake` (e.g., `CMakeOutput.log`) and `vcpkg`. The content of those files flow into the workflow output log. Customizable by the user by setting the input `logCollectionRegExps`.
   - automatic parsing of `CMake`, `vcpkg` and `gcc`, `clang`, `msvc` errors, reporting them contextually in the workflow summary by means of annotations.
   - although disabled by default (see input `doNotCache`), `run-vcpkg` can cache vcpkg's executable and data files to speed up subsequent workflow runs. Since bootstrapping `vcpkg` already downloads a prebuilt binary saving the time to build `vcpkg`,
@@ -171,10 +169,8 @@ Flowchart with related input in [action.yml](https://github.com/lukka/run-vcpkg/
 ```
 ┌──────────────────────────┐
 |  If running in GH Runner,|   Environment variables:
-|  set the env vars:       |   - If any env var is
-|  - VCPKG_BINARY_SOURCES  |     already defined
-|  - ACTIONS_CACHE_URL     |     it will not be overridden.
-|  - ACTIONS_RUNTIME_TOKEN |
+|  set the env vars:       |   - If any env var is already defined
+|  - VCPKG_BINARY_SOURCES  |     it won't be overidden. 
 └─────────────┬────────────┘
               ▼
 ┌──────────────────────────┐
@@ -264,6 +260,15 @@ When conditions are satisfied, the toolchain execution starts [vcpkg](https://gi
  **Putting this manifest-like file under source control is highly recommended as this helps to run vcpkg the same exact way locally and remotely on the build servers.**
 The dependencies specified in the vcpkg.json file are installed when CMake runs (i.e. at `run-cmake` execution time).
 
+### Usage of github.workspace in multi platform workflows
+
+Using `github.workspace` may be challenging since it contains backslashes on Windows which are interpreted as escape sequences when used as base path of additional arguments. To work around this, you could use the `String.raw` function which prevents the escape sequences from being processed, e.g.:
+
+```yaml
+  with:
+    configurePresetAdditionalArgs: "[ String.raw`-DD3D9_INCLUDE_DIR=${{ github.workspace }}/cache/Include` ]"
+````
+
 ## Samples
 
 _Checkmarks_ indicates whether the samples "uses" or specifies the thing in the header or whether it is true.
@@ -287,7 +292,7 @@ _Checkmarks_ indicates whether the samples "uses" or specifies the thing in the 
 
 All the content in this repository is licensed under the [MIT License](LICENSE.txt).
 
-Copyright © 2019-2020-2021-2022-2023 Luca Cappa
+Copyright © 2019-2020-2021-2022-2023-2024-2025 Luca Cappa
 
 <br>
 
