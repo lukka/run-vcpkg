@@ -24,8 +24,7 @@ const baseLibUtils = new BaseUtilLib(actionLib);
 describe('run-vcpkg functional tests', () => {
     beforeEach(async () => {
         process.env.GITHUB_WORKSPACE = assetDirectory;
-        // The GH Action cache is not enabled when running tests because these env vars are not defined:
-        // ACTIONS_RUNTIME_TOKEN and ACTIONS_CACHE_URL. Set a default that uses the filesystem and won't fail.
+        // Set a default that uses the filesystem and won't fail.
         process.env.VCPKG_BINARY_SOURCES = 'clear;default,readwrite';
 
         await actionLib.rmRF(vcpkgDirectory);
