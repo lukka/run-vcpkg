@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020-2021-2022-2023 Luca Cappa
+# Copyright (c) 2019-2020-2021-2022-2023-2024-2025-2026 Luca Cappa
 # Released under the term specified in file LICENSE.txt
 # SPDX short identifier: MIT
 
@@ -62,7 +62,7 @@ inputs:
     description: "Specifies a semicolon separated list of regular expressions that are used to identify log file paths in the workflow output. A regular expression must have a single capturing group, that is a single pair of parenthesis such as 'See also (.+.log)'. When a match occurs, the content of the file is written into the workflow output for disclosing its content to the user. The default regular expressions are for CMake's and vcpkg's log files."
 
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
 
 branding:

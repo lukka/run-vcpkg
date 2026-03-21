@@ -292,7 +292,7 @@ _Checkmarks_ indicates whether the samples "uses" or specifies the thing in the 
 
 All the content in this repository is licensed under the [MIT License](LICENSE.txt).
 
-Copyright © 2019-2020-2021-2022-2023-2024-2025 Luca Cappa
+Copyright © 2019-2020-2021-2022-2023-2024-2025-2026 Luca Cappa
 
 <br>
 
