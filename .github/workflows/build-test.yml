@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true" # Force JavaScript-based GitHub Actions in this workflow to run on Node.js 24 for consistent runtime behavior.
 
 jobs:
   build_and_unit_test:
