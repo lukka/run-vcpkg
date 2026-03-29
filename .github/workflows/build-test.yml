@@ -23,7 +23,7 @@ jobs:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: true
-    - uses: lukka/get-cmake@b78306120111dc2522750771cfd09ee7ca723687 # v4.3.0
+    - uses: lukka/get-cmake@ea83089aa35e08e459464341fe24ad024ee2466f # v4.3.1
     - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
       with:
         node-version: '24.x'
@@ -60,7 +60,7 @@ jobs:
       with:
         submodules: true
 
-    - uses: lukka/get-cmake@b78306120111dc2522750771cfd09ee7ca723687 # v4.3.0
+    - uses: lukka/get-cmake@ea83089aa35e08e459464341fe24ad024ee2466f # v4.3.1
 
     - name: basic test for run-vcpkg (not running vcpkg).
       uses: ./
@@ -100,7 +100,7 @@ jobs:
       with:
         submodules: true
 
-    - uses: lukka/get-cmake@b78306120111dc2522750771cfd09ee7ca723687 # v4.3.0
+    - uses: lukka/get-cmake@ea83089aa35e08e459464341fe24ad024ee2466f # v4.3.1
 
     - name: basic test for run-vcpkg (not running vcpkg).
       uses: ./
