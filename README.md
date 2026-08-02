@@ -92,7 +92,7 @@ jobs:
           # using the vcpkg.cmake toolchain. The default is `false`.
           # runVcpkgInstall: true
 
-          # This is only needed if `runVpkgInstall` is `true`.
+          # This is only needed if `runVcpkgInstall` is `true`.
           # This glob expression used to locate the vcpkg.json and  use
           # its directory location as `working directory` when running `vcpkg install`.
           # Change it to match a single manifest file you want to use.
