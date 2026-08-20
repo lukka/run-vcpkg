@@ -66,14 +66,14 @@ jobs:
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'b322364f06308bdd24823f9d8f03fe0cc86fd46f'
+        vcpkgGitCommitId: '45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4'
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
 
     - name: basic test for run-vcpkg with running 'vcpkg install'.
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'b322364f06308bdd24823f9d8f03fe0cc86fd46f'
+        vcpkgGitCommitId: '45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4'
         runVcpkgInstall: true
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
       env:
@@ -106,7 +106,7 @@ jobs:
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'b322364f06308bdd24823f9d8f03fe0cc86fd46f'
+        vcpkgGitCommitId: '45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4'
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
 
   finalize_coveralls:

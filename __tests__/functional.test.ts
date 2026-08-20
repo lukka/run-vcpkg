@@ -51,7 +51,7 @@ describe('run-vcpkg functional tests', () => {
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "b322364f06308bdd24823f9d8f03fe0cc86fd46f";
+        process.env.INPUT_VCPKGGITCOMMITID = "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -69,7 +69,7 @@ describe('run-vcpkg functional tests', () => {
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "b322364f06308bdd24823f9d8f03fe0cc86fd46f";
+        process.env.INPUT_VCPKGGITCOMMITID = "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = "['invalid command']";
 
@@ -85,7 +85,7 @@ describe('run-vcpkg functional tests', () => {
         console.log(process.env.INPUT_VCPKGDIRECTORY);
         delete process.env.INPUT_VCPKGJSONGLOB;
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
-        process.env.INPUT_VCPKGGITCOMMITID = "b322364f06308bdd24823f9d8f03fe0cc86fd46f";
+        process.env.INPUT_VCPKGGITCOMMITID = "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -110,7 +110,7 @@ describe('run-vcpkg functional tests', () => {
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgCacheDirectory(baseLibUtils.baseLib));
 
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
-        process.env.INPUT_VCPKGGITCOMMITID = "b322364f06308bdd24823f9d8f03fe0cc86fd46f";
+        process.env.INPUT_VCPKGGITCOMMITID = "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
