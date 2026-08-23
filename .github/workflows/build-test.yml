@@ -24,7 +24,7 @@ jobs:
       with:
         submodules: true
     - uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
-    - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version: '24.x'
       # How to consume GitHub packages, from this message (!): https://github.community/t/download-from-github-package-registry-without-authentication/14407/35
