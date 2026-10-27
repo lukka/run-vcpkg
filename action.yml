@@ -57,9 +57,9 @@ inputs:
     required: false
     description: "Specify which shell to be used when launching commands. 'true' means the default shell is used. 'false' means no shell is used. It also can be an absolute path and arguments of the shell to spawn commands with."
   logCollectionRegExps:
-    default: "\\s*\"(.+CMakeOutput\\.log)\"\\.\\s*;\\s*\"(.+CMakeError\\.log)\"\\.\\s*;\\s*(.+out\\.log)\\s*;\\s+(.+err\\.log)\\s*;\\s*(.+vcpkg.+\\.log)\\s*"
+    default: "\\s*\"(.+CMakeOutput\\.log)\"\\.;\\s*\"(.+CMakeError\\.log)\"\\.;\\s*(.+out\\.log);\\s+(.+err\\.log);\\n\\s*((?:[A-Za-z]:)?[\\\\/].*vcpkg.+\\.log)"
     required: false
-    description: "Specifies a semicolon separated list of regular expressions that are used to identify log file paths in the workflow output. A regular expression must have a single capturing group, that is a single pair of parenthesis such as 'See also (.+.log)'. When a match occurs, the content of the file is written into the workflow output for disclosing its content to the user. The default regular expressions are for CMake's and vcpkg's log files."
+    description: "Specifies a semicolon separated list of regular expressions that are used to identify log file paths in the workflow output. A regular expression must have a single capturing group that matches the log file path, such as 'See also (.+.log)'; non-capturing groups such as '(?:...)' are allowed. When a match occurs, the content of the file is written into the workflow output for disclosing its content to the user. The default regular expressions are for CMake's and vcpkg's log files."
 
 runs:
   using: 'node24'
