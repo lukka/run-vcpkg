@@ -23,7 +23,7 @@ jobs:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: true
-    - uses: lukka/get-cmake@b78306120111dc2522750771cfd09ee7ca723687 # v4.3.0
+    - uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
     - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
       with:
         node-version: '24.x'
@@ -39,7 +39,7 @@ jobs:
     - run: npm run test
     - run: npm run pack
     - name: Coveralls
-      uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
+      uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         parallel: true
@@ -60,20 +60,20 @@ jobs:
       with:
         submodules: true
 
-    - uses: lukka/get-cmake@b78306120111dc2522750771cfd09ee7ca723687 # v4.3.0
+    - uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
 
     - name: basic test for run-vcpkg (not running vcpkg).
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'b322364f06308bdd24823f9d8f03fe0cc86fd46f'
+        vcpkgGitCommitId: '45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4'
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
 
     - name: basic test for run-vcpkg with running 'vcpkg install'.
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'b322364f06308bdd24823f9d8f03fe0cc86fd46f'
+        vcpkgGitCommitId: '45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4'
         runVcpkgInstall: true
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
       env:
@@ -100,13 +100,13 @@ jobs:
       with:
         submodules: true
 
-    - uses: lukka/get-cmake@b78306120111dc2522750771cfd09ee7ca723687 # v4.3.0
+    - uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
 
     - name: basic test for run-vcpkg (not running vcpkg).
       uses: ./
       with:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        vcpkgGitCommitId: 'b322364f06308bdd24823f9d8f03fe0cc86fd46f'
+        vcpkgGitCommitId: '45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4'
         vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
 
   finalize_coveralls:
@@ -115,7 +115,7 @@ jobs:
     if: ${{ always() }}
     steps:
     - name: Finalize Coveralls
-      uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
+      uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         parallel-finished: true
