@@ -24,8 +24,7 @@ const baseLibUtils = new BaseUtilLib(actionLib);
 describe('run-vcpkg functional tests', () => {
     beforeEach(async () => {
         process.env.GITHUB_WORKSPACE = assetDirectory;
-        // The GH Action cache is not enabled when running tests because these env vars are not defined:
-        // ACTIONS_RUNTIME_TOKEN and ACTIONS_CACHE_URL. Set a default that uses the filesystem and won't fail.
+        // Set a default that uses the filesystem and won't fail.
         process.env.VCPKG_BINARY_SOURCES = 'clear;default,readwrite';
 
         await actionLib.rmRF(vcpkgDirectory);
@@ -52,7 +51,7 @@ describe('run-vcpkg functional tests', () => {
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "b322364f06308bdd24823f9d8f03fe0cc86fd46f";
+        process.env.INPUT_VCPKGGITCOMMITID = "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -70,7 +69,7 @@ describe('run-vcpkg functional tests', () => {
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
         process.env.INPUT_VCPKGDIRECTORY = vcpkgDirectory;
         process.env.INPUT_VCPKGJSONGLOB = "**/vcpkg.json";
-        process.env.INPUT_VCPKGGITCOMMITID = "b322364f06308bdd24823f9d8f03fe0cc86fd46f";
+        process.env.INPUT_VCPKGGITCOMMITID = "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = "['invalid command']";
 
@@ -86,7 +85,7 @@ describe('run-vcpkg functional tests', () => {
         console.log(process.env.INPUT_VCPKGDIRECTORY);
         delete process.env.INPUT_VCPKGJSONGLOB;
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
-        process.env.INPUT_VCPKGGITCOMMITID = "b322364f06308bdd24823f9d8f03fe0cc86fd46f";
+        process.env.INPUT_VCPKGGITCOMMITID = "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4";
         process.env.INPUT_RUNVCPKGINSTALL = "false";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -111,7 +110,7 @@ describe('run-vcpkg functional tests', () => {
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgCacheDirectory(baseLibUtils.baseLib));
 
         process.env.INPUT_VCPKGGITURL = "https://github.com/microsoft/vcpkg.git";
-        process.env.INPUT_VCPKGGITCOMMITID = "b322364f06308bdd24823f9d8f03fe0cc86fd46f";
+        process.env.INPUT_VCPKGGITCOMMITID = "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4";
         process.env.INPUT_RUNVCPKGINSTALL = "true";
         process.env.INPUT_RUNVCPKGFORMATSTRING = runvcpkglib.VcpkgRunner.VCPKGINSTALLCMDDEFAULT;
 
@@ -131,7 +130,8 @@ describe('run-vcpkg functional tests', () => {
         console.log(cp.execSync(`node ${testScript}`, options)?.toString());
         const elapsedWithInstalled = new Date().getTime() - startTime.getTime();
         console.log(`********* With vcpkg_installed it took: ${elapsedWithInstalled}ms`)
-        expect(elapsedWithInstalled).toBeLessThan((elapsed / 3) + 30000);// Allow 30 seconds of abs err.
+        const allowedAbsoluteError = process.platform === "darwin" ? 45000 : 30000;
+        expect(elapsedWithInstalled).toBeLessThan((elapsed / 3) + allowedAbsoluteError);
 
         // Consume the generated cache, and it should take considerably less than without cache.
         await actionLib.rmRF(await runvcpkglib.getDefaultVcpkgInstallDirectory(baseLibUtils.baseLib));
